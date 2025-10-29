@@ -25,11 +25,22 @@ export interface TaxCalculation {
 
 /**
  * Sanitize rate - évite NaN et valeurs invalides qui causent des 400
+ * Supporte aussi les virgules décimales (ex: "9,975" → 9.975)
  */
 export function sanitizeRate(value: unknown): number {
   if (typeof value === 'number' && isFinite(value) && value >= 0) {
     return value;
   }
+
+  // Support des strings avec virgules ou points décimaux
+  if (typeof value === 'string') {
+    const normalized = value.trim().replace(',', '.');
+    const parsed = parseFloat(normalized);
+    if (isFinite(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
   return 0;
 }
 

@@ -184,14 +184,30 @@ export function TaxSettings() {
         tax_number_qst: settings.tax_number_qst,
       });
 
-      // Utiliser safeUpsert pour éviter les erreurs 400
-      await safeUpsert(supabase, 'tax_settings', settingsData, 'organization_id');
+      // Log détaillé pour debugging (avec types)
+      console.log('[TaxSettings.save] Payload:', settingsData);
+      console.log('[TaxSettings.save] Types:', Object.fromEntries(
+        Object.entries(settingsData).map(([k, v]) => [k, typeof v])
+      ));
 
+      // Utiliser safeUpsert pour éviter les erreurs 400
+      const result = await safeUpsert(supabase, 'tax_settings', settingsData, 'organization_id');
+
+      console.log('[TaxSettings.save] Success:', result);
       showToast('Tax settings saved successfully', 'success');
       await loadSettings();
     } catch (error: any) {
-      console.error('Error saving settings:', error);
-      showToast(`Error saving settings: ${error.message || 'Unknown error'}`, 'error');
+      console.error('[TaxSettings.save] Error:', error);
+      console.error('[TaxSettings.save] Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+
+      // Message d'erreur détaillé pour l'utilisateur
+      const errorMsg = error.message || error.details || 'Unknown error';
+      showToast(`Error saving settings: ${errorMsg}`, 'error');
     } finally {
       setSaving(false);
     }
