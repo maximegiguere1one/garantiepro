@@ -52,15 +52,15 @@ export function PricingSettings() {
   });
 
   useEffect(() => {
-    if (profile?.user_id && organization?.id) {
+    if (profile?.id && organization?.id) {
       loadSettings();
     } else {
       setLoading(false);
     }
-  }, [profile?.user_id, organization?.id]);
+  }, [profile?.id, organization?.id]);
 
   const loadSettings = async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     setLoading(true);
     try {
@@ -91,7 +91,7 @@ export function PricingSettings() {
   };
 
   const createDefaultSettings = async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     try {
       const defaultSettings = {
@@ -134,7 +134,7 @@ export function PricingSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!profile?.user_id || !organization?.id) {
+    if (!profile?.id || !organization?.id) {
       showToast('Erreur: utilisateur non connecté', 'error');
       return;
     }

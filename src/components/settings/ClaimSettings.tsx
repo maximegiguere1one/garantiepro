@@ -60,12 +60,12 @@ export function ClaimSettings() {
 
   useEffect(() => {
     cleanupOldBackups();
-    if (profile?.user_id && organization?.id) {
+    if (profile?.id && organization?.id) {
       loadSettings();
     } else {
       setLoading(false);
     }
-  }, [profile?.user_id, organization?.id]);
+  }, [profile?.id, organization?.id]);
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -80,7 +80,7 @@ export function ClaimSettings() {
   }, [hasUnsavedChanges]);
 
   const loadSettings = useCallback(async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     setLoading(true);
     try {
@@ -122,10 +122,10 @@ export function ClaimSettings() {
     } finally {
       setLoading(false);
     }
-  }, [profile?.user_id, organization?.id, showToast]);
+  }, [profile?.id, organization?.id, showToast]);
 
   const createDefaultSettings = async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     try {
       const defaultSettings = {
@@ -192,7 +192,7 @@ export function ClaimSettings() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!profile?.user_id || !organization?.id) {
+    if (!profile?.id || !organization?.id) {
       showToast('Erreur: utilisateur non connecté', 'error');
       return;
     }

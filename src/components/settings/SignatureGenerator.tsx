@@ -65,7 +65,7 @@ export function SignatureGenerator() {
   };
 
   const handleSave = async () => {
-    if (!profile?.user_id || !organization?.id || !previewData || !selectedStyle) return;
+    if (!profile?.id || !organization?.id || !previewData || !selectedStyle) return;
 
     setLoading(true);
     try {

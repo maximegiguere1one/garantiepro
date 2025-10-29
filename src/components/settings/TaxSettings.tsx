@@ -60,15 +60,15 @@ export function TaxSettings() {
   });
 
   useEffect(() => {
-    if (profile?.user_id && organization?.id) {
+    if (profile?.id && organization?.id) {
       loadSettings();
     } else {
       setLoading(false);
     }
-  }, [profile?.user_id, organization?.id]);
+  }, [profile?.id, organization?.id]);
 
   const loadSettings = async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     setLoading(true);
     try {
@@ -99,7 +99,7 @@ export function TaxSettings() {
   };
 
   const createDefaultSettings = async () => {
-    if (!profile?.user_id || !organization?.id) return;
+    if (!profile?.id || !organization?.id) return;
 
     try {
       const defaultSettings = {
@@ -184,26 +184,11 @@ export function TaxSettings() {
         tax_number_qst: settings.tax_number_qst,
       });
 
-      // Log détaillé pour debugging (avec types)
-      console.log('[TaxSettings.save] Payload:', settingsData);
-      console.log('[TaxSettings.save] Types:', Object.fromEntries(
-        Object.entries(settingsData).map(([k, v]) => [k, typeof v])
-      ));
-
-      // Utiliser safeUpsert pour éviter les erreurs 400
-      const result = await safeUpsert(supabase, 'tax_settings', settingsData, 'organization_id');
-
-      console.log('[TaxSettings.save] Success:', result);
+      await safeUpsert(supabase, 'tax_settings', settingsData, 'organization_id');
       showToast('Tax settings saved successfully', 'success');
       await loadSettings();
     } catch (error: any) {
-      console.error('[TaxSettings.save] Error:', error);
-      console.error('[TaxSettings.save] Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint,
-      });
+      console.error('Error saving tax settings:', error);
 
       // Message d'erreur détaillé pour l'utilisateur
       const errorMsg = error.message || error.details || 'Unknown error';
