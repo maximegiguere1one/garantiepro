@@ -4,7 +4,7 @@ export function registerServiceWorker(): void {
                        window.location.hostname.includes('webcontainer');
 
   if (isStackBlitz) {
-    console.log('[ServiceWorker] Skipping registration in StackBlitz environment');
+    // Silencieusement skip dans StackBlitz
     return;
   }
 

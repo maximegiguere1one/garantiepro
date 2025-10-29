@@ -7,27 +7,35 @@ import { errorMonitor } from './lib/monitoring/error-monitor';
 import { performanceMonitor } from './lib/monitoring/performance-monitor';
 
 (function silenceStackblitzNoise() {
-  const isBolt =
+  const isStackBlitz =
     location.hostname.includes('stackblitz.com') ||
     location.hostname.includes('webcontainer') ||
     location.hostname.includes('staticblitz');
 
-  if (!isBolt) return;
+  if (!isStackBlitz) return;
 
+  // Liste des URLs à filtrer silencieusement
   const shouldMute = (url: string | undefined) =>
     !!url &&
     (url.includes('stackblitz.com/api/ad_conversions') ||
-     url.includes('/api/ad_conversions'));
+     url.includes('/api/ad_conversions') ||
+     url.includes('/api/dns-records'));
 
+  // Intercepter fetch
   const origFetch = window.fetch.bind(window);
   window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : (input as Request).url;
     if (shouldMute(url)) {
-      return Promise.resolve(new Response(null, { status: 204 }));
+      // Retourner une réponse vide silencieusement
+      return Promise.resolve(new Response('{}', {
+        status: 204,
+        headers: { 'Content-Type': 'application/json' }
+      }));
     }
     return origFetch(input, init);
   };
 
+  // Intercepter sendBeacon
   if (navigator.sendBeacon) {
     const origBeacon = navigator.sendBeacon.bind(navigator);
     navigator.sendBeacon = (url: string | URL, data?: BodyInit) => {
@@ -35,6 +43,34 @@ import { performanceMonitor } from './lib/monitoring/performance-monitor';
       return origBeacon(url, data);
     };
   }
+
+  // Supprimer les erreurs de console spécifiques
+  const origError = console.error;
+  console.error = function(...args: any[]) {
+    const msg = args.join(' ');
+    if (
+      msg.includes('ad_conversions') ||
+      msg.includes('ad conversion') ||
+      msg.includes('DNS records') ||
+      msg.includes('Tracking has already been taken')
+    ) {
+      return; // Ignore silencieusement
+    }
+    return origError.apply(console, args);
+  };
+
+  // Supprimer les warnings spécifiques
+  const origWarn = console.warn;
+  console.warn = function(...args: any[]) {
+    const msg = args.join(' ');
+    if (
+      msg.includes('[Contextify]') ||
+      msg.includes('preloaded using link preload')
+    ) {
+      return; // Ignore silencieusement
+    }
+    return origWarn.apply(console, args);
+  };
 })();
 
 errorMonitor.initialize();
