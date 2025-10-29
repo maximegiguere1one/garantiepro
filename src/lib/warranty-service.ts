@@ -159,15 +159,28 @@ class WarrantyService {
   ): Promise<WarrantyListResponse | null> {
     const rpcStartTime = performance.now();
 
-    const offset = (page - 1) * pageSize;
+    console.log('[WarrantyService] Calling get_warranties_optimized with:', {
+      p_page: page,
+      p_page_size: pageSize,
+      p_status_filter: statusFilter,
+      p_search_query: searchQuery
+    });
+
     const { data, error } = await supabase.rpc('get_warranties_optimized', {
-      p_limit: pageSize,
-      p_offset: offset,
-      p_status: statusFilter === 'all' ? null : statusFilter,
-      p_search: searchQuery || null,
+      p_page: page,
+      p_page_size: pageSize,
+      p_status_filter: statusFilter === 'all' ? 'all' : statusFilter,
+      p_search_query: searchQuery || '',
     });
 
     const rpcTime = performance.now() - rpcStartTime;
+
+    console.log('[WarrantyService] RPC Response:', {
+      hasError: !!error,
+      hasData: !!data,
+      dataLength: Array.isArray(data) ? data.length : 'not array',
+      data: data
+    });
 
     if (error) {
       console.error('[WarrantyService] get_warranties_optimized error:', error);
@@ -176,6 +189,11 @@ class WarrantyService {
 
     if (!data) {
       console.warn('[WarrantyService] get_warranties_optimized returned null');
+      return null;
+    }
+
+    if (!Array.isArray(data) || data.length === 0) {
+      console.warn('[WarrantyService] get_warranties_optimized returned empty or invalid:', data);
       return null;
     }
 
