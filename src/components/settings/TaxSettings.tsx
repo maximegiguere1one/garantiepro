@@ -83,7 +83,7 @@ export function TaxSettings() {
       if (data) {
         setSettings({
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id
         });
       } else {
@@ -103,7 +103,7 @@ export function TaxSettings() {
 
     try {
       const defaultSettings = {
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         gst_rate: 5.0,
         qst_rate: 9.975,
@@ -131,7 +131,7 @@ export function TaxSettings() {
       if (data) {
         setSettings({
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id
         });
         showToast('Paramètres fiscaux créés automatiquement (Québec)', 'success');
@@ -164,7 +164,7 @@ export function TaxSettings() {
     console.log('[TaxSettings.handleSubmit] profile:', profile);
     console.log('[TaxSettings.handleSubmit] organization:', organization);
 
-    if (!profile?.user_id || !organization?.id) {
+    if (!profile?.id || !organization?.id) {
       console.error('[TaxSettings.handleSubmit] Missing user or org!');
       showToast('Error: user not connected', 'error');
       return;
@@ -176,7 +176,7 @@ export function TaxSettings() {
     try {
       // Sanitize settings pour éviter NaN et valeurs invalides (400)
       const settingsData = sanitizeTaxSettings({
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         gst_rate: settings.gst_rate,
         qst_rate: settings.qst_rate,
