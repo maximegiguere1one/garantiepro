@@ -1,0 +1,307 @@
+{
+  "$schema": "./in-app-guides-schema.json",
+  "version": "2.0.0",
+  "lastUpdated": "2025-10-27",
+  "description": "Comprehensive product tours with 25+ steps covering all key workflows for role-based personalization",
+  "tours": {
+    "welcome_dealer": {
+      "tourId": "welcome-dealer-v2",
+      "priority": 1,
+      "roles": ["dealer"],
+      "conditionType": "first_login",
+      "dismissible": false,
+      "steps": [
+        {
+          "stepId": "WD01",
+          "selector": "[data-tour='dashboard']",
+          "title": {"en": "Welcome to Your Dashboard", "fr": "Bienvenue sur votre tableau de bord"},
+          "body": {"en": "This is your command center. See daily sales, recent warranties, and quick actions.", "fr": "Ceci est votre centre de commande. Consultez les ventes du jour, garanties récentes et actions rapides."},
+          "placement": "center"
+        },
+        {
+          "stepId": "WD02",
+          "selector": "[data-tour='sales-kpi']",
+          "title": {"en": "Your Sales Metrics", "fr": "Vos métriques de vente"},
+          "body": {"en": "Track daily performance: warranties sold, revenue, and targets in real-time.", "fr": "Suivez la performance quotidienne: garanties vendues, revenus et objectifs en temps réel."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "WD03",
+          "selector": "[data-tour='create-warranty-button']",
+          "title": {"en": "Create Your First Warranty", "fr": "Créez votre première garantie"},
+          "body": {"en": "Click here to start. The simple form takes 5-7 minutes and guides you through each step.", "fr": "Cliquez ici pour commencer. Le formulaire simple prend 5-7 minutes et vous guide à chaque étape."},
+          "placement": "left"
+        },
+        {
+          "stepId": "WD04",
+          "selector": "[data-tour='recent-warranties']",
+          "title": {"en": "Recent Warranties", "fr": "Garanties récentes"},
+          "body": {"en": "Access recently created warranties. Click any to view details or download PDF.", "fr": "Accédez aux garanties récemment créées. Cliquez sur une pour voir les détails ou télécharger le PDF."},
+          "placement": "top"
+        },
+        {
+          "stepId": "WD05",
+          "selector": "[data-tour='help-center']",
+          "title": {"en": "Need Help?", "fr": "Besoin d'aide?"},
+          "body": {"en": "Access tutorials, FAQs, and contact support anytime from here.", "fr": "Accédez aux tutoriels, FAQ et contactez le support à tout moment depuis ici."},
+          "placement": "bottom"
+        }
+      ]
+    },
+    "warranty_creation_basic": {
+      "tourId": "warranty-creation-dealer",
+      "priority": 2,
+      "roles": ["dealer"],
+      "conditionType": "never_seen",
+      "dismissible": true,
+      "steps": [
+        {
+          "stepId": "WCB01",
+          "selector": "[data-tour='warranty-form']",
+          "title": {"en": "Simplified Warranty Form", "fr": "Formulaire de garantie simplifié"},
+          "body": {"en": "This form shows only essential fields. No overwhelming options—just what you need.", "fr": "Ce formulaire montre uniquement les champs essentiels. Aucune option écrasante—juste ce dont vous avez besoin."},
+          "placement": "right"
+        },
+        {
+          "stepId": "WCB02",
+          "selector": "[data-tour='customer-search']",
+          "title": {"en": "Find or Add Customer", "fr": "Trouver ou ajouter un client"},
+          "body": {"en": "Start typing to search existing customers or click 'New Customer' to add one.", "fr": "Commencez à taper pour rechercher des clients existants ou cliquez sur 'Nouveau client' pour en ajouter un."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "WCB03",
+          "selector": "[data-tour='vin-decoder']",
+          "title": {"en": "VIN Auto-Fill", "fr": "Remplissage automatique NIV"},
+          "body": {"en": "Enter VIN and vehicle details populate automatically. Saves time and reduces errors.", "fr": "Entrez le NIV et les détails du véhicule se remplissent automatiquement. Économise du temps et réduit les erreurs."},
+          "placement": "right"
+        },
+        {
+          "stepId": "WCB04",
+          "selector": "[data-tour='plan-selector']",
+          "title": {"en": "Select Warranty Plan", "fr": "Sélectionner le plan de garantie"},
+          "body": {"en": "Choose from pre-configured plans. Pricing calculates automatically based on vehicle and coverage.", "fr": "Choisissez parmi les plans préconfigurés. Le prix se calcule automatiquement selon le véhicule et la couverture."},
+          "placement": "left"
+        },
+        {
+          "stepId": "WCB05",
+          "selector": "[data-tour='save-button']",
+          "title": {"en": "Save and Generate", "fr": "Enregistrer et générer"},
+          "body": {"en": "Click to save. PDF contract generates instantly. Print or email to customer immediately.", "fr": "Cliquez pour enregistrer. Le contrat PDF se génère instantanément. Imprimez ou envoyez par email au client immédiatement."},
+          "placement": "top"
+        }
+      ]
+    },
+    "warranty_creation_advanced": {
+      "tourId": "warranty-creation-operator",
+      "priority": 2,
+      "roles": ["operator", "admin"],
+      "conditionType": "never_seen",
+      "dismissible": true,
+      "steps": [
+        {
+          "stepId": "WCA01",
+          "selector": "[data-tour='advanced-toggle']",
+          "title": {"en": "Advanced Mode Available", "fr": "Mode avancé disponible"},
+          "body": {"en": "As an operator, you can access advanced features. Toggle to see pricing overrides, commissions, and more.", "fr": "En tant qu'opérateur, vous pouvez accéder aux fonctionnalités avancées. Basculez pour voir les remplacements de prix, commissions et plus."},
+          "placement": "top"
+        },
+        {
+          "stepId": "WCA02",
+          "selector": "[data-tour='pricing-override']",
+          "title": {"en": "Price Override", "fr": "Remplacement du prix"},
+          "body": {"en": "Override default pricing when needed. System logs all changes with your user ID for audit.", "fr": "Remplacez le prix par défaut si nécessaire. Le système enregistre tous les changements avec votre ID utilisateur pour l'audit."},
+          "placement": "right"
+        },
+        {
+          "stepId": "WCA03",
+          "selector": "[data-tour='discount-approval']",
+          "title": {"en": "Discount Management", "fr": "Gestion des remises"},
+          "body": {"en": "Apply custom discounts. Discounts over 10% require manager approval automatically.", "fr": "Appliquez des remises personnalisées. Les remises supérieures à 10% nécessitent l'approbation du gestionnaire automatiquement."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "WCA04",
+          "selector": "[data-tour='internal-notes']",
+          "title": {"en": "Internal Notes", "fr": "Notes internes"},
+          "body": {"en": "Add notes visible only to your team. Document special conditions, negotiations, or approval reasons.", "fr": "Ajoutez des notes visibles uniquement par votre équipe. Documentez les conditions spéciales, négociations ou raisons d'approbation."},
+          "placement": "left"
+        },
+        {
+          "stepId": "WCA05",
+          "selector": "[data-tour='commission-split']",
+          "title": {"en": "Commission Configuration", "fr": "Configuration des commissions"},
+          "body": {"en": "Configure dealer commission splits. Set percentages and track payouts per transaction.", "fr": "Configurez les répartitions de commissions des concessionnaires. Définissez les pourcentages et suivez les paiements par transaction."},
+          "placement": "right"
+        }
+      ]
+    },
+    "claim_submission": {
+      "tourId": "claim-submission-basic",
+      "priority": 3,
+      "roles": ["dealer", "operator"],
+      "conditionType": "never_seen",
+      "dismissible": true,
+      "steps": [
+        {
+          "stepId": "CS01",
+          "selector": "[data-tour='claims-center']",
+          "title": {"en": "Claims Center", "fr": "Centre de réclamations"},
+          "body": {"en": "Manage all warranty claims here. Submit new claims and track existing ones in one place.", "fr": "Gérez toutes les réclamations de garantie ici. Soumettez de nouvelles réclamations et suivez les existantes en un seul endroit."},
+          "placement": "center"
+        },
+        {
+          "stepId": "CS02",
+          "selector": "[data-tour='new-claim-button']",
+          "title": {"en": "Start New Claim", "fr": "Démarrer une nouvelle réclamation"},
+          "body": {"en": "Click to begin. You'll need: warranty number, issue description, and photos if available.", "fr": "Cliquez pour commencer. Vous aurez besoin: numéro de garantie, description du problème et photos si disponibles."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "CS03",
+          "selector": "[data-tour='claim-details']",
+          "title": {"en": "Describe the Issue", "fr": "Décrire le problème"},
+          "body": {"en": "Provide clear description. Include repair estimate and supporting documents for faster approval.", "fr": "Fournissez une description claire. Incluez l'estimation de réparation et documents justificatifs pour une approbation plus rapide."},
+          "placement": "right"
+        },
+        {
+          "stepId": "CS04",
+          "selector": "[data-tour='file-upload']",
+          "title": {"en": "Upload Photos & Documents", "fr": "Télécharger photos & documents"},
+          "body": {"en": "Drag and drop files or click to browse. Supports images, PDFs, and common document formats.", "fr": "Glissez-déposez des fichiers ou cliquez pour parcourir. Supporte images, PDF et formats de documents courants."},
+          "placement": "left"
+        },
+        {
+          "stepId": "CS05",
+          "selector": "[data-tour='claim-status']",
+          "title": {"en": "Track Status", "fr": "Suivre le statut"},
+          "body": {"en": "After submission, track real-time status. Notifications alert you when status changes.", "fr": "Après soumission, suivez le statut en temps réel. Les notifications vous alertent lorsque le statut change."},
+          "placement": "top"
+        }
+      ]
+    },
+    "claim_processing": {
+      "tourId": "claim-processing-operator",
+      "priority": 3,
+      "roles": ["operator", "admin"],
+      "conditionType": "never_seen",
+      "dismissible": true,
+      "steps": [
+        {
+          "stepId": "CP01",
+          "selector": "[data-tour='pending-queue']",
+          "title": {"en": "Your Claims Queue", "fr": "Votre file de réclamations"},
+          "body": {"en": "All pending claims requiring review, sorted by priority and SLA deadline.", "fr": "Toutes les réclamations en attente nécessitant une révision, triées par priorité et échéance SLA."},
+          "placement": "right"
+        },
+        {
+          "stepId": "CP02",
+          "selector": "[data-tour='sla-indicator']",
+          "title": {"en": "SLA Tracking", "fr": "Suivi SLA"},
+          "body": {"en": "Color-coded indicators: Green=on-track, Yellow=approaching deadline, Red=overdue. Prioritize accordingly.", "fr": "Indicateurs codés par couleur: Vert=dans les temps, Jaune=approche l'échéance, Rouge=en retard. Priorisez en conséquence."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "CP03",
+          "selector": "[data-tour='claim-details-panel']",
+          "title": {"en": "Full Claim Details", "fr": "Détails complets de la réclamation"},
+          "body": {"en": "Review everything: customer history, warranty terms, repair estimate, photos, and prior communications.", "fr": "Révisez tout: historique client, conditions de garantie, estimation de réparation, photos et communications antérieures."},
+          "placement": "left"
+        },
+        {
+          "stepId": "CP04",
+          "selector": "[data-tour='approval-buttons']",
+          "title": {"en": "Approve or Reject", "fr": "Approuver ou rejeter"},
+          "body": {"en": "Make decision with one click. Add explanation notes for customer and internal team.", "fr": "Prenez la décision en un clic. Ajoutez des notes d'explication pour le client et l'équipe interne."},
+          "placement": "bottom"
+        },
+        {
+          "stepId": "CP05",
+          "selector": "[data-tour='audit-trail']",
+          "title": {"en": "Audit Trail", "fr": "Piste d'audit"},
+          "body": {"en": "Every action is logged with timestamp and user. Complete transparency for compliance.", "fr": "Chaque action est enregistrée avec horodatage et utilisateur. Transparence complète pour la conformité."},
+          "placement": "right"
+        }
+      ]
+    },
+    "progressive_disclosure": {
+      "tourId": "progressive-disclosure-intro",
+      "priority": 4,
+      "roles": ["operator", "admin"],
+      "conditionType": "role_based",
+      "dismissible": true,
+      "steps": [
+        {
+          "stepId": "PD01",
+          "selector": "[data-tour='show-advanced-button']",
+          "title": {"en": "Show Advanced Options", "fr": "Afficher les options avancées"},
+          "body": {"en": "Advanced features are collapsed by default. Click 'Show advanced options' when you need them.", "fr": "Les fonctionnalités avancées sont repliées par défaut. Cliquez sur 'Afficher les options avancées' quand vous en avez besoin."},
+          "placement": "top"
+        },
+        {
+          "stepId": "PD02",
+          "selector": "[data-tour='advanced-section']",
+          "title": {"en": "Advanced Controls", "fr": "Contrôles avancés"},
+          "body": {"en": "Advanced options give more control but require expertise. Hover any field for detailed help.", "fr": "Les options avancées donnent plus de contrôle mais nécessitent de l'expertise. Survolez n'importe quel champ pour une aide détaillée."},
+          "placement": "right"
+        }
+      ]
+    }
+  },
+  "settings": {
+    "keyboard": {
+      "enabled": true,
+      "nextKey": "ArrowRight",
+      "prevKey": "ArrowLeft",
+      "skipKey": "Escape",
+      "announceKeys": true
+    },
+    "accessibility": {
+      "ariaLive": "polite",
+      "focusTrap": true,
+      "announceSteps": true,
+      "screenReaderInstructions": {
+        "en": "Use arrow keys to navigate. Press Escape to skip.",
+        "fr": "Utilisez les flèches pour naviguer. Appuyez sur Échap pour passer."
+      }
+    },
+    "display": {
+      "backdropOpacity": 0.5,
+      "highlightPadding": 8,
+      "scrollOffset": 100,
+      "showProgress": true,
+      "showStepNumbers": true
+    },
+    "behavior": {
+      "scrollToElement": true,
+      "autoAdvance": false,
+      "pauseOnHover": false,
+      "closeOnClickOutside": false
+    },
+    "storage": {
+      "local": true,
+      "server": true,
+      "localKey": "proremorque_tours_completed",
+      "syncInterval": 300000
+    }
+  },
+  "analytics": {
+    "enabled": true,
+    "events": {
+      "tourStarted": "tour:started",
+      "tourCompleted": "tour:completed",
+      "tourSkipped": "tour:skipped",
+      "stepViewed": "tour:step_viewed",
+      "stepDuration": "tour:step_duration",
+      "helpAccessed": "tour:help_clicked"
+    },
+    "properties": [
+      "tourId",
+      "stepId",
+      "userRole",
+      "timestamp",
+      "duration",
+      "skippedAt"
+    ]
+  }
+}

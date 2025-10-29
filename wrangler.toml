@@ -1,0 +1,36 @@
+# Configuration Cloudflare Pages
+# Pour déployer: wrangler pages deploy dist --project-name=garantieproremorque
+
+name = "garantieproremorque"
+compatibility_date = "2024-10-26"
+
+# Pages configuration
+[site]
+bucket = "./dist"
+
+# Headers de sécurité
+[[headers]]
+for = "/*"
+[headers.values]
+X-Frame-Options = "DENY"
+X-Content-Type-Options = "nosniff"
+X-XSS-Protection = "1; mode=block"
+Referrer-Policy = "strict-origin-when-cross-origin"
+
+# Cache pour les assets
+[[headers]]
+for = "/assets/*"
+[headers.values]
+Cache-Control = "public, max-age=31536000, immutable"
+
+# Pas de cache pour index.html
+[[headers]]
+for = "/index.html"
+[headers.values]
+Cache-Control = "public, max-age=0, must-revalidate"
+
+# Redirections SPA - toutes les routes vers index.html
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200

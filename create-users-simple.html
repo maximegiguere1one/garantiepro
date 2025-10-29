@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer les utilisateurs - Location Pro-Remorque</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #1e293b;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus {
+            outline: none;
+            border-color: #dc2626;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        .result.success {
+            background: #dcfce7;
+            border: 2px solid #22c55e;
+            color: #166534;
+            display: block;
+        }
+        .result.error {
+            background: #fee2e2;
+            border: 2px solid #dc2626;
+            color: #991b1b;
+            display: block;
+        }
+        .credentials {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        .credentials.show {
+            display: block;
+        }
+        .credential-item {
+            margin-bottom: 15px;
+            padding: 12px;
+            background: white;
+            border-radius: 6px;
+        }
+        .credential-item strong {
+            color: #dc2626;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Créer les utilisateurs</h1>
+        <p class="subtitle">Configuration initiale des utilisateurs pour Location Pro-Remorque</p>
+
+        <div class="form-group">
+            <label for="serviceKey">Service Role Key</label>
+            <input
+                type="password"
+                id="serviceKey"
+                placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                required
+            >
+            <small style="color: #64748b; display: block; margin-top: 5px;">
+                Trouvez cette clé dans: Supabase Dashboard → Settings → API → service_role key
+            </small>
+        </div>
+
+        <button onclick="createUsers()" id="createBtn">Créer les 4 utilisateurs</button>
+
+        <div id="result" class="result"></div>
+        <div id="credentials" class="credentials"></div>
+    </div>
+
+    <script type="module">
+        const SUPABASE_URL = 'https://lfpdfdugijzewshxwofy.supabase.co';
+        const ORG_ID = '4286fe95-1cbe-4942-a4ba-4e7d569ad2fe';
+
+        const users = [
+            {
+                id: 'e29bc700-3a29-4751-851d-9c099216bb87',
+                email: 'maxime@giguere-influence.com',
+                full_name: 'Maxime Giguere',
+                password: 'ProRemorque2025!',
+                role: 'admin'
+            },
+            {
+                id: '58091680-8b9f-435f-a8db-963e23f4b2c4',
+                email: 'maxime@agence1.com',
+                full_name: 'maxime',
+                password: 'ProRemorque2025!',
+                role: 'admin'
+            },
+            {
+                id: '03baf5cb-a226-4800-8342-b59846af832c',
+                email: 'gigueremaxime321@gmail.com',
+                full_name: 'gigueremaxime321',
+                password: 'ProRemorque2025!',
+                role: 'admin'
+            },
+            {
+                id: '5b38b16f-b96c-4e55-8814-4cd7e21d25e1',
+                email: 'philippe@proremorque.com',
+                full_name: 'Philippe Jacob',
+                password: 'ProRemorque2025!',
+                role: 'admin'
+            }
+        ];
+
+        window.createUsers = async function() {
+            const serviceKey = document.getElementById('serviceKey').value.trim();
+            const resultDiv = document.getElementById('result');
+            const credentialsDiv = document.getElementById('credentials');
+            const btn = document.getElementById('createBtn');
+
+            if (!serviceKey) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ Veuillez entrer la Service Role Key';
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Création en cours...';
+            resultDiv.style.display = 'none';
+            credentialsDiv.style.display = 'none';
+
+            const results = [];
+            let successCount = 0;
+            let errorCount = 0;
+
+            for (const user of users) {
+                try {
+                    // Create user in auth.users
+                    const createResponse = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${serviceKey}`,
+                            'Content-Type': 'application/json',
+                            'apikey': serviceKey
+                        },
+                        body: JSON.stringify({
+                            email: user.email,
+                            password: user.password,
+                            email_confirm: true,
+                            user_metadata: {
+                                full_name: user.full_name
+                            }
+                        })
+                    });
+
+                    if (!createResponse.ok) {
+                        const error = await createResponse.text();
+                        throw new Error(error);
+                    }
+
+                    const authUser = await createResponse.json();
+
+                    // Create profile
+                    const profileResponse = await fetch(`${SUPABASE_URL}/rest/v1/profiles`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${serviceKey}`,
+                            'Content-Type': 'application/json',
+                            'apikey': serviceKey,
+                            'Prefer': 'return=minimal'
+                        },
+                        body: JSON.stringify({
+                            id: authUser.id,
+                            email: user.email,
+                            full_name: user.full_name,
+                            role: user.role,
+                            organization_id: ORG_ID
+                        })
+                    });
+
+                    if (!profileResponse.ok && profileResponse.status !== 409) {
+                        const error = await profileResponse.text();
+                        console.error('Profile error:', error);
+                    }
+
+                    results.push({
+                        success: true,
+                        email: user.email,
+                        password: user.password
+                    });
+                    successCount++;
+
+                } catch (error) {
+                    results.push({
+                        success: false,
+                        email: user.email,
+                        error: error.message
+                    });
+                    errorCount++;
+                }
+            }
+
+            // Show results
+            btn.disabled = false;
+            btn.textContent = 'Créer les 4 utilisateurs';
+
+            if (successCount > 0) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `✅ ${successCount} utilisateur(s) créé(s) avec succès!`;
+
+                credentialsDiv.className = 'credentials show';
+                credentialsDiv.innerHTML = `
+                    <h3 style="margin-top: 0; color: #1e293b;">📋 Identifiants de connexion:</h3>
+                    ${results.filter(r => r.success).map(r => `
+                        <div class="credential-item">
+                            <strong>Email:</strong> ${r.email}<br>
+                            <strong>Mot de passe:</strong> <code>${r.password}</code>
+                        </div>
+                    `).join('')}
+                    <p style="margin-top: 20px; color: #dc2626; font-weight: 600;">
+                        ⚠️ Changez ces mots de passe après la première connexion!
+                    </p>
+                `;
+            }
+
+            if (errorCount > 0) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    ❌ ${errorCount} erreur(s) rencontrée(s)<br>
+                    ${results.filter(r => !r.success).map(r =>
+                        `<small>${r.email}: ${r.error}</small>`
+                    ).join('<br>')}
+                `;
+            }
+        };
+    </script>
+</body>
+</html>

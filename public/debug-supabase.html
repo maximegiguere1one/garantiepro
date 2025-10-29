@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Debug Supabase Config</title>
+  <style>
+    body { 
+      font-family: system-ui; 
+      max-width: 800px; 
+      margin: 50px auto; 
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card { 
+      background: white; 
+      padding: 20px; 
+      border-radius: 8px; 
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .value { 
+      background: #f0f0f0; 
+      padding: 10px; 
+      border-radius: 4px; 
+      font-family: monospace;
+      word-break: break-all;
+    }
+    .label {
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    .warning {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Debug Configuration Supabase</h1>
+  
+  <div class="card">
+    <div class="label">🌐 Environnement actuel:</div>
+    <div class="value" id="hostname"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">📍 VITE_SUPABASE_URL:</div>
+    <div class="value" id="supabase-url"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">🔑 VITE_SUPABASE_ANON_KEY (premiers/derniers 20 chars):</div>
+    <div class="value" id="supabase-key"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">👤 Utilisateur connecté:</div>
+    <div class="value" id="user-email">Chargement...</div>
+  </div>
+
+  <div class="card">
+    <div class="label">📊 Nombre de garanties:</div>
+    <div class="value" id="warranties-count">Chargement...</div>
+  </div>
+
+  <div class="warning">
+    <strong>⚠️ PROBLÈME DÉTECTÉ:</strong><br>
+    Si Bolt et le navigateur montrent des URLs Supabase différentes,
+    c'est la cause du problème!
+  </div>
+
+  <script type="module">
+    // Afficher l'environnement
+    document.getElementById('hostname').textContent = window.location.hostname;
+
+    // Afficher les variables d'environnement
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'NOT SET';
+    const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'NOT SET';
+    
+    document.getElementById('supabase-url').textContent = supabaseUrl;
+    
+    if (supabaseKey && supabaseKey !== 'NOT SET') {
+      const keyPreview = supabaseKey.substring(0, 20) + '...' + supabaseKey.substring(supabaseKey.length - 20);
+      document.getElementById('supabase-key').textContent = keyPreview;
+    } else {
+      document.getElementById('supabase-key').textContent = 'NOT SET';
+    }
+
+    // Tester la connexion Supabase
+    import { supabase } from '../src/lib/supabase.ts';
+    
+    async function checkConnection() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          document.getElementById('user-email').textContent = user.email || 'Pas d\'email';
+          
+          // Compter les garanties
+          const { data, error } = await supabase
+            .from('warranties')
+            .select('id', { count: 'exact', head: true });
+          
+          if (error) {
+            document.getElementById('warranties-count').textContent = `Erreur: ${error.message}`;
+          } else {
+            document.getElementById('warranties-count').textContent = `${data?.length || 0} garanties`;
+          }
+        } else {
+          document.getElementById('user-email').textContent = 'Non connecté';
+          document.getElementById('warranties-count').textContent = 'N/A';
+        }
+      } catch (error) {
+        document.getElementById('user-email').textContent = `Erreur: ${error.message}`;
+        document.getElementById('warranties-count').textContent = 'Erreur';
+      }
+    }
+    
+    checkConnection();
+  </script>
+</body>
+</html>

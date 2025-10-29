@@ -1,0 +1,4 @@
+# Redirects pour SPA (Single Page Application)
+# Toutes les routes qui ne sont pas des fichiers doivent pointer vers index.html
+
+/* /index.html 200

@@ -1,0 +1,607 @@
+{
+  "$schema": "./rules-per-role-schema.json",
+  "version": "1.0.0",
+  "lastUpdated": "2025-10-27",
+  "roles": {
+    "dealer": {
+      "displayName": {
+        "en": "Dealer",
+        "fr": "Concessionnaire"
+      },
+      "description": {
+        "en": "Front-line sales team focused on warranty creation",
+        "fr": "Équipe de vente concentrée sur la création de garanties"
+      },
+      "permissions": {
+        "warranties": {
+          "create": true,
+          "read": true,
+          "update": false,
+          "delete": false,
+          "viewAll": false
+        },
+        "claims": {
+          "create": true,
+          "read": true,
+          "update": false,
+          "delete": false,
+          "approve": false
+        },
+        "customers": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false
+        },
+        "inventory": {
+          "create": false,
+          "read": true,
+          "update": false,
+          "delete": false
+        },
+        "settings": {
+          "viewCompany": false,
+          "editCompany": false,
+          "viewPricing": false,
+          "editPricing": false,
+          "manageUsers": false
+        },
+        "reports": {
+          "viewOwn": true,
+          "viewTeam": false,
+          "viewAll": false,
+          "export": false
+        }
+      },
+      "uiFeatures": {
+        "showAdvancedPricing": false,
+        "showInternalNotes": false,
+        "showSystemLogs": false,
+        "showAuditTrail": false,
+        "canEditPlans": false,
+        "canOverridePrices": false,
+        "canApproveDiscounts": false,
+        "showBulkActions": false,
+        "showAdvancedFilters": false,
+        "showAnalytics": false,
+        "showAPIAccess": false
+      },
+      "dashboardWidgets": [
+        "salesKPI",
+        "inventorySummary",
+        "recentWarranties",
+        "quickActions",
+        "todayStats"
+      ],
+      "navigation": {
+        "showDashboard": true,
+        "showWarranties": true,
+        "showClaims": true,
+        "showCustomers": true,
+        "showInventory": true,
+        "showReports": false,
+        "showAnalytics": false,
+        "showSettings": false,
+        "showAdmin": false,
+        "showOrganizations": false
+      },
+      "warrantyForm": {
+        "showBasicInfo": true,
+        "showCustomerInfo": true,
+        "showVehicleInfo": true,
+        "showPricingBasic": true,
+        "showPricingAdvanced": false,
+        "showInternalNotes": false,
+        "showCommissions": false,
+        "showApprovalWorkflow": false,
+        "defaultMode": "simple",
+        "allowModeSwitch": false
+      },
+      "claimsView": {
+        "showBasicInfo": true,
+        "showStatus": true,
+        "showHistory": false,
+        "showInternalComments": false,
+        "showApprovalChain": false,
+        "showCostBreakdown": false,
+        "layout": "compact"
+      },
+      "limits": {
+        "maxWarrantyValue": 10000,
+        "maxDiscountPercent": 5,
+        "requiresApprovalAbove": 5000,
+        "dailyWarrantyLimit": 50
+      },
+      "notifications": {
+        "warrantyCreated": true,
+        "warrantyApproved": true,
+        "warrantyRejected": true,
+        "claimSubmitted": true,
+        "claimStatusChanged": true,
+        "dailyDigest": false,
+        "weeklyReport": false
+      },
+      "onboarding": {
+        "showWelcomeTour": true,
+        "showContextualHelp": true,
+        "showTooltips": true,
+        "requiredTours": [
+          "warranty-creation-basic",
+          "claim-submission",
+          "customer-management"
+        ],
+        "optionalTours": [
+          "inventory-search",
+          "reports-viewing"
+        ]
+      }
+    },
+    "operator": {
+      "displayName": {
+        "en": "Operator",
+        "fr": "Opérateur"
+      },
+      "description": {
+        "en": "Operations team managing warranties and processing claims",
+        "fr": "Équipe opérationnelle gérant les garanties et traitant les réclamations"
+      },
+      "permissions": {
+        "warranties": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false,
+          "viewAll": true
+        },
+        "claims": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false,
+          "approve": true
+        },
+        "customers": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false
+        },
+        "inventory": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": false
+        },
+        "settings": {
+          "viewCompany": true,
+          "editCompany": false,
+          "viewPricing": true,
+          "editPricing": false,
+          "manageUsers": false
+        },
+        "reports": {
+          "viewOwn": true,
+          "viewTeam": true,
+          "viewAll": false,
+          "export": true
+        }
+      },
+      "uiFeatures": {
+        "showAdvancedPricing": true,
+        "showInternalNotes": true,
+        "showSystemLogs": false,
+        "showAuditTrail": true,
+        "canEditPlans": true,
+        "canOverridePrices": true,
+        "canApproveDiscounts": true,
+        "showBulkActions": true,
+        "showAdvancedFilters": true,
+        "showAnalytics": true,
+        "showAPIAccess": false
+      },
+      "dashboardWidgets": [
+        "salesKPI",
+        "claimsSLA",
+        "teamQueue",
+        "inventorySummary",
+        "pendingApprovals",
+        "recentActivity",
+        "performanceMetrics"
+      ],
+      "navigation": {
+        "showDashboard": true,
+        "showWarranties": true,
+        "showClaims": true,
+        "showCustomers": true,
+        "showInventory": true,
+        "showReports": true,
+        "showAnalytics": true,
+        "showSettings": true,
+        "showAdmin": false,
+        "showOrganizations": false
+      },
+      "warrantyForm": {
+        "showBasicInfo": true,
+        "showCustomerInfo": true,
+        "showVehicleInfo": true,
+        "showPricingBasic": true,
+        "showPricingAdvanced": true,
+        "showInternalNotes": true,
+        "showCommissions": true,
+        "showApprovalWorkflow": true,
+        "defaultMode": "advanced",
+        "allowModeSwitch": true
+      },
+      "claimsView": {
+        "showBasicInfo": true,
+        "showStatus": true,
+        "showHistory": true,
+        "showInternalComments": true,
+        "showApprovalChain": true,
+        "showCostBreakdown": true,
+        "layout": "detailed"
+      },
+      "limits": {
+        "maxWarrantyValue": 50000,
+        "maxDiscountPercent": 20,
+        "requiresApprovalAbove": 25000,
+        "dailyWarrantyLimit": null
+      },
+      "notifications": {
+        "warrantyCreated": true,
+        "warrantyApproved": true,
+        "warrantyRejected": true,
+        "claimSubmitted": true,
+        "claimStatusChanged": true,
+        "dailyDigest": true,
+        "weeklyReport": true
+      },
+      "onboarding": {
+        "showWelcomeTour": true,
+        "showContextualHelp": true,
+        "showTooltips": true,
+        "requiredTours": [
+          "warranty-creation-advanced",
+          "claim-processing",
+          "approval-workflow",
+          "bulk-operations"
+        ],
+        "optionalTours": [
+          "analytics-dashboard",
+          "advanced-search",
+          "reporting-tools"
+        ]
+      }
+    },
+    "support": {
+      "displayName": {
+        "en": "Support",
+        "fr": "Support"
+      },
+      "description": {
+        "en": "Customer support team assisting with issues and inquiries",
+        "fr": "Équipe de support client aidant avec les problèmes et demandes"
+      },
+      "permissions": {
+        "warranties": {
+          "create": false,
+          "read": true,
+          "update": false,
+          "delete": false,
+          "viewAll": true
+        },
+        "claims": {
+          "create": false,
+          "read": true,
+          "update": true,
+          "delete": false,
+          "approve": false
+        },
+        "customers": {
+          "create": false,
+          "read": true,
+          "update": true,
+          "delete": false
+        },
+        "inventory": {
+          "create": false,
+          "read": true,
+          "update": false,
+          "delete": false
+        },
+        "settings": {
+          "viewCompany": false,
+          "editCompany": false,
+          "viewPricing": false,
+          "editPricing": false,
+          "manageUsers": false
+        },
+        "reports": {
+          "viewOwn": true,
+          "viewTeam": false,
+          "viewAll": false,
+          "export": false
+        }
+      },
+      "uiFeatures": {
+        "showAdvancedPricing": false,
+        "showInternalNotes": true,
+        "showSystemLogs": false,
+        "showAuditTrail": false,
+        "canEditPlans": false,
+        "canOverridePrices": false,
+        "canApproveDiscounts": false,
+        "showBulkActions": false,
+        "showAdvancedFilters": true,
+        "showAnalytics": false,
+        "showAPIAccess": false
+      },
+      "dashboardWidgets": [
+        "supportQueue",
+        "recentClaims",
+        "customerInquiries",
+        "responseMetrics",
+        "knowledgeBase"
+      ],
+      "navigation": {
+        "showDashboard": true,
+        "showWarranties": true,
+        "showClaims": true,
+        "showCustomers": true,
+        "showInventory": false,
+        "showReports": false,
+        "showAnalytics": false,
+        "showSettings": false,
+        "showAdmin": false,
+        "showOrganizations": false
+      },
+      "warrantyForm": {
+        "showBasicInfo": true,
+        "showCustomerInfo": true,
+        "showVehicleInfo": true,
+        "showPricingBasic": false,
+        "showPricingAdvanced": false,
+        "showInternalNotes": true,
+        "showCommissions": false,
+        "showApprovalWorkflow": false,
+        "defaultMode": "readonly",
+        "allowModeSwitch": false
+      },
+      "claimsView": {
+        "showBasicInfo": true,
+        "showStatus": true,
+        "showHistory": true,
+        "showInternalComments": true,
+        "showApprovalChain": false,
+        "showCostBreakdown": false,
+        "layout": "support"
+      },
+      "limits": {
+        "maxWarrantyValue": null,
+        "maxDiscountPercent": null,
+        "requiresApprovalAbove": null,
+        "dailyWarrantyLimit": null
+      },
+      "notifications": {
+        "warrantyCreated": false,
+        "warrantyApproved": false,
+        "warrantyRejected": false,
+        "claimSubmitted": true,
+        "claimStatusChanged": true,
+        "dailyDigest": false,
+        "weeklyReport": false
+      },
+      "onboarding": {
+        "showWelcomeTour": true,
+        "showContextualHelp": true,
+        "showTooltips": true,
+        "requiredTours": [
+          "support-dashboard",
+          "claim-assistance",
+          "customer-communication"
+        ],
+        "optionalTours": [
+          "knowledge-base",
+          "escalation-process"
+        ]
+      }
+    },
+    "admin": {
+      "displayName": {
+        "en": "Administrator",
+        "fr": "Administrateur"
+      },
+      "description": {
+        "en": "System administrators with full access to configuration and management",
+        "fr": "Administrateurs système avec accès complet à la configuration et gestion"
+      },
+      "permissions": {
+        "warranties": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": true,
+          "viewAll": true
+        },
+        "claims": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": true,
+          "approve": true
+        },
+        "customers": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": true
+        },
+        "inventory": {
+          "create": true,
+          "read": true,
+          "update": true,
+          "delete": true
+        },
+        "settings": {
+          "viewCompany": true,
+          "editCompany": true,
+          "viewPricing": true,
+          "editPricing": true,
+          "manageUsers": true
+        },
+        "reports": {
+          "viewOwn": true,
+          "viewTeam": true,
+          "viewAll": true,
+          "export": true
+        }
+      },
+      "uiFeatures": {
+        "showAdvancedPricing": true,
+        "showInternalNotes": true,
+        "showSystemLogs": true,
+        "showAuditTrail": true,
+        "canEditPlans": true,
+        "canOverridePrices": true,
+        "canApproveDiscounts": true,
+        "showBulkActions": true,
+        "showAdvancedFilters": true,
+        "showAnalytics": true,
+        "showAPIAccess": true
+      },
+      "dashboardWidgets": [
+        "systemHealth",
+        "userActivity",
+        "salesKPI",
+        "claimsSLA",
+        "financialSummary",
+        "performanceMetrics",
+        "alertsMonitoring"
+      ],
+      "navigation": {
+        "showDashboard": true,
+        "showWarranties": true,
+        "showClaims": true,
+        "showCustomers": true,
+        "showInventory": true,
+        "showReports": true,
+        "showAnalytics": true,
+        "showSettings": true,
+        "showAdmin": true,
+        "showOrganizations": true
+      },
+      "warrantyForm": {
+        "showBasicInfo": true,
+        "showCustomerInfo": true,
+        "showVehicleInfo": true,
+        "showPricingBasic": true,
+        "showPricingAdvanced": true,
+        "showInternalNotes": true,
+        "showCommissions": true,
+        "showApprovalWorkflow": true,
+        "defaultMode": "advanced",
+        "allowModeSwitch": true
+      },
+      "claimsView": {
+        "showBasicInfo": true,
+        "showStatus": true,
+        "showHistory": true,
+        "showInternalComments": true,
+        "showApprovalChain": true,
+        "showCostBreakdown": true,
+        "layout": "admin"
+      },
+      "limits": {
+        "maxWarrantyValue": null,
+        "maxDiscountPercent": null,
+        "requiresApprovalAbove": null,
+        "dailyWarrantyLimit": null
+      },
+      "notifications": {
+        "warrantyCreated": true,
+        "warrantyApproved": true,
+        "warrantyRejected": true,
+        "claimSubmitted": true,
+        "claimStatusChanged": true,
+        "dailyDigest": true,
+        "weeklyReport": true
+      },
+      "onboarding": {
+        "showWelcomeTour": true,
+        "showContextualHelp": true,
+        "showTooltips": true,
+        "requiredTours": [
+          "admin-overview",
+          "user-management",
+          "system-configuration",
+          "security-settings"
+        ],
+        "optionalTours": [
+          "api-integration",
+          "advanced-reporting",
+          "audit-logs"
+        ]
+      }
+    }
+  },
+  "featureFlags": {
+    "enableRoleBasedUI": true,
+    "enableProgressiveDisclosure": true,
+    "enableInAppTours": true,
+    "enableContextualHelp": true,
+    "enableAnalytics": true,
+    "allowRoleOverrides": false
+  },
+  "progressiveDisclosure": {
+    "warrantyForm": {
+      "initialSections": ["basic", "customer", "vehicle", "pricing"],
+      "collapsedSections": ["advanced", "internal", "commissions"],
+      "expandLabel": {
+        "en": "Show advanced options",
+        "fr": "Afficher les options avancées"
+      },
+      "collapseLabel": {
+        "en": "Hide advanced options",
+        "fr": "Masquer les options avancées"
+      },
+      "confirmExpand": {
+        "enabled": true,
+        "message": {
+          "en": "Advanced options are intended for experienced users. Continue?",
+          "fr": "Les options avancées sont destinées aux utilisateurs expérimentés. Continuer?"
+        }
+      }
+    },
+    "dashboard": {
+      "defaultWidgetsCount": 4,
+      "maxWidgetsCount": 8,
+      "customizeLabel": {
+        "en": "Customize dashboard",
+        "fr": "Personnaliser le tableau de bord"
+      }
+    },
+    "filters": {
+      "basicFilters": ["status", "dateRange", "customer"],
+      "advancedFilters": ["tags", "customFields", "complexQueries"],
+      "expandLabel": {
+        "en": "More filters",
+        "fr": "Plus de filtres"
+      }
+    }
+  },
+  "analytics": {
+    "trackRoleUsage": true,
+    "trackFeatureAdoption": true,
+    "trackTimeToComplete": true,
+    "trackErrorRates": true,
+    "events": {
+      "roleLoaded": "personalization:role_loaded",
+      "featureAccessed": "personalization:feature_accessed",
+      "advancedOptionsExpanded": "personalization:advanced_expanded",
+      "tourStarted": "onboarding:tour_started",
+      "tourCompleted": "onboarding:tour_completed",
+      "tourSkipped": "onboarding:tour_skipped",
+      "helpAccessed": "help:contextual_accessed"
+    }
+  }
+}

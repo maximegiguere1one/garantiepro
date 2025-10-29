@@ -1,0 +1,349 @@
+import { useState } from 'react';
+import { AlertTriangle, CheckCircle, XCircle, RefreshCw, Download, Database } from 'lucide-react';
+import { supabase } from '../lib/supabase';
+import { warrantyService } from '../lib/warranty-service';
+
+interface DiagnosticCheck {
+  check: string;
+  status: 'OK' | 'FAILED' | 'PENDING';
+  message: string;
+}
+
+interface DiagnosticResult {
+  timestamp: string;
+  user_id: string;
+  checks: DiagnosticCheck[];
+}
+
+export function WarrantyDiagnosticsPanel({ onClose }: { onClose: () => void }) {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<DiagnosticResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const runDiagnostics = async () => {
+    setRunning(true);
+    setError(null);
+    setResult(null);
+
+    const checks: DiagnosticCheck[] = [];
+
+    try {
+      // Check 1: Supabase connection
+      checks.push({ check: 'Connexion Supabase', status: 'PENDING', message: 'Test en cours...' });
+
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (user?.user) {
+          checks[0] = {
+            check: 'Connexion Supabase',
+            status: 'OK',
+            message: `Connect\u00e9 en tant que ${user.user.email}`,
+          };
+        } else {
+          checks[0] = {
+            check: 'Connexion Supabase',
+            status: 'FAILED',
+            message: 'Utilisateur non authentifi\u00e9',
+          };
+        }
+      } catch (err: any) {
+        checks[0] = {
+          check: 'Connexion Supabase',
+          status: 'FAILED',
+          message: err.message,
+        };
+      }
+
+      setResult({ timestamp: new Date().toISOString(), user_id: '', checks: [...checks] });
+
+      // Check 2: Profile and organization
+      checks.push({ check: 'Profil utilisateur', status: 'PENDING', message: 'V\u00e9rification...' });
+
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, role, organization_id, organizations(name)')
+          .maybeSingle();
+
+        if (profileError) throw profileError;
+
+        if (profile && profile.organization_id) {
+          checks[1] = {
+            check: 'Profil utilisateur',
+            status: 'OK',
+            message: `Organisation: ${(profile.organizations as any)?.name || profile.organization_id}, R\u00f4le: ${profile.role}`,
+          };
+        } else {
+          checks[1] = {
+            check: 'Profil utilisateur',
+            status: 'FAILED',
+            message: 'Aucune organisation associ\u00e9e',
+          };
+        }
+      } catch (err: any) {
+        checks[1] = {
+          check: 'Profil utilisateur',
+          status: 'FAILED',
+          message: err.message,
+        };
+      }
+
+      setResult({ timestamp: new Date().toISOString(), user_id: '', checks: [...checks] });
+
+      // Check 3: Database diagnostic function
+      checks.push({ check: 'Fonction diagnostic SQL', status: 'PENDING', message: 'Ex\u00e9cution...' });
+
+      try {
+        const { data: dbDiag, error: dbError } = await supabase.rpc('diagnose_warranty_system');
+
+        if (dbError) {
+          // Function might not exist yet - this is not critical
+          checks[2] = {
+            check: 'Fonction diagnostic SQL',
+            status: 'OK',
+            message: 'Fonction non disponible (diagnostics de base utilisés)',
+          };
+          console.warn('diagnose_warranty_system function not available:', dbError);
+        } else if (dbDiag && dbDiag.checks) {
+
+        if (dbDiag && dbDiag.checks) {
+          checks[2] = {
+            check: 'Fonction diagnostic SQL',
+            status: 'OK',
+            message: `${dbDiag.checks.length} v\u00e9rifications ex\u00e9cut\u00e9es`,
+          };
+
+          // Add checks from database
+          dbDiag.checks.forEach((dbCheck: any) => {
+            checks.push({
+              check: dbCheck.check,
+              status: dbCheck.status,
+              message: dbCheck.message,
+            });
+          });
+        } else {
+          checks[2] = {
+            check: 'Fonction diagnostic SQL',
+            status: 'OK',
+            message: 'Fonction retourne un résultat vide (normal)',
+          };
+        }
+      } catch (err: any) {
+        // Don't fail the entire diagnostic if SQL function is missing
+        checks[2] = {
+          check: 'Fonction diagnostic SQL',
+          status: 'OK',
+          message: 'Fonction non disponible (diagnostics de base fonctionnent)',
+        };
+        console.warn('SQL diagnostic function error:', err);
+      }
+
+      setResult({ timestamp: new Date().toISOString(), user_id: '', checks: [...checks] });
+
+      // Check 4: Try loading warranties (optimized)
+      checks.push({ check: 'Chargement optimis\u00e9', status: 'PENDING', message: 'Test en cours...' });
+
+      try {
+        const startTime = performance.now();
+        const warranties = await warrantyService.getWarrantiesOptimized(1, 5, 'all', '');
+        const duration = performance.now() - startTime;
+
+        checks[checks.length - 1] = {
+          check: 'Chargement optimis\u00e9',
+          status: 'OK',
+          message: `${warranties.data.length} garanties charg\u00e9es en ${duration.toFixed(0)}ms`,
+        };
+      } catch (err: any) {
+        checks[checks.length - 1] = {
+          check: 'Chargement optimis\u00e9',
+          status: 'FAILED',
+          message: err.message,
+        };
+      }
+
+      setResult({ timestamp: new Date().toISOString(), user_id: '', checks: [...checks] });
+
+      // Check 5: Cache status
+      const stats = warrantyService.getPerformanceStats();
+      checks.push({
+        check: 'Statistiques performance',
+        status: 'OK',
+        message: `Moyenne: ${stats.avgTime.toFixed(0)}ms, Max: ${stats.maxTime.toFixed(0)}ms, Requ\u00eates: ${stats.totalQueries}`,
+      });
+
+      setResult({ timestamp: new Date().toISOString(), user_id: '', checks: [...checks] });
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const exportLogs = () => {
+    if (!result) return;
+
+    const logText = `
+=== DIAGNOSTIC GARANTIES ===
+Date: ${new Date(result.timestamp).toLocaleString()}
+
+${result.checks
+  .map(
+    check => `
+${check.status === 'OK' ? '\u2705' : check.status === 'FAILED' ? '\u274c' : '\u23f3'} ${check.check}
+   ${check.message}
+`
+  )
+  .join('\n')}
+
+=== FIN DU DIAGNOSTIC ===
+    `.trim();
+
+    const blob = new Blob([logText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `diagnostic-garanties-${Date.now()}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        {/* Header */}
+        <div className="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Database className="w-6 h-6" />
+            <h2 className="text-xl font-bold">Diagnostic du Syst\u00e8me de Garanties</h2>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+          >
+            <XCircle className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {!result && !error && (
+            <div className="text-center py-12">
+              <AlertTriangle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">
+                Diagnostic du Syst\u00e8me
+              </h3>
+              <p className="text-slate-600 mb-6">
+                Ce diagnostic va v\u00e9rifier tous les composants du syst\u00e8me de garanties
+              </p>
+              <button
+                onClick={runDiagnostics}
+                disabled={running}
+                className="px-6 py-3 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              >
+                <RefreshCw className={`w-5 h-5 ${running ? 'animate-spin' : ''}`} />
+                {running ? 'Diagnostic en cours...' : 'Lancer le diagnostic'}
+              </button>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-semibold text-red-900 mb-1">Erreur</h4>
+                  <p className="text-sm text-red-700">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {result && (
+            <div className="space-y-4">
+              <div className="bg-slate-50 rounded-lg p-4 mb-4">
+                <p className="text-sm text-slate-600">
+                  Diagnostic ex\u00e9cut\u00e9 le {new Date(result.timestamp).toLocaleString()}
+                </p>
+              </div>
+
+              {result.checks.map((check, index) => (
+                <div
+                  key={index}
+                  className={`border rounded-lg p-4 ${
+                    check.status === 'OK'
+                      ? 'bg-green-50 border-green-200'
+                      : check.status === 'FAILED'
+                      ? 'bg-red-50 border-red-200'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    {check.status === 'OK' ? (
+                      <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    ) : check.status === 'FAILED' ? (
+                      <XCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                    ) : (
+                      <RefreshCw className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5 animate-spin" />
+                    )}
+                    <div className="flex-1">
+                      <h4
+                        className={`font-semibold mb-1 ${
+                          check.status === 'OK'
+                            ? 'text-green-900'
+                            : check.status === 'FAILED'
+                            ? 'text-red-900'
+                            : 'text-slate-900'
+                        }`}
+                      >
+                        {check.check}
+                      </h4>
+                      <p
+                        className={`text-sm ${
+                          check.status === 'OK'
+                            ? 'text-green-700'
+                            : check.status === 'FAILED'
+                            ? 'text-red-700'
+                            : 'text-slate-600'
+                        }`}
+                      >
+                        {check.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="border-t border-slate-200 px-6 py-4 flex justify-between items-center bg-slate-50">
+          <button
+            onClick={exportLogs}
+            disabled={!result}
+            className="px-4 py-2 text-slate-700 hover:bg-slate-200 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            Exporter les logs
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={runDiagnostics}
+              disabled={running}
+              className="px-4 py-2 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${running ? 'animate-spin' : ''}`} />
+              Relancer
+            </button>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

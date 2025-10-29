@@ -1,0 +1,56 @@
+{
+  "name": "Warranty Management System",
+  "short_name": "Warranty Pro",
+  "description": "Professional warranty and claims management platform with real-time notifications",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1e293b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "prefer_related_applications": false,
+  "scope": "/",
+  "shortcuts": [
+    {
+      "name": "New Warranty",
+      "short_name": "New",
+      "description": "Create a new warranty",
+      "url": "/?page=new-warranty",
+      "icons": [
+        {
+          "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Claims Center",
+      "short_name": "Claims",
+      "description": "View and manage claims",
+      "url": "/?page=claims",
+      "icons": [
+        {
+          "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+          "sizes": "512x512",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "screenshots": [],
+  "related_applications": [],
+  "permissions": [
+    "notifications",
+    "push"
+  ],
+  "gcm_sender_id": "103953800507"
+}

@@ -1,0 +1,358 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-10-26",
+  "language": {
+    "primary": "fr",
+    "supported": ["fr", "en"]
+  },
+  "index": [
+    {
+      "id": "q1",
+      "question_fr": "Comment créer mon compte",
+      "question_en": "How to create my account",
+      "keywords_fr": ["compte", "créer", "inscription", "invitation", "email"],
+      "keywords_en": ["account", "create", "signup", "invitation", "email"],
+      "document": "faq.md",
+      "anchor": "#q1-comment-créer-mon-compte-pro-remorque",
+      "category": "compte",
+      "relevance": 10
+    },
+    {
+      "id": "q2",
+      "question_fr": "Mot de passe oublié",
+      "question_en": "Forgot password",
+      "keywords_fr": ["mot de passe", "oublié", "réinitialiser", "reset"],
+      "keywords_en": ["password", "forgot", "reset", "recover"],
+      "document": "faq.md",
+      "anchor": "#q2-jai-oublié-mon-mot-de-passe-comment-le-réinitialiser",
+      "category": "compte",
+      "relevance": 9
+    },
+    {
+      "id": "warranty-creation",
+      "question_fr": "Créer une garantie",
+      "question_en": "Create a warranty",
+      "keywords_fr": ["garantie", "créer", "nouvelle", "contrat", "formulaire"],
+      "keywords_en": ["warranty", "create", "new", "contract", "form"],
+      "document": "user-manual/fr/01-creer-garantie.md",
+      "anchor": "#",
+      "category": "garanties",
+      "relevance": 10
+    },
+    {
+      "id": "q9",
+      "question_fr": "Combien de temps pour créer garantie",
+      "question_en": "How long to create warranty",
+      "keywords_fr": ["temps", "durée", "créer", "garantie", "minutes"],
+      "keywords_en": ["time", "duration", "create", "warranty", "minutes"],
+      "document": "faq.md",
+      "anchor": "#q9-combien-de-temps-faut-il-pour-créer-une-garantie",
+      "category": "garanties",
+      "relevance": 8
+    },
+    {
+      "id": "q10",
+      "question_fr": "VIN obligatoire",
+      "question_en": "VIN required",
+      "keywords_fr": ["vin", "obligatoire", "numéro", "identification", "17 caractères"],
+      "keywords_en": ["vin", "required", "mandatory", "number", "17 characters"],
+      "document": "faq.md",
+      "anchor": "#q10-le-vin-est-il-obligatoire",
+      "category": "garanties",
+      "relevance": 9
+    },
+    {
+      "id": "q11",
+      "question_fr": "Plans de garantie disponibles",
+      "question_en": "Available warranty plans",
+      "keywords_fr": ["plans", "garantie", "durée", "12 mois", "24 mois", "36 mois", "prix"],
+      "keywords_en": ["plans", "warranty", "duration", "12 months", "24 months", "36 months", "price"],
+      "document": "faq.md",
+      "anchor": "#q11-quels-plans-de-garantie-sont-disponibles",
+      "category": "garanties",
+      "relevance": 10
+    },
+    {
+      "id": "q12",
+      "question_fr": "Calcul des taxes",
+      "question_en": "Tax calculation",
+      "keywords_fr": ["taxes", "calcul", "province", "tps", "tvq", "hst", "pourcentage"],
+      "keywords_en": ["taxes", "calculation", "province", "gst", "qst", "hst", "percentage"],
+      "document": "faq.md",
+      "anchor": "#q12-comment-sont-calculées-les-taxes",
+      "category": "garanties",
+      "relevance": 8
+    },
+    {
+      "id": "claim-process",
+      "question_fr": "Traiter une réclamation",
+      "question_en": "Process a claim",
+      "keywords_fr": ["réclamation", "traiter", "soumettre", "photos", "claim"],
+      "keywords_en": ["claim", "process", "submit", "photos", "file"],
+      "document": "user-manual/fr/02-traiter-reclamation.md",
+      "anchor": "#",
+      "category": "reclamations",
+      "relevance": 10
+    },
+    {
+      "id": "q21",
+      "question_fr": "Soumettre réclamation",
+      "question_en": "Submit claim",
+      "keywords_fr": ["soumettre", "réclamation", "nouvelle", "formulaire"],
+      "keywords_en": ["submit", "claim", "new", "form"],
+      "document": "faq.md",
+      "anchor": "#q21-comment-soumettre-une-réclamation",
+      "category": "reclamations",
+      "relevance": 10
+    },
+    {
+      "id": "q22",
+      "question_fr": "Photos réclamation",
+      "question_en": "Claim photos",
+      "keywords_fr": ["photos", "combien", "minimum", "maximum", "taille", "format"],
+      "keywords_en": ["photos", "how many", "minimum", "maximum", "size", "format"],
+      "document": "faq.md",
+      "anchor": "#q22-combien-de-photos-dois-je-fournir",
+      "category": "reclamations",
+      "relevance": 9
+    },
+    {
+      "id": "q23",
+      "question_fr": "Statuts réclamation",
+      "question_en": "Claim statuses",
+      "keywords_fr": ["statuts", "réclamation", "en attente", "révision", "approuvée", "refusée"],
+      "keywords_en": ["statuses", "claim", "pending", "review", "approved", "denied"],
+      "document": "faq.md",
+      "anchor": "#q23-quels-sont-les-statuts-dune-réclamation",
+      "category": "reclamations",
+      "relevance": 8
+    },
+    {
+      "id": "q24",
+      "question_fr": "Délai traitement réclamation",
+      "question_en": "Claim processing time",
+      "keywords_fr": ["temps", "délai", "traitement", "réclamation", "jours"],
+      "keywords_en": ["time", "delay", "processing", "claim", "days"],
+      "document": "faq.md",
+      "anchor": "#q24-combien-de-temps-pour-traiter-une-réclamation",
+      "category": "reclamations",
+      "relevance": 9
+    },
+    {
+      "id": "signature-electronic",
+      "question_fr": "Signature électronique",
+      "question_en": "Electronic signature",
+      "keywords_fr": ["signature", "électronique", "légale", "ip", "timestamp", "certificat"],
+      "keywords_en": ["signature", "electronic", "legal", "ip", "timestamp", "certificate"],
+      "document": "user-manual/fr/03-signature-electronique.md",
+      "anchor": "#",
+      "category": "signature",
+      "relevance": 10
+    },
+    {
+      "id": "q31",
+      "question_fr": "Signature légale",
+      "question_en": "Legal signature",
+      "keywords_fr": ["signature", "légale", "conforme", "lcse", "ueta", "eidas"],
+      "keywords_en": ["signature", "legal", "compliant", "lcse", "ueta", "eidas"],
+      "document": "faq.md",
+      "anchor": "#q31-la-signature-électronique-est-elle-légale",
+      "category": "signature",
+      "relevance": 10
+    },
+    {
+      "id": "q32",
+      "question_fr": "Signature en personne vs distance",
+      "question_en": "In-person vs remote signature",
+      "keywords_fr": ["signature", "en personne", "à distance", "différence", "tablette", "email"],
+      "keywords_en": ["signature", "in person", "remote", "difference", "tablet", "email"],
+      "document": "faq.md",
+      "anchor": "#q32-quelle-est-la-différence-entre-signature-en-personne-et-à-distance",
+      "category": "signature",
+      "relevance": 8
+    },
+    {
+      "id": "q34",
+      "question_fr": "Validité lien signature",
+      "question_en": "Signature link validity",
+      "keywords_fr": ["lien", "signature", "validité", "expiration", "30 jours"],
+      "keywords_en": ["link", "signature", "validity", "expiration", "30 days"],
+      "document": "faq.md",
+      "anchor": "#q34-combien-de-temps-le-lien-de-signature-est-il-valide",
+      "category": "signature",
+      "relevance": 7
+    },
+    {
+      "id": "q42",
+      "question_fr": "Programme fidélité",
+      "question_en": "Loyalty program",
+      "keywords_fr": ["fidélité", "crédit", "2000$", "10 garanties", "programme"],
+      "keywords_en": ["loyalty", "credit", "2000$", "10 warranties", "program"],
+      "document": "faq.md",
+      "anchor": "#q42-comment-fonctionne-le-programme-fidélité",
+      "category": "fidelite",
+      "relevance": 9
+    },
+    {
+      "id": "q43",
+      "question_fr": "Expiration crédit",
+      "question_en": "Credit expiration",
+      "keywords_fr": ["crédit", "expiration", "fidélité", "expire"],
+      "keywords_en": ["credit", "expiration", "loyalty", "expires"],
+      "document": "faq.md",
+      "anchor": "#q43-mon-crédit-fidélité-expire-t-il",
+      "category": "fidelite",
+      "relevance": 7
+    },
+    {
+      "id": "q46",
+      "question_fr": "Contacter support",
+      "question_en": "Contact support",
+      "keywords_fr": ["support", "contacter", "aide", "email", "téléphone"],
+      "keywords_en": ["support", "contact", "help", "email", "phone"],
+      "document": "faq.md",
+      "anchor": "#q46-comment-contacter-le-support",
+      "category": "support",
+      "relevance": 10
+    },
+    {
+      "id": "quickstart",
+      "question_fr": "Démarrage rapide",
+      "question_en": "Quick start",
+      "keywords_fr": ["démarrage", "rapide", "guide", "premiers pas", "commencer"],
+      "keywords_en": ["quick", "start", "guide", "first steps", "begin"],
+      "document": "fr/quickstart.md",
+      "anchor": "#",
+      "category": "guide",
+      "relevance": 10
+    },
+    {
+      "id": "q52",
+      "question_fr": "Exporter données",
+      "question_en": "Export data",
+      "keywords_fr": ["exporter", "données", "csv", "backup", "télécharger"],
+      "keywords_en": ["export", "data", "csv", "backup", "download"],
+      "document": "faq.md",
+      "anchor": "#q52-puis-je-exporter-toutes-mes-données",
+      "category": "technique",
+      "relevance": 8
+    },
+    {
+      "id": "video-admin-tour",
+      "question_fr": "Vidéo tour admin",
+      "question_en": "Admin tour video",
+      "keywords_fr": ["vidéo", "tour", "admin", "tutoriel", "dashboard"],
+      "keywords_en": ["video", "tour", "admin", "tutorial", "dashboard"],
+      "document": "videos/01-admin-tour-script-fr.md",
+      "anchor": "#",
+      "category": "videos",
+      "relevance": 7
+    },
+    {
+      "id": "video-claim-process",
+      "question_fr": "Vidéo traiter réclamation",
+      "question_en": "Process claim video",
+      "keywords_fr": ["vidéo", "réclamation", "traiter", "tutoriel"],
+      "keywords_en": ["video", "claim", "process", "tutorial"],
+      "document": "videos/02-process-claim-script-fr.md",
+      "anchor": "#",
+      "category": "videos",
+      "relevance": 7
+    },
+    {
+      "id": "video-signature",
+      "question_fr": "Vidéo signature contrat",
+      "question_en": "Contract signature video",
+      "keywords_fr": ["vidéo", "signature", "contrat", "signer", "tutoriel"],
+      "keywords_en": ["video", "signature", "contract", "sign", "tutorial"],
+      "document": "videos/03-sign-download-contract-script-fr.md",
+      "anchor": "#",
+      "category": "videos",
+      "relevance": 7
+    }
+  ],
+  "categories": [
+    {
+      "id": "compte",
+      "label_fr": "Compte et Accès",
+      "label_en": "Account and Access",
+      "icon": "user"
+    },
+    {
+      "id": "garanties",
+      "label_fr": "Garanties",
+      "label_en": "Warranties",
+      "icon": "shield"
+    },
+    {
+      "id": "reclamations",
+      "label_fr": "Réclamations",
+      "label_en": "Claims",
+      "icon": "alert-circle"
+    },
+    {
+      "id": "signature",
+      "label_fr": "Signature électronique",
+      "label_en": "Electronic Signature",
+      "icon": "pen-tool"
+    },
+    {
+      "id": "paiements",
+      "label_fr": "Paiements et Facturation",
+      "label_en": "Payments and Billing",
+      "icon": "credit-card"
+    },
+    {
+      "id": "fidelite",
+      "label_fr": "Programme Fidélité",
+      "label_en": "Loyalty Program",
+      "icon": "gift"
+    },
+    {
+      "id": "support",
+      "label_fr": "Support Technique",
+      "label_en": "Technical Support",
+      "icon": "help-circle"
+    },
+    {
+      "id": "guide",
+      "label_fr": "Guides",
+      "label_en": "Guides",
+      "icon": "book"
+    },
+    {
+      "id": "videos",
+      "label_fr": "Vidéos",
+      "label_en": "Videos",
+      "icon": "video"
+    }
+  ],
+  "synonyms": {
+    "fr": {
+      "garantie": ["warranty", "contrat", "couverture", "protection"],
+      "réclamation": ["claim", "demande", "sinistre"],
+      "signature": ["signer", "signé", "validation"],
+      "crédit": ["fidélité", "récompense", "bonus"],
+      "support": ["aide", "assistance", "help", "soutien"]
+    },
+    "en": {
+      "warranty": ["guarantee", "contract", "coverage", "protection"],
+      "claim": ["request", "submission", "report"],
+      "signature": ["sign", "signed", "validation"],
+      "credit": ["loyalty", "reward", "bonus"],
+      "support": ["help", "assistance", "aid"]
+    }
+  },
+  "searchConfig": {
+    "fuzzyMatch": true,
+    "minCharacters": 3,
+    "maxResults": 10,
+    "highlightMatches": true,
+    "searchFields": ["question_fr", "question_en", "keywords_fr", "keywords_en"],
+    "boostFields": {
+      "question": 2.0,
+      "keywords": 1.5,
+      "category": 1.0
+    }
+  }
+}

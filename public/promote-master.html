@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promotion Master - Maxime</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      padding: 40px 30px;
+      text-align: center;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 16px;
+      opacity: 0.9;
+    }
+
+    .content {
+      padding: 40px 30px;
+    }
+
+    .info-box {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-left: 4px solid #f59e0b;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+
+    .info-box p {
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .info-box strong {
+      color: #78350f;
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .user-info {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      border: 2px solid #e2e8f0;
+    }
+
+    .user-info label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .user-info .value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1e293b;
+    }
+
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+      color: white;
+      border: none;
+      padding: 18px;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 25px rgba(220, 38, 38, 0.3);
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(220, 38, 38, 0.4);
+    }
+
+    button:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 12px;
+      font-size: 15px;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .result.success {
+      background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+      border-left: 4px solid #10b981;
+      color: #065f46;
+      display: block;
+    }
+
+    .result.error {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      border-left: 4px solid #ef4444;
+      color: #991b1b;
+      display: block;
+    }
+
+    .result strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .result pre {
+      background: rgba(0, 0, 0, 0.05);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      margin-top: 12px;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #78350f;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 2px solid #f59e0b;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>👑 Promotion Master</h1>
+      <p>Outil de configuration système</p>
+    </div>
+
+    <div class="content">
+      <div class="info-box">
+        <strong>⚠️ Action Système Critique</strong>
+        <p>Cette page va promouvoir l'utilisateur au rôle <strong>Master</strong>, le niveau le plus élevé du système avec accès complet.</p>
+      </div>
+
+      <div class="user-info">
+        <label>Email de l'utilisateur</label>
+        <div class="value">maxime@giguere-influence.com</div>
+        <span class="badge">→ Rôle Master</span>
+      </div>
+
+      <button id="promoteBtn" onclick="promoteToMaster()">
+        Promouvoir au rôle Master
+      </button>
+
+      <div id="result" class="result"></div>
+    </div>
+  </div>
+
+  <script>
+    async function promoteToMaster() {
+      const button = document.getElementById('promoteBtn');
+      const result = document.getElementById('result');
+
+      // Reset
+      result.className = 'result';
+      result.style.display = 'none';
+
+      // Disable button and show loading
+      button.disabled = true;
+      button.innerHTML = '<span class="spinner"></span> Promotion en cours...';
+
+      try {
+        console.log('🚀 Starting promotion process...');
+
+        // Use Supabase URL directly
+        const functionUrl = 'https://zbnktduicggfvvpbqsbo.supabase.co/functions/v1/create-admin-maxime';
+
+        console.log('Function URL:', functionUrl);
+
+        // Call the Edge Function
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        console.log('Response status:', response.status);
+
+        const data = await response.json();
+        console.log('Response data:', data);
+
+        if (data.success) {
+          result.className = 'result success';
+          result.innerHTML = `
+            <strong>✅ Succès!</strong>
+            <p>${data.message}</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+            <p style="margin-top: 16px;">
+              <strong>Prochaines étapes:</strong><br>
+              1. Fermez cet onglet<br>
+              2. Déconnectez-vous de l'application<br>
+              3. Reconnectez-vous avec: ${data.email}<br>
+              4. Vous êtes maintenant Master! 👑
+            </p>
+          `;
+
+          // Keep button disabled
+          button.innerHTML = '✅ Promotion réussie';
+          button.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        } else {
+          // Show available users if provided
+          let availableUsers = '';
+          if (data.available_users && data.available_users.length > 0) {
+            availableUsers = `
+              <p style="margin-top: 12px;"><strong>Utilisateurs disponibles:</strong></p>
+              <pre>${JSON.stringify(data.available_users, null, 2)}</pre>
+            `;
+          }
+
+          throw new Error(data.error || 'Unknown error');
+        }
+      } catch (error) {
+        console.error('❌ Error:', error);
+        result.className = 'result error';
+        result.innerHTML = `
+          <strong>❌ Erreur</strong>
+          <p>${error.message}</p>
+          <p style="margin-top: 12px;">
+            <strong>Vérifiez que:</strong><br>
+            • L'utilisateur maxime@giguere-influence.com existe<br>
+            • Le compte a été connecté au moins une fois<br>
+            • Consultez la console (F12) pour plus de détails
+          </p>
+        `;
+
+        // Re-enable button
+        button.disabled = false;
+        button.innerHTML = 'Réessayer';
+      }
+    }
+
+    // Show ready state
+    console.log('🚀 Page prête - Cliquez sur le bouton pour promouvoir Maxime au rôle Master');
+    console.log('📍 URL actuelle:', window.location.href);
+  </script>
+</body>
+</html>

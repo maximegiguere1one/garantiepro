@@ -1,0 +1,216 @@
+/* Custom styling for Shepherd.js product tours */
+
+.shepherd-theme-custom {
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+}
+
+.shepherd-element {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  max-width: 400px;
+  z-index: 9999;
+  padding: 0;
+}
+
+.shepherd-header {
+  padding: 1.5rem 1.5rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.shepherd-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.shepherd-text {
+  padding: 1rem 1.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.shepherd-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.shepherd-button {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.875rem;
+  min-height: 36px;
+}
+
+.shepherd-button-primary {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+}
+
+.shepherd-button-primary:hover {
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
+  transform: translateY(-1px);
+}
+
+.shepherd-button-primary:active {
+  transform: translateY(0);
+}
+
+.shepherd-button-secondary {
+  background: white;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.shepherd-button-secondary:hover {
+  background: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.shepherd-cancel-icon {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.shepherd-cancel-icon:hover {
+  color: #111827;
+}
+
+.shepherd-modal-overlay-container {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(2px);
+}
+
+.shepherd-target-highlight {
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+  }
+}
+
+.shepherd-element.shepherd-has-title .shepherd-content .shepherd-header {
+  background: linear-gradient(to bottom, #fef2f2, white);
+  border-bottom: 2px solid #dc2626;
+}
+
+.shepherd-arrow {
+  border-width: 16px;
+}
+
+.shepherd-arrow::before {
+  border-width: 16px;
+}
+
+.shepherd-element[data-popper-placement^='top'] > .shepherd-arrow {
+  bottom: -16px;
+}
+
+.shepherd-element[data-popper-placement^='bottom'] > .shepherd-arrow {
+  top: -16px;
+}
+
+.shepherd-element[data-popper-placement^='left'] > .shepherd-arrow {
+  right: -16px;
+}
+
+.shepherd-element[data-popper-placement^='right'] > .shepherd-arrow {
+  left: -16px;
+}
+
+/* Step progress indicator */
+.shepherd-text::before {
+  content: attr(data-step-progress);
+  display: block;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* Keyboard focus styles */
+.shepherd-button:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* Mobile responsive */
+@media (max-width: 640px) {
+  .shepherd-element {
+    max-width: calc(100vw - 2rem);
+    margin: 1rem;
+  }
+
+  .shepherd-text {
+    font-size: 0.8125rem;
+  }
+
+  .shepherd-button {
+    padding: 0.625rem 1rem;
+    min-width: 80px;
+  }
+}
+
+/* Accessibility improvements */
+.shepherd-element[role='dialog'] {
+  isolation: isolate;
+}
+
+.shepherd-element:focus-within {
+  outline: 2px solid #dc2626;
+  outline-offset: 4px;
+}
+
+/* Loading state */
+.shepherd-element.shepherd-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Completion celebration */
+.shepherd-element.shepherd-complete .shepherd-text {
+  text-align: center;
+  padding: 2rem 1.5rem;
+}
+
+.shepherd-element.shepherd-complete .shepherd-text::before {
+  content: '✅';
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 1rem;
+  animation: celebrate 0.5s ease-out;
+}
+
+@keyframes celebrate {
+  0% {
+    transform: scale(0) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
+}

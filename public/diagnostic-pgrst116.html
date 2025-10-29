@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic PGRST116 - Location Pro Remorque</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        .header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px;
+        }
+        .test-section {
+            background: #f9fafb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border-left: 4px solid #dc2626;
+        }
+        .test-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            margin-top: 12px;
+        }
+        .status.loading {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .log {
+            background: #1f2937;
+            color: #10b981;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 16px;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.6;
+        }
+        .log-error {
+            color: #ef4444;
+        }
+        .log-warning {
+            color: #f59e0b;
+        }
+        .log-info {
+            color: #3b82f6;
+        }
+        .log-success {
+            color: #10b981;
+        }
+        button {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 14px rgba(220, 38, 38, 0.4);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .summary {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            margin-top: 24px;
+        }
+        .summary h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            color: #1f2937;
+        }
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            line-height: 20px;
+            text-align: center;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .result-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .result-card h4 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #1f2937;
+        }
+        .result-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #dc2626;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Diagnostic PGRST116</h1>
+            <p>Outil de détection automatique des erreurs de requêtes Supabase</p>
+        </div>
+
+        <div class="content">
+            <div class="test-section">
+                <h2><span class="icon">⚙️</span> Configuration</h2>
+                <p>Cet outil va tester toutes les tables de paramètres pour identifier les duplicates et les requêtes problématiques.</p>
+                <button id="startBtn" onclick="runDiagnostic()">Lancer le Diagnostic</button>
+            </div>
+
+            <div id="results" style="display: none;">
+                <div class="test-section">
+                    <h2><span class="icon">📊</span> Résultats</h2>
+                    <div id="status"></div>
+                    <div class="log" id="log"></div>
+                </div>
+
+                <div class="summary" id="summary" style="display: none;">
+                    <h3>📋 Résumé des Tests</h3>
+                    <div id="summaryContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = window.location.origin.includes('localhost')
+            ? 'YOUR_SUPABASE_URL'
+            : window.location.origin;
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        let supabase;
+        let logElement;
+        let results = {
+            tested: 0,
+            passed: 0,
+            failed: 0,
+            warnings: 0,
+            duplicates: []
+        };
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const className = `log-${type}`;
+            logElement.innerHTML += `<div class="${className}">[${timestamp}] ${message}</div>`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        function updateStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        async function testTableDuplicates(tableName, column = 'organization_id') {
+            results.tested++;
+            log(`🔍 Test: ${tableName} - Vérification duplicates sur ${column}...`, 'info');
+
+            try {
+                // Test 1: Compter tous les enregistrements
+                const { data: allData, error: countError } = await supabase
+                    .from(tableName)
+                    .select('*', { count: 'exact', head: false });
+
+                if (countError) {
+                    log(`❌ Erreur lecture ${tableName}: ${countError.message}`, 'error');
+                    results.failed++;
+                    return { table: tableName, status: 'error', error: countError.message };
+                }
+
+                const totalCount = allData?.length || 0;
+                log(`   Total enregistrements: ${totalCount}`, 'info');
+
+                if (totalCount === 0) {
+                    log(`⚠️  ${tableName}: Aucune donnée`, 'warning');
+                    results.warnings++;
+                    return { table: tableName, status: 'warning', message: 'Aucune donnée' };
+                }
+
+                // Test 2: Grouper par organization_id et compter
+                const groupedData = {};
+                allData.forEach(row => {
+                    const key = row[column];
+                    if (!groupedData[key]) {
+                        groupedData[key] = [];
+                    }
+                    groupedData[key].push(row);
+                });
+
+                // Test 3: Identifier les duplicates
+                const duplicates = Object.entries(groupedData)
+                    .filter(([key, rows]) => rows.length > 1)
+                    .map(([key, rows]) => ({ [column]: key, count: rows.length }));
+
+                if (duplicates.length > 0) {
+                    log(`🔴 DUPLICATES TROUVÉS dans ${tableName}:`, 'error');
+                    duplicates.forEach(dup => {
+                        log(`   - ${column} = ${dup[column]}: ${dup.count} enregistrements`, 'error');
+                    });
+                    results.failed++;
+                    results.duplicates.push({ table: tableName, duplicates });
+                    return { table: tableName, status: 'duplicates', count: duplicates.length, duplicates };
+                } else {
+                    log(`✅ ${tableName}: Aucun duplicate`, 'success');
+                    results.passed++;
+                    return { table: tableName, status: 'ok', count: totalCount };
+                }
+
+            } catch (error) {
+                log(`❌ Exception ${tableName}: ${error.message}`, 'error');
+                results.failed++;
+                return { table: tableName, status: 'error', error: error.message };
+            }
+        }
+
+        async function testSingleQuery(tableName) {
+            log(`🧪 Test: ${tableName} - Simulation requête .single()...`, 'info');
+
+            try {
+                // Tester avec .single() (devrait échouer si duplicates)
+                const { data, error } = await supabase
+                    .from(tableName)
+                    .select('*')
+                    .limit(1)
+                    .single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        log(`🔴 PGRST116 détecté sur ${tableName}!`, 'error');
+                        return { table: tableName, error: 'PGRST116', status: 'pgrst116' };
+                    } else {
+                        log(`⚠️  Erreur ${tableName}: ${error.message}`, 'warning');
+                        return { table: tableName, error: error.message, status: 'error' };
+                    }
+                }
+
+                log(`✅ ${tableName}: .single() fonctionne`, 'success');
+                return { table: tableName, status: 'ok' };
+
+            } catch (error) {
+                log(`❌ Exception ${tableName}: ${error.message}`, 'error');
+                return { table: tableName, error: error.message, status: 'error' };
+            }
+        }
+
+        async function runDiagnostic() {
+            // Initialisation
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('results').style.display = 'block';
+            logElement = document.getElementById('log');
+            logElement.innerHTML = '';
+            results = { tested: 0, passed: 0, failed: 0, warnings: 0, duplicates: [] };
+
+            updateStatus('Initialisation...', 'loading');
+            log('🚀 Démarrage du diagnostic PGRST116...', 'info');
+            log('', 'info');
+
+            // Initialiser Supabase
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                log('✅ Connexion Supabase établie', 'success');
+            } catch (error) {
+                log(`❌ Erreur connexion Supabase: ${error.message}`, 'error');
+                updateStatus('Erreur de connexion', 'error');
+                return;
+            }
+
+            log('', 'info');
+            log('=' . repeat(60), 'info');
+            log('Phase 1: Vérification des Duplicates', 'info');
+            log('=' . repeat(60), 'info');
+            log('', 'info');
+
+            // Tables à tester
+            const settingsTables = [
+                'company_settings',
+                'pricing_settings',
+                'tax_settings',
+                'claim_settings'
+            ];
+
+            const duplicateResults = [];
+            for (const table of settingsTables) {
+                const result = await testTableDuplicates(table);
+                duplicateResults.push(result);
+                log('', 'info');
+            }
+
+            log('=' . repeat(60), 'info');
+            log('Phase 2: Test Requêtes .single()', 'info');
+            log('=' . repeat(60), 'info');
+            log('', 'info');
+
+            const singleResults = [];
+            for (const table of settingsTables) {
+                const result = await testSingleQuery(table);
+                singleResults.push(result);
+                log('', 'info');
+            }
+
+            // Résumé final
+            log('=' . repeat(60), 'info');
+            log('📊 RÉSUMÉ FINAL', 'info');
+            log('=' . repeat(60), 'info');
+            log(`Tests effectués: ${results.tested}`, 'info');
+            log(`✅ Réussis: ${results.passed}`, 'success');
+            log(`❌ Échoués: ${results.failed}`, results.failed > 0 ? 'error' : 'info');
+            log(`⚠️  Avertissements: ${results.warnings}`, results.warnings > 0 ? 'warning' : 'info');
+            log(`🔴 Tables avec duplicates: ${results.duplicates.length}`, results.duplicates.length > 0 ? 'error' : 'success');
+
+            // Afficher le résumé
+            displaySummary(duplicateResults, singleResults);
+
+            // Status final
+            if (results.failed > 0) {
+                updateStatus('❌ Problèmes détectés - Nettoyage requis', 'error');
+            } else if (results.warnings > 0) {
+                updateStatus('⚠️ Tests complétés avec avertissements', 'warning');
+            } else {
+                updateStatus('✅ Tous les tests sont passés', 'success');
+            }
+
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        function displaySummary(duplicateResults, singleResults) {
+            const summaryDiv = document.getElementById('summary');
+            const contentDiv = document.getElementById('summaryContent');
+
+            let html = '<div class="results-grid">';
+
+            // Résumé duplicates
+            duplicateResults.forEach(result => {
+                const statusClass = result.status === 'ok' ? 'success' :
+                                  result.status === 'duplicates' ? 'error' : 'warning';
+                const icon = result.status === 'ok' ? '✅' :
+                            result.status === 'duplicates' ? '🔴' : '⚠️';
+
+                html += `
+                    <div class="result-card">
+                        <h4>${icon} ${result.table}</h4>
+                        <div class="result-value">
+                            ${result.status === 'duplicates' ? result.count + ' duplicates' :
+                              result.status === 'ok' ? 'OK' : result.status}
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+
+            // Recommandations
+            if (results.duplicates.length > 0) {
+                html += `
+                    <div style="margin-top: 24px; padding: 20px; background: #fef3c7; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                        <h4 style="color: #92400e; margin-bottom: 12px;">⚠️ Action Requise</h4>
+                        <p style="color: #92400e; margin-bottom: 12px;">Des duplicates ont été détectés dans ${results.duplicates.length} table(s).</p>
+                        <p style="color: #92400e;"><strong>Prochaine étape:</strong> Ouvrez <code>FIX_PGRST116_QUICK_START.md</code> et exécutez le script de nettoyage SQL.</p>
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div style="margin-top: 24px; padding: 20px; background: #d1fae5; border-radius: 12px; border-left: 4px solid #10b981;">
+                        <h4 style="color: #065f46; margin-bottom: 12px;">✅ Excellent!</h4>
+                        <p style="color: #065f46;">Aucun duplicate détecté. Si l'erreur PGRST116 persiste, elle vient d'une autre source.</p>
+                    </div>
+                `;
+            }
+
+            contentDiv.innerHTML = html;
+            summaryDiv.style.display = 'block';
+        }
+
+        // Auto-démarrage si params URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('auto') === 'true') {
+                setTimeout(runDiagnostic, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

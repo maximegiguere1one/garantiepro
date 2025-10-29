@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VAPID Key Generator</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 800px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #1e293b;
+      font-size: 32px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .subtitle {
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      width: 100%;
+      margin-bottom: 30px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .output {
+      display: none;
+      background: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .output.show {
+      display: block;
+    }
+
+    .key-section {
+      margin-bottom: 20px;
+    }
+
+    .key-label {
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .key-value {
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 12px;
+      word-break: break-all;
+      color: #334155;
+      max-height: 120px;
+      overflow-y: auto;
+    }
+
+    .copy-btn {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-left: 10px;
+    }
+
+    .copy-btn:hover {
+      background: #2563eb;
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+    }
+
+    .instructions {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+
+    .instructions h3 {
+      color: #92400e;
+      margin-bottom: 12px;
+      font-size: 16px;
+    }
+
+    .instructions ol {
+      margin-left: 20px;
+      color: #78350f;
+    }
+
+    .instructions li {
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    .instructions code {
+      background: #fcd34d;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 13px;
+    }
+
+    .security-warning {
+      background: #fee2e2;
+      border-left: 4px solid #ef4444;
+      padding: 16px;
+      border-radius: 6px;
+      margin-top: 20px;
+    }
+
+    .security-warning h3 {
+      color: #991b1b;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .security-warning ul {
+      margin-left: 20px;
+      color: #7f1d1d;
+      line-height: 1.6;
+    }
+
+    .loader {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .icon {
+      width: 24px;
+      height: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>
+      <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+      </svg>
+      VAPID Key Generator
+    </h1>
+    <p class="subtitle">Generate secure VAPID keys for Web Push Notifications</p>
+
+    <button id="generateBtn" onclick="generateKeys()">
+      Generate VAPID Keys
+    </button>
+
+    <div id="output" class="output">
+      <div class="key-section">
+        <div class="key-label">
+          Public Key (safe to share)
+          <button class="copy-btn" onclick="copyToClipboard('publicKey', this)">Copy</button>
+        </div>
+        <div class="key-value" id="publicKey"></div>
+      </div>
+
+      <div class="key-section">
+        <div class="key-label">
+          Private Key (keep secret!)
+          <button class="copy-btn" onclick="copyToClipboard('privateKey', this)">Copy</button>
+        </div>
+        <div class="key-value" id="privateKey"></div>
+      </div>
+
+      <div class="instructions">
+        <h3>📋 Next Steps</h3>
+        <ol>
+          <li>Copy both keys using the buttons above</li>
+          <li>Add them to your <code>.env</code> file:
+            <pre style="margin-top: 8px; background: #fcd34d; padding: 8px; border-radius: 4px; overflow-x: auto;">
+VITE_VAPID_PUBLIC_KEY=your-public-key-here
+VITE_VAPID_PRIVATE_KEY=your-private-key-here</pre>
+          </li>
+          <li>Configure private key as Supabase secret:
+            <pre style="margin-top: 8px; background: #fcd34d; padding: 8px; border-radius: 4px; overflow-x: auto;">
+supabase secrets set VAPID_PRIVATE_KEY=your-private-key</pre>
+          </li>
+          <li>Restart your development server</li>
+          <li>Test push notifications in your app</li>
+        </ol>
+      </div>
+
+      <div class="security-warning">
+        <h3>⚠️ Security Notes</h3>
+        <ul>
+          <li>Never commit the private key to version control</li>
+          <li>Store the private key securely (environment variables, secrets manager)</li>
+          <li>The public key can be safely shared with clients</li>
+          <li>Generate unique keys for each environment (dev, staging, production)</li>
+          <li>Rotate keys if compromised</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function arrayBufferToBase64Url(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      const base64 = btoa(binary);
+      return base64
+        .replace(/\+/g, '-')
+        .replace(/\//g, '_')
+        .replace(/=+$/, '');
+    }
+
+    async function generateKeys() {
+      const btn = document.getElementById('generateBtn');
+      const output = document.getElementById('output');
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="loader"></span> Generating...';
+
+      try {
+        const keyPair = await crypto.subtle.generateKey(
+          {
+            name: 'ECDSA',
+            namedCurve: 'P-256'
+          },
+          true,
+          ['sign', 'verify']
+        );
+
+        const publicKeyBuffer = await crypto.subtle.exportKey('spki', keyPair.publicKey);
+        const privateKeyBuffer = await crypto.subtle.exportKey('pkcs8', keyPair.privateKey);
+
+        const publicKeyBase64 = arrayBufferToBase64Url(publicKeyBuffer);
+        const privateKeyBase64 = arrayBufferToBase64Url(privateKeyBuffer);
+
+        document.getElementById('publicKey').textContent = publicKeyBase64;
+        document.getElementById('privateKey').textContent = privateKeyBase64;
+
+        output.classList.add('show');
+        btn.innerHTML = '✓ Keys Generated - Generate New Keys';
+        btn.disabled = false;
+
+        console.log('✅ VAPID keys generated successfully!');
+        console.log('Public Key:', publicKeyBase64);
+        console.log('Private Key:', privateKeyBase64);
+      } catch (error) {
+        console.error('Error generating keys:', error);
+        alert('Error generating keys: ' + error.message);
+        btn.innerHTML = 'Generate VAPID Keys';
+        btn.disabled = false;
+      }
+    }
+
+    function copyToClipboard(elementId, button) {
+      const text = document.getElementById(elementId).textContent;
+
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.classList.add('copied');
+
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.classList.remove('copied');
+        }, 2000);
+      }).catch(err => {
+        console.error('Failed to copy:', err);
+        alert('Failed to copy to clipboard');
+      });
+    }
+  </script>
+</body>
+</html>

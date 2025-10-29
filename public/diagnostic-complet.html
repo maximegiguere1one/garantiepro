@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnostic Complet - Système de Réclamations</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #48bb78;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #4299e1;
+        }
+        .test-header {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4299e1;
+        }
+        .test-item {
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 4px;
+            background: #1a202c;
+        }
+        .pending { color: #fbbf24; }
+        .success { color: #48bb78; }
+        .error { color: #f56565; }
+        .code {
+            background: #000;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin: 10px 0;
+            font-size: 12px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #4299e1;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .summary {
+            background: #2d3748;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+            border: 2px solid #48bb78;
+        }
+        .summary h2 {
+            color: #48bb78;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 DIAGNOSTIC COMPLET - Système de Réclamations</h1>
+        <p class="subtitle">Test de tous les composants critiques</p>
+
+        <div id="results"></div>
+
+        <div class="summary" id="summary" style="display: none;">
+            <h2>📊 Résumé</h2>
+            <div id="summaryContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const results = document.getElementById('results');
+        const summary = document.getElementById('summary');
+        const summaryContent = document.getElementById('summaryContent');
+
+        let testsPassed = 0;
+        let testsFailed = 0;
+        let testsTotal = 0;
+
+        function addSection(title) {
+            const section = document.createElement('div');
+            section.className = 'test-section';
+            section.innerHTML = `<div class="test-header">${title}</div>`;
+            results.appendChild(section);
+            return section;
+        }
+
+        function addTest(section, message, status = 'pending') {
+            testsTotal++;
+            const item = document.createElement('div');
+            item.className = 'test-item ' + status;
+
+            let icon = '⏳';
+            if (status === 'success') {
+                icon = '✅';
+                testsPassed++;
+            } else if (status === 'error') {
+                icon = '❌';
+                testsFailed++;
+            }
+
+            item.innerHTML = status === 'pending'
+                ? `<span class="spinner"></span>${message}`
+                : `${icon} ${message}`;
+
+            section.appendChild(item);
+            return item;
+        }
+
+        function addCode(section, code) {
+            const codeBlock = document.createElement('div');
+            codeBlock.className = 'code';
+            codeBlock.textContent = code;
+            section.appendChild(codeBlock);
+        }
+
+        async function runDiagnostics() {
+            // TEST 1: Configuration
+            const section1 = addSection('1️⃣ CONFIGURATION');
+            const test1a = addTest(section1, 'Vérification variables Supabase...');
+
+            const SUPABASE_URL = 'https://lfpdfdugijzewshxwofy.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxmcGRmZHVnaWp6ZXdzaHh3b2Z5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE1Njc3MTIsImV4cCI6MjA3NzE0MzcxMn0.L7AvQrsYzcximQJ2oNyT7K69jIJSWofUnaRwvZkY4a4';
+
+            if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+                test1a.className = 'test-item success';
+                test1a.innerHTML = '✅ Variables Supabase configurées';
+                testsPassed++;
+            } else {
+                test1a.className = 'test-item error';
+                test1a.innerHTML = '❌ Variables Supabase manquantes';
+                testsFailed++;
+                return;
+            }
+
+            addCode(section1, `SUPABASE_URL: ${SUPABASE_URL}\nANON_KEY: ${SUPABASE_ANON_KEY.substring(0, 50)}...`);
+
+            // TEST 2: Connexion Supabase
+            const section2 = addSection('2️⃣ CONNEXION SUPABASE');
+            const test2a = addTest(section2, 'Test connexion API REST...');
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+                    headers: {
+                        'apikey': SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                    }
+                });
+
+                if (response.ok) {
+                    test2a.className = 'test-item success';
+                    test2a.innerHTML = `✅ Connexion Supabase réussie (${response.status})`;
+                    testsPassed++;
+                } else {
+                    test2a.className = 'test-item error';
+                    test2a.innerHTML = `❌ Erreur Supabase: ${response.status}`;
+                    testsFailed++;
+                }
+            } catch (error) {
+                test2a.className = 'test-item error';
+                test2a.innerHTML = `❌ Erreur connexion: ${error.message}`;
+                testsFailed++;
+            }
+
+            // TEST 3: Tokens de Réclamation
+            const section3 = addSection('3️⃣ TOKENS DE RÉCLAMATION');
+            const test3a = addTest(section3, 'Récupération des tokens...');
+
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/warranty_claim_tokens?is_used=eq.false&order=created_at.desc&limit=5`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                const tokens = await response.json();
+
+                if (tokens && tokens.length > 0) {
+                    test3a.className = 'test-item success';
+                    test3a.innerHTML = `✅ ${tokens.length} tokens disponibles`;
+                    testsPassed++;
+
+                    addCode(section3, tokens.map(t =>
+                        `Token: ${t.token}\nExpire: ${new Date(t.expires_at).toLocaleString()}\nAccès: ${t.access_count} fois`
+                    ).join('\n\n'));
+                } else {
+                    test3a.className = 'test-item error';
+                    test3a.innerHTML = '❌ Aucun token disponible';
+                    testsFailed++;
+                }
+            } catch (error) {
+                test3a.className = 'test-item error';
+                test3a.innerHTML = `❌ Erreur: ${error.message}`;
+                testsFailed++;
+            }
+
+            // TEST 4: Validation Token Spécifique
+            const section4 = addSection('4️⃣ VALIDATION TOKEN SPÉCIFIQUE');
+            const testToken = '020f9d7a-aee7-485e-bac4-f4bade5c132d';
+            const test4a = addTest(section4, `Test token: ${testToken}...`);
+
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/warranty_claim_tokens?token=eq.${testToken}`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                const tokenData = await response.json();
+
+                if (tokenData && tokenData.length > 0) {
+                    const token = tokenData[0];
+                    const isValid = !token.is_used && new Date(token.expires_at) > new Date();
+
+                    if (isValid) {
+                        test4a.className = 'test-item success';
+                        test4a.innerHTML = '✅ Token valide et disponible';
+                        testsPassed++;
+
+                        addCode(section4, JSON.stringify(token, null, 2));
+
+                        // Test récupération garantie
+                        const test4b = addTest(section4, 'Récupération garantie associée...');
+
+                        const warrantyResponse = await fetch(
+                            `${SUPABASE_URL}/rest/v1/warranties?id=eq.${token.warranty_id}&select=*,customers(*),trailers(*),warranty_plans(*)`,
+                            {
+                                headers: {
+                                    'apikey': SUPABASE_ANON_KEY,
+                                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                                }
+                            }
+                        );
+
+                        const warrantyData = await warrantyResponse.json();
+
+                        if (warrantyData && warrantyData.length > 0) {
+                            test4b.className = 'test-item success';
+                            test4b.innerHTML = '✅ Garantie récupérée avec succès';
+                            testsPassed++;
+
+                            const w = warrantyData[0];
+                            addCode(section4,
+                                `Client: ${w.customers?.first_name} ${w.customers?.last_name}\n` +
+                                `Véhicule: ${w.trailers?.year} ${w.trailers?.make} ${w.trailers?.model}\n` +
+                                `VIN: ${w.trailers?.vin}\n` +
+                                `Plan: ${w.warranty_plans?.name}\n` +
+                                `Période: ${new Date(w.start_date).toLocaleDateString()} → ${new Date(w.end_date).toLocaleDateString()}`
+                            );
+                        } else {
+                            test4b.className = 'test-item error';
+                            test4b.innerHTML = '❌ Garantie introuvable';
+                            testsFailed++;
+                        }
+                    } else {
+                        test4a.className = 'test-item error';
+                        test4a.innerHTML = `❌ Token ${token.is_used ? 'déjà utilisé' : 'expiré'}`;
+                        testsFailed++;
+                    }
+                } else {
+                    test4a.className = 'test-item error';
+                    test4a.innerHTML = '❌ Token introuvable';
+                    testsFailed++;
+                }
+            } catch (error) {
+                test4a.className = 'test-item error';
+                test4a.innerHTML = `❌ Erreur: ${error.message}`;
+                testsFailed++;
+            }
+
+            // TEST 5: Permissions RLS
+            const section5 = addSection('5️⃣ PERMISSIONS RLS');
+            const test5a = addTest(section5, 'Test accès anonyme warranty_claim_tokens...');
+
+            try {
+                const response = await fetch(
+                    `${SUPABASE_URL}/rest/v1/warranty_claim_tokens?limit=1`,
+                    {
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                        }
+                    }
+                );
+
+                if (response.ok) {
+                    test5a.className = 'test-item success';
+                    test5a.innerHTML = '✅ Accès anonyme autorisé';
+                    testsPassed++;
+                } else {
+                    test5a.className = 'test-item error';
+                    test5a.innerHTML = `❌ Accès refusé: ${response.status}`;
+                    testsFailed++;
+                }
+            } catch (error) {
+                test5a.className = 'test-item error';
+                test5a.innerHTML = `❌ Erreur: ${error.message}`;
+                testsFailed++;
+            }
+
+            // AFFICHER RÉSUMÉ
+            showSummary();
+        }
+
+        function showSummary() {
+            summary.style.display = 'block';
+
+            const successRate = Math.round((testsPassed / testsTotal) * 100);
+            let status = '✅ TOUS LES TESTS RÉUSSIS';
+            let color = '#48bb78';
+
+            if (testsFailed > 0) {
+                status = `⚠️ ${testsFailed} TEST(S) ÉCHOUÉ(S)`;
+                color = '#f56565';
+            }
+
+            summaryContent.innerHTML = `
+                <div style="font-size: 20px; margin-bottom: 15px; color: ${color};">
+                    ${status}
+                </div>
+                <div style="margin: 10px 0;">
+                    <strong>Tests réussis:</strong> ${testsPassed}/${testsTotal} (${successRate}%)
+                </div>
+                ${testsFailed > 0 ? `
+                    <div style="margin: 20px 0; padding: 15px; background: #1a202c; border-radius: 4px;">
+                        <strong style="color: #f56565;">🔧 ACTIONS RECOMMANDÉES:</strong><br><br>
+                        ${testsFailed > 0 ? '• Vérifiez les erreurs ci-dessus<br>' : ''}
+                        • Consultez la console du navigateur (F12)<br>
+                        • Vérifiez que le fichier .env contient les bonnes valeurs<br>
+                        • Redémarrez le serveur de développement: npm run dev
+                    </div>
+                ` : `
+                    <div style="margin: 20px 0; padding: 15px; background: #1a202c; border-radius: 4px; border-left: 4px solid #48bb78;">
+                        <strong style="color: #48bb78;">✅ SYSTÈME 100% OPÉRATIONNEL</strong><br><br>
+                        Le système de réclamation fonctionne parfaitement!<br><br>
+                        <strong>Testez maintenant:</strong><br>
+                        <a href="/test-claim-direct.html?token=020f9d7a-aee7-485e-bac4-f4bade5c132d"
+                           style="color: #4299e1; text-decoration: underline;">
+                            → Formulaire de réclamation
+                        </a>
+                    </div>
+                `}
+            `;
+        }
+
+        // Lancer les diagnostics
+        runDiagnostics();
+    </script>
+</body>
+</html>

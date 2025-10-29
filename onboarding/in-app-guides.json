@@ -1,0 +1,598 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2024-10-26",
+  "tours": [
+    {
+      "id": "first-login-tour",
+      "name": "Premier tour guidé",
+      "description": "Découverte initiale de Pro-Remorque",
+      "trigger": {
+        "condition": "first_login",
+        "userType": ["dealer", "admin"]
+      },
+      "steps": [
+        {
+          "id": "welcome",
+          "target": "body",
+          "placement": "center",
+          "title": {
+            "fr": "Bienvenue sur Pro-Remorque! 🚛",
+            "en": "Welcome to Pro-Remorque! 🚛"
+          },
+          "content": {
+            "fr": "Je vais vous guider à travers les fonctionnalités essentielles en 2 minutes. Vous pourrez créer votre première garantie immédiatement après!",
+            "en": "I'll guide you through the essential features in 2 minutes. You'll be able to create your first warranty right after!"
+          },
+          "buttons": {
+            "next": {
+              "fr": "Commencer le tour",
+              "en": "Start Tour"
+            },
+            "skip": {
+              "fr": "Passer",
+              "en": "Skip"
+            }
+          }
+        },
+        {
+          "id": "dashboard-stats",
+          "target": "[data-tour='stats-cards']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Vos indicateurs clés",
+            "en": "Your Key Metrics"
+          },
+          "content": {
+            "fr": "Ces 4 cartes montrent vos garanties actives, réclamations en attente, revenus du mois, et crédit fidélité disponible. Elles se mettent à jour en temps réel.",
+            "en": "These 4 cards show your active warranties, pending claims, monthly revenue, and available loyalty credit. They update in real-time."
+          },
+          "highlight": true
+        },
+        {
+          "id": "new-warranty-button",
+          "target": "[data-tour='new-warranty-btn']",
+          "placement": "left",
+          "title": {
+            "fr": "Créer une garantie",
+            "en": "Create a Warranty"
+          },
+          "content": {
+            "fr": "Cliquez ici pour créer une nouvelle garantie. Le processus prend 5-7 minutes et génère un contrat PDF professionnel automatiquement.",
+            "en": "Click here to create a new warranty. The process takes 5-7 minutes and automatically generates a professional PDF contract."
+          },
+          "highlight": true,
+          "pulse": true
+        },
+        {
+          "id": "sidebar-menu",
+          "target": "[data-tour='sidebar-nav']",
+          "placement": "right",
+          "title": {
+            "fr": "Menu de navigation",
+            "en": "Navigation Menu"
+          },
+          "content": {
+            "fr": "Accédez à toutes les sections depuis ce menu: Garanties, Réclamations, Clients, Inventaire, et Paramètres.",
+            "en": "Access all sections from this menu: Warranties, Claims, Customers, Inventory, and Settings."
+          },
+          "highlight": true
+        },
+        {
+          "id": "search-bar",
+          "target": "[data-tour='global-search']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Recherche rapide",
+            "en": "Quick Search"
+          },
+          "content": {
+            "fr": "Trouvez n'importe quoi instantanément: garantie par VIN ou numéro, client par nom, réclamation... Les résultats s'affichent pendant que vous tapez.",
+            "en": "Find anything instantly: warranty by VIN or number, customer by name, claim... Results appear as you type."
+          },
+          "highlight": true,
+          "example": {
+            "fr": "Essayez: VIN, nom de client, ou WARR-12345",
+            "en": "Try: VIN, customer name, or WARR-12345"
+          }
+        },
+        {
+          "id": "quick-actions",
+          "target": "[data-tour='quick-actions']",
+          "placement": "left",
+          "title": {
+            "fr": "Actions rapides",
+            "en": "Quick Actions"
+          },
+          "content": {
+            "fr": "Ces boutons donnent accès aux tâches courantes en un clic: nouvelle garantie, traiter réclamation, exporter CSV, gérer inventaire.",
+            "en": "These buttons provide one-click access to common tasks: new warranty, process claim, export CSV, manage inventory."
+          }
+        },
+        {
+          "id": "activity-feed",
+          "target": "[data-tour='activity-feed']",
+          "placement": "left",
+          "title": {
+            "fr": "Fil d'activité",
+            "en": "Activity Feed"
+          },
+          "content": {
+            "fr": "Suivez toutes les activités en temps réel: nouvelles garanties, réclamations soumises, paiements reçus. Cliquez sur une activité pour voir les détails.",
+            "en": "Track all activities in real-time: new warranties, claims submitted, payments received. Click an activity to see details."
+          }
+        },
+        {
+          "id": "tour-complete",
+          "target": "body",
+          "placement": "center",
+          "title": {
+            "fr": "C'est tout! Vous êtes prêt 🎉",
+            "en": "That's it! You're ready 🎉"
+          },
+          "content": {
+            "fr": "Vous connaissez maintenant l'essentiel. Créez votre première garantie ou explorez le menu pour découvrir plus de fonctionnalités.",
+            "en": "You now know the essentials. Create your first warranty or explore the menu to discover more features."
+          },
+          "buttons": {
+            "primary": {
+              "fr": "Créer ma première garantie",
+              "en": "Create My First Warranty",
+              "action": "navigate",
+              "target": "/warranties/new"
+            },
+            "secondary": {
+              "fr": "Explorer seul",
+              "en": "Explore on My Own",
+              "action": "close"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "warranty-creation-tour",
+      "name": "Créer une garantie",
+      "description": "Guide pas à pas pour créer une garantie",
+      "trigger": {
+        "condition": "route_match",
+        "route": "/warranties/new",
+        "firstTime": true
+      },
+      "steps": [
+        {
+          "id": "warranty-intro",
+          "target": "[data-tour='warranty-form']",
+          "placement": "top",
+          "title": {
+            "fr": "Formulaire de garantie",
+            "en": "Warranty Form"
+          },
+          "content": {
+            "fr": "Ce formulaire contient 3 sections: Informations client, Détails remorque, et Plan de garantie. Tous les champs avec (*) sont obligatoires.",
+            "en": "This form contains 3 sections: Customer Info, Trailer Details, and Warranty Plan. All fields with (*) are required."
+          }
+        },
+        {
+          "id": "customer-search",
+          "target": "[data-tour='customer-email']",
+          "placement": "right",
+          "title": {
+            "fr": "Client existant?",
+            "en": "Existing Customer?"
+          },
+          "content": {
+            "fr": "Si le client existe déjà, tapez son email et cliquez sur l'icône de recherche. Ses informations seront auto-remplies.",
+            "en": "If the customer already exists, type their email and click the search icon. Their information will be auto-filled."
+          },
+          "highlight": true
+        },
+        {
+          "id": "vin-validation",
+          "target": "[data-tour='trailer-vin']",
+          "placement": "right",
+          "title": {
+            "fr": "VIN important",
+            "en": "VIN Important"
+          },
+          "content": {
+            "fr": "Le VIN doit contenir exactement 17 caractères. Le système vérifie automatiquement s'il existe déjà et évite les doublons.",
+            "en": "VIN must contain exactly 17 characters. The system automatically checks if it already exists and prevents duplicates."
+          },
+          "highlight": true
+        },
+        {
+          "id": "warranty-plan",
+          "target": "[data-tour='warranty-plan']",
+          "placement": "left",
+          "title": {
+            "fr": "Choisir le plan",
+            "en": "Choose Plan"
+          },
+          "content": {
+            "fr": "Sélectionnez 12, 24 ou 36 mois selon les besoins du client. Le prix de base s'affiche automatiquement.",
+            "en": "Select 12, 24, or 36 months based on customer needs. Base price displays automatically."
+          }
+        },
+        {
+          "id": "addon-options",
+          "target": "[data-tour='addon-options']",
+          "placement": "left",
+          "title": {
+            "fr": "Options supplémentaires",
+            "en": "Additional Options"
+          },
+          "content": {
+            "fr": "Cochez les options désirées (pneus, batteries, électrique...). Le total se met à jour en temps réel avec taxes incluses.",
+            "en": "Check desired options (tires, batteries, electrical...). Total updates in real-time with taxes included."
+          }
+        },
+        {
+          "id": "loyalty-credit",
+          "target": "[data-tour='loyalty-credit']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Crédit fidélité",
+            "en": "Loyalty Credit"
+          },
+          "content": {
+            "fr": "Si vous avez du crédit disponible ($2000 après 10 garanties), cochez cette case pour l'appliquer et réduire le prix.",
+            "en": "If you have available credit ($2000 after 10 warranties), check this box to apply it and reduce the price."
+          },
+          "condition": "credit_available > 0"
+        },
+        {
+          "id": "generate-contract",
+          "target": "[data-tour='generate-btn']",
+          "placement": "top",
+          "title": {
+            "fr": "Générer le contrat",
+            "en": "Generate Contract"
+          },
+          "content": {
+            "fr": "Cliquez Aperçu pour vérifier, ou Générer directement. Le PDF sera créé en 5-10 secondes avec un numéro unique (WARR-XXXXX).",
+            "en": "Click Preview to verify, or Generate directly. PDF will be created in 5-10 seconds with a unique number (WARR-XXXXX)."
+          },
+          "highlight": true,
+          "pulse": true
+        }
+      ]
+    },
+    {
+      "id": "signature-flow-tour",
+      "name": "Signature électronique",
+      "description": "Comment faire signer un contrat",
+      "trigger": {
+        "condition": "feature_used",
+        "feature": "signature_started",
+        "count": 0
+      },
+      "steps": [
+        {
+          "id": "signature-methods",
+          "target": "[data-tour='signature-method-selector']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Deux méthodes disponibles",
+            "en": "Two Methods Available"
+          },
+          "content": {
+            "fr": "Signature EN PERSONNE: client présent avec tablette/écran tactile. Signature À DISTANCE: envoi lien email au client.",
+            "en": "IN PERSON: customer present with tablet/touchscreen. REMOTE: send email link to customer."
+          }
+        },
+        {
+          "id": "in-person-signature",
+          "target": "[data-tour='signature-pad']",
+          "placement": "top",
+          "title": {
+            "fr": "Zone de signature",
+            "en": "Signature Area"
+          },
+          "content": {
+            "fr": "Le client signe avec son doigt ou stylet dans ce rectangle. Boutons: Effacer pour recommencer, Valider pour confirmer.",
+            "en": "Customer signs with finger or stylus in this rectangle. Buttons: Clear to restart, Validate to confirm."
+          },
+          "condition": "method == 'in_person'"
+        },
+        {
+          "id": "signature-proof",
+          "target": "[data-tour='signature-certificate']",
+          "placement": "left",
+          "title": {
+            "fr": "Preuve légale automatique",
+            "en": "Automatic Legal Proof"
+          },
+          "content": {
+            "fr": "Chaque signature génère: horodatage UTC, adresse IP, hash cryptographique SHA-256, certificat conforme LCSE/UETA/eIDAS.",
+            "en": "Each signature generates: UTC timestamp, IP address, SHA-256 cryptographic hash, LCSE/UETA/eIDAS compliant certificate."
+          },
+          "highlight": true
+        }
+      ]
+    },
+    {
+      "id": "claims-process-tour",
+      "name": "Traiter une réclamation",
+      "description": "Processus complet de réclamation",
+      "trigger": {
+        "condition": "route_match",
+        "route": "/claims/new",
+        "firstTime": true
+      },
+      "steps": [
+        {
+          "id": "warranty-search",
+          "target": "[data-tour='warranty-search']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Trouver la garantie",
+            "en": "Find Warranty"
+          },
+          "content": {
+            "fr": "Recherchez par VIN (17 caractères), numéro de garantie (WARR-XXXXX), ou nom du client. Vérifiez que la garantie est ACTIVE.",
+            "en": "Search by VIN (17 characters), warranty number (WARR-XXXXX), or customer name. Verify warranty is ACTIVE."
+          }
+        },
+        {
+          "id": "claim-type",
+          "target": "[data-tour='claim-type']",
+          "placement": "right",
+          "title": {
+            "fr": "Type de problème",
+            "en": "Issue Type"
+          },
+          "content": {
+            "fr": "Choisissez la catégorie la plus proche: Mécanique, Électrique, Structural, Cosmétique, Pneu/Roue, ou Autre.",
+            "en": "Choose the closest category: Mechanical, Electrical, Structural, Cosmetic, Tire/Wheel, or Other."
+          }
+        },
+        {
+          "id": "description-structure",
+          "target": "[data-tour='claim-description']",
+          "placement": "right",
+          "title": {
+            "fr": "Description structurée",
+            "en": "Structured Description"
+          },
+          "content": {
+            "fr": "Utilisez ce format: QUAND (date), OÙ (localisation), QUOI (symptôme), CIRCONSTANCES, ACTIONS. Minimum 50 caractères, recommandé 100+.",
+            "en": "Use this format: WHEN (date), WHERE (location), WHAT (symptom), CIRCUMSTANCES, ACTIONS. Minimum 50 characters, recommended 100+."
+          },
+          "example": {
+            "fr": "QUAND: 26 oct 2024\nOÙ: Essieu arrière\nQUOI: Bruit métallique\nCIRCONSTANCES: Après 200 km, charge 1500 lbs\nACTIONS: Inspection visuelle, jeu détecté",
+            "en": "WHEN: Oct 26 2024\nWHERE: Rear axle\nWHAT: Metallic noise\nCIRCUMSTANCES: After 200 km, 1500 lbs load\nACTIONS: Visual inspection, play detected"
+          }
+        },
+        {
+          "id": "photo-upload",
+          "target": "[data-tour='photo-upload']",
+          "placement": "left",
+          "title": {
+            "fr": "Photos OBLIGATOIRES",
+            "en": "Photos REQUIRED"
+          },
+          "content": {
+            "fr": "Minimum 3 photos, maximum 10. Formats: JPG, PNG, HEIC. Taille max: 10 MB chacune. Prenez: vue ensemble, gros plan problème, angle alternatif.",
+            "en": "Minimum 3 photos, maximum 10. Formats: JPG, PNG, HEIC. Max size: 10 MB each. Take: overview, close-up problem, alternate angle."
+          },
+          "highlight": true
+        },
+        {
+          "id": "claim-status-tracking",
+          "target": "[data-tour='status-badge']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Suivi du statut",
+            "en": "Status Tracking"
+          },
+          "content": {
+            "fr": "Statuts: En attente (jaune) → En révision (bleu) → Info requise (orange) ou Décision (vert=approuvé, rouge=refusé). Notifications automatiques.",
+            "en": "Statuses: Pending (yellow) → Under Review (blue) → Info Needed (orange) or Decision (green=approved, red=denied). Automatic notifications."
+          }
+        }
+      ]
+    },
+    {
+      "id": "settings-tour",
+      "name": "Configurer votre entreprise",
+      "description": "Paramètres essentiels",
+      "trigger": {
+        "condition": "route_match",
+        "route": "/settings",
+        "userVisitCount": 1
+      },
+      "steps": [
+        {
+          "id": "company-logo",
+          "target": "[data-tour='company-logo']",
+          "placement": "right",
+          "title": {
+            "fr": "Logo entreprise",
+            "en": "Company Logo"
+          },
+          "content": {
+            "fr": "Uploadez votre logo (PNG ou JPG, max 2 MB). Il apparaîtra sur tous vos contrats PDF et emails.",
+            "en": "Upload your logo (PNG or JPG, max 2 MB). It will appear on all your PDF contracts and emails."
+          }
+        },
+        {
+          "id": "contact-info",
+          "target": "[data-tour='company-info']",
+          "placement": "left",
+          "title": {
+            "fr": "Coordonnées",
+            "en": "Contact Info"
+          },
+          "content": {
+            "fr": "Vérifiez nom commercial, adresse, téléphone, email. Ces infos apparaissent sur les contrats et emails clients.",
+            "en": "Verify business name, address, phone, email. This info appears on contracts and customer emails."
+          }
+        },
+        {
+          "id": "email-templates",
+          "target": "[data-tour='email-templates']",
+          "placement": "right",
+          "title": {
+            "fr": "Templates d'emails",
+            "en": "Email Templates"
+          },
+          "content": {
+            "fr": "Personnalisez les emails automatiques: confirmation garantie, notification réclamation, rappels signature. Variables disponibles: {{client_name}}, {{warranty_number}}.",
+            "en": "Customize automatic emails: warranty confirmation, claim notification, signature reminders. Available variables: {{client_name}}, {{warranty_number}}."
+          }
+        },
+        {
+          "id": "vendor-signature",
+          "target": "[data-tour='vendor-signature']",
+          "placement": "left",
+          "title": {
+            "fr": "Signature vendeur",
+            "en": "Vendor Signature"
+          },
+          "content": {
+            "fr": "Créez votre signature de vendeur qui sera pré-imprimée sur tous les contrats. Dessinez-la une fois, réutilisez infiniment.",
+            "en": "Create your vendor signature that will be pre-printed on all contracts. Draw it once, reuse infinitely."
+          },
+          "highlight": true
+        }
+      ]
+    },
+    {
+      "id": "export-csv-tour",
+      "name": "Exporter vos données",
+      "description": "Comment exporter en CSV",
+      "trigger": {
+        "condition": "button_clicked",
+        "button": "export-csv",
+        "firstTime": true
+      },
+      "steps": [
+        {
+          "id": "export-filters",
+          "target": "[data-tour='export-filters']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Filtres avant export",
+            "en": "Filters Before Export"
+          },
+          "content": {
+            "fr": "Appliquez des filtres pour exporter seulement ce dont vous avez besoin: par date, statut, province, plan. Ou exportez tout.",
+            "en": "Apply filters to export only what you need: by date, status, province, plan. Or export everything."
+          }
+        },
+        {
+          "id": "csv-content",
+          "target": "[data-tour='export-btn']",
+          "placement": "left",
+          "title": {
+            "fr": "Contenu CSV",
+            "en": "CSV Content"
+          },
+          "content": {
+            "fr": "Le CSV contiendra: numéro garantie, client, VIN, plan, montant, taxes, dates, statut. Ouvrable dans Excel, Google Sheets, comptabilité.",
+            "en": "CSV will contain: warranty number, customer, VIN, plan, amount, taxes, dates, status. Open in Excel, Google Sheets, accounting software."
+          }
+        }
+      ]
+    },
+    {
+      "id": "loyalty-program-tour",
+      "name": "Programme fidélité",
+      "description": "Comprendre le crédit $2000",
+      "trigger": {
+        "condition": "warranty_count",
+        "operator": ">=",
+        "value": 8,
+        "shownOnce": true
+      },
+      "steps": [
+        {
+          "id": "loyalty-explained",
+          "target": "[data-tour='loyalty-credit-badge']",
+          "placement": "bottom",
+          "title": {
+            "fr": "Programme fidélité expliqué",
+            "en": "Loyalty Program Explained"
+          },
+          "content": {
+            "fr": "Vous gagnez $2000 de crédit après chaque tranche de 10 garanties vendues. Utilisez ce crédit pour réduire le prix de vos futures ventes.",
+            "en": "You earn $2000 credit after every 10 warranties sold. Use this credit to reduce the price of your future sales."
+          },
+          "highlight": true
+        },
+        {
+          "id": "apply-credit",
+          "target": "[data-tour='apply-loyalty-checkbox']",
+          "placement": "right",
+          "title": {
+            "fr": "Appliquer le crédit",
+            "en": "Apply Credit"
+          },
+          "content": {
+            "fr": "Lors de création garantie, cochez 'Appliquer crédit fidélité' et entrez le montant (max = crédit disponible). Le total se réduit instantanément.",
+            "en": "When creating warranty, check 'Apply loyalty credit' and enter amount (max = available credit). Total reduces instantly."
+          },
+          "condition": "loyalty_credit > 0"
+        }
+      ]
+    }
+  ],
+  "tooltips": [
+    {
+      "id": "vin-tooltip",
+      "target": "[data-tour='trailer-vin']",
+      "trigger": "hover",
+      "title": {
+        "fr": "Format VIN",
+        "en": "VIN Format"
+      },
+      "content": {
+        "fr": "17 caractères alphanumériques. Pas de I, O, Q. Exemple: 1HGBH41JXMN109186",
+        "en": "17 alphanumeric characters. No I, O, Q. Example: 1HGBH41JXMN109186"
+      }
+    },
+    {
+      "id": "tax-calculation-tooltip",
+      "target": "[data-tour='tax-summary']",
+      "trigger": "hover",
+      "title": {
+        "fr": "Calcul automatique",
+        "en": "Automatic Calculation"
+      },
+      "content": {
+        "fr": "Taxes calculées selon la province du client. QC: 14.975%, ON: 13% HST, AB: 5%, etc.",
+        "en": "Taxes calculated by customer province. QC: 14.975%, ON: 13% HST, AB: 5%, etc."
+      }
+    },
+    {
+      "id": "warranty-expiry-tooltip",
+      "target": "[data-tour='expiry-date']",
+      "trigger": "hover",
+      "title": {
+        "fr": "Date d'expiration",
+        "en": "Expiry Date"
+      },
+      "content": {
+        "fr": "Calculée automatiquement: Date d'achat + durée du plan (12/24/36 mois).",
+        "en": "Calculated automatically: Purchase date + plan duration (12/24/36 months)."
+      }
+    }
+  ],
+  "configuration": {
+    "theme": {
+      "primaryColor": "#DC2626",
+      "highlightColor": "#FCD34D",
+      "overlayOpacity": 0.75
+    },
+    "behavior": {
+      "showProgressBar": true,
+      "allowSkip": true,
+      "closeOnClickOutside": false,
+      "keyboardNavigation": true
+    },
+    "storage": {
+      "method": "localStorage",
+      "prefix": "proremorque_tour_"
+    }
+  }
+}

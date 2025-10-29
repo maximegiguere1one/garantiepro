@@ -1,0 +1,266 @@
+{
+  "common": {
+    "actions": {
+      "save": { "fr": "Enregistrer", "en": "Save" },
+      "cancel": { "fr": "Annuler", "en": "Cancel" },
+      "delete": { "fr": "Supprimer", "en": "Delete" },
+      "edit": { "fr": "Modifier", "en": "Edit" },
+      "create": { "fr": "Créer", "en": "Create" },
+      "submit": { "fr": "Soumettre", "en": "Submit" },
+      "close": { "fr": "Fermer", "en": "Close" },
+      "back": { "fr": "Retour", "en": "Back" },
+      "next": { "fr": "Suivant", "en": "Next" },
+      "finish": { "fr": "Terminer", "en": "Finish" },
+      "download": { "fr": "Télécharger", "en": "Download" },
+      "export": { "fr": "Exporter", "en": "Export" },
+      "search": { "fr": "Rechercher", "en": "Search" },
+      "filter": { "fr": "Filtrer", "en": "Filter" },
+      "clear": { "fr": "Effacer", "en": "Clear" },
+      "retry": { "fr": "Réessayer", "en": "Retry" },
+      "confirm": { "fr": "Confirmer", "en": "Confirm" },
+      "continue": { "fr": "Continuer", "en": "Continue" }
+    },
+    "status": {
+      "loading": { "fr": "Chargement...", "en": "Loading..." },
+      "saving": { "fr": "Enregistrement...", "en": "Saving..." },
+      "saved": { "fr": "Enregistré", "en": "Saved" },
+      "success": { "fr": "Succès", "en": "Success" },
+      "error": { "fr": "Erreur", "en": "Error" },
+      "warning": { "fr": "Avertissement", "en": "Warning" },
+      "info": { "fr": "Information", "en": "Information" }
+    },
+    "validation": {
+      "required": { "fr": "Ce champ est obligatoire", "en": "This field is required" },
+      "invalidEmail": { "fr": "Adresse courriel invalide", "en": "Invalid email address" },
+      "invalidPhone": { "fr": "Numéro de téléphone invalide", "en": "Invalid phone number" },
+      "invalidPostalCode": { "fr": "Code postal invalide", "en": "Invalid postal code" },
+      "minLength": { "fr": "Minimum {{min}} caractères requis", "en": "Minimum {{min}} characters required" },
+      "maxLength": { "fr": "Maximum {{max}} caractères autorisés", "en": "Maximum {{max}} characters allowed" },
+      "mustBePositive": { "fr": "La valeur doit être positive", "en": "Value must be positive" },
+      "invalidDate": { "fr": "Date invalide", "en": "Invalid date" }
+    }
+  },
+  "warranty": {
+    "create": {
+      "title": { "fr": "Créer une garantie", "en": "Create Warranty" },
+      "subtitle": { "fr": "Enregistrer une nouvelle garantie pour un client", "en": "Register a new warranty for a customer" },
+      "step1Title": { "fr": "Informations du client", "en": "Customer Information" },
+      "step2Title": { "fr": "Détails de la remorque", "en": "Trailer Details" },
+      "step3Title": { "fr": "Sélection du plan", "en": "Plan Selection" },
+      "progressLabel": { "fr": "Étape {{current}} sur {{total}}", "en": "Step {{current}} of {{total}}" },
+      "autosaveIndicator": { "fr": "Sauvegarde automatique activée", "en": "Auto-save enabled" },
+      "draftSaved": { "fr": "Brouillon enregistré à {{time}}", "en": "Draft saved at {{time}}" },
+      "customerSection": {
+        "firstName": { "fr": "Prénom", "en": "First Name" },
+        "lastName": { "fr": "Nom", "en": "Last Name" },
+        "email": { "fr": "Courriel", "en": "Email" },
+        "phone": { "fr": "Téléphone", "en": "Phone" },
+        "address": { "fr": "Adresse", "en": "Address" },
+        "city": { "fr": "Ville", "en": "City" },
+        "province": { "fr": "Province", "en": "Province" },
+        "postalCode": { "fr": "Code postal", "en": "Postal Code" },
+        "languagePreference": { "fr": "Langue préférée", "en": "Preferred Language" },
+        "existingCustomer": { "fr": "Client existant trouvé", "en": "Existing customer found" },
+        "newCustomer": { "fr": "Nouveau client", "en": "New customer" }
+      },
+      "trailerSection": {
+        "vin": { "fr": "NIV (Numéro d'identification)", "en": "VIN (Vehicle Identification Number)" },
+        "vinHint": { "fr": "17 caractères", "en": "17 characters" },
+        "make": { "fr": "Marque", "en": "Make" },
+        "model": { "fr": "Modèle", "en": "Model" },
+        "year": { "fr": "Année", "en": "Year" },
+        "trailerType": { "fr": "Type de remorque", "en": "Trailer Type" },
+        "category": { "fr": "Catégorie", "en": "Category" },
+        "purchaseDate": { "fr": "Date d'achat", "en": "Purchase Date" },
+        "purchasePrice": { "fr": "Prix d'achat", "en": "Purchase Price" },
+        "manufacturerWarranty": { "fr": "Garantie fabricant jusqu'au", "en": "Manufacturer warranty until" }
+      },
+      "planSection": {
+        "selectPlan": { "fr": "Sélectionner un plan", "en": "Select a Plan" },
+        "planDetails": { "fr": "Détails du plan", "en": "Plan Details" },
+        "coverage": { "fr": "Couverture", "en": "Coverage" },
+        "duration": { "fr": "Durée", "en": "Duration" },
+        "deductible": { "fr": "Franchise", "en": "Deductible" },
+        "price": { "fr": "Prix", "en": "Price" },
+        "subtotal": { "fr": "Sous-total", "en": "Subtotal" },
+        "taxes": { "fr": "Taxes", "en": "Taxes" },
+        "total": { "fr": "Total", "en": "Total" },
+        "loyaltyCredit": { "fr": "Crédit de fidélité", "en": "Loyalty Credit" },
+        "loyaltyCreditApplied": { "fr": "Crédit de {{amount}} appliqué automatiquement", "en": "{{amount}} credit applied automatically" },
+        "addons": { "fr": "Options supplémentaires", "en": "Additional Options" }
+      },
+      "success": { "fr": "Garantie créée avec succès!", "en": "Warranty created successfully!" },
+      "error": { "fr": "Erreur lors de la création de la garantie", "en": "Error creating warranty" }
+    }
+  },
+  "claims": {
+    "title": { "fr": "Réclamations", "en": "Claims" },
+    "subtitle": { "fr": "Gérer les réclamations de garantie", "en": "Manage warranty claims" },
+    "create": { "fr": "Nouvelle réclamation", "en": "New Claim" },
+    "timeline": {
+      "title": { "fr": "Historique", "en": "Timeline" },
+      "submitted": { "fr": "Réclamation soumise", "en": "Claim submitted" },
+      "underReview": { "fr": "En cours d'examen", "en": "Under review" },
+      "approved": { "fr": "Approuvée", "en": "Approved" },
+      "rejected": { "fr": "Rejetée", "en": "Rejected" },
+      "closed": { "fr": "Fermée", "en": "Closed" },
+      "eventOn": { "fr": "le {{date}}", "en": "on {{date}}" }
+    },
+    "status": {
+      "pending": { "fr": "En attente", "en": "Pending" },
+      "processing": { "fr": "En traitement", "en": "Processing" },
+      "approved": { "fr": "Approuvée", "en": "Approved" },
+      "rejected": { "fr": "Rejetée", "en": "Rejected" },
+      "closed": { "fr": "Fermée", "en": "Closed" }
+    },
+    "sla": {
+      "title": { "fr": "Délai de réponse", "en": "Response Time" },
+      "remaining": { "fr": "{{hours}}h restantes", "en": "{{hours}}h remaining" },
+      "urgent": { "fr": "Urgent - moins de 24h", "en": "Urgent - less than 24h" },
+      "warning": { "fr": "Attention - moins de 48h", "en": "Warning - less than 48h" },
+      "normal": { "fr": "Dans les délais", "en": "On time" }
+    },
+    "upload": {
+      "title": { "fr": "Documents et photos", "en": "Documents and Photos" },
+      "dragDrop": { "fr": "Glissez-déposez vos fichiers ici ou cliquez pour parcourir", "en": "Drag and drop files here or click to browse" },
+      "maxSize": { "fr": "Taille maximale: 10 Mo par fichier", "en": "Maximum size: 10 MB per file" },
+      "acceptedFormats": { "fr": "Formats acceptés: JPG, PNG, PDF", "en": "Accepted formats: JPG, PNG, PDF" },
+      "uploading": { "fr": "Téléversement en cours...", "en": "Uploading..." },
+      "uploaded": { "fr": "{{count}} fichier(s) téléversé(s)", "en": "{{count}} file(s) uploaded" },
+      "error": { "fr": "Erreur lors du téléversement", "en": "Upload error" },
+      "fileTooLarge": { "fr": "Fichier trop volumineux (max 10 Mo)", "en": "File too large (max 10 MB)" }
+    },
+    "decision": {
+      "approve": { "fr": "Approuver", "en": "Approve" },
+      "reject": { "fr": "Rejeter", "en": "Reject" },
+      "reason": { "fr": "Raison", "en": "Reason" },
+      "reasonRequired": { "fr": "Une raison est requise", "en": "Reason is required" },
+      "notes": { "fr": "Notes internes", "en": "Internal Notes" },
+      "confirmApproval": { "fr": "Confirmer l'approbation de cette réclamation?", "en": "Confirm approval of this claim?" },
+      "confirmRejection": { "fr": "Confirmer le rejet de cette réclamation?", "en": "Confirm rejection of this claim?" }
+    }
+  },
+  "signature": {
+    "title": { "fr": "Signature électronique", "en": "Electronic Signature" },
+    "preview": {
+      "title": { "fr": "Aperçu du document", "en": "Document Preview" },
+      "loading": { "fr": "Chargement du document...", "en": "Loading document..." },
+      "page": { "fr": "Page {{current}} / {{total}}", "en": "Page {{current}} of {{total}}" },
+      "zoom": { "fr": "Zoom", "en": "Zoom" },
+      "fitWidth": { "fr": "Ajuster à la largeur", "en": "Fit to width" },
+      "fitPage": { "fr": "Ajuster à la page", "en": "Fit to page" }
+    },
+    "capture": {
+      "title": { "fr": "Apposer votre signature", "en": "Place Your Signature" },
+      "instructions": { "fr": "Signez dans l'espace ci-dessous", "en": "Sign in the space below" },
+      "clear": { "fr": "Effacer", "en": "Clear" },
+      "redo": { "fr": "Recommencer", "en": "Redo" },
+      "sign": { "fr": "Signer le document", "en": "Sign Document" }
+    },
+    "proof": {
+      "title": { "fr": "Preuve de signature", "en": "Signature Proof" },
+      "timestamp": { "fr": "Horodatage", "en": "Timestamp" },
+      "ipAddress": { "fr": "Adresse IP", "en": "IP Address" },
+      "documentHash": { "fr": "Empreinte du document", "en": "Document Hash" },
+      "verified": { "fr": "Signature vérifiée", "en": "Signature Verified" },
+      "certificate": { "fr": "Certificat de signature", "en": "Signature Certificate" },
+      "downloadCertificate": { "fr": "Télécharger le certificat", "en": "Download Certificate" }
+    },
+    "success": {
+      "title": { "fr": "Document signé avec succès", "en": "Document Signed Successfully" },
+      "message": { "fr": "Votre signature a été enregistrée et un certificat a été généré.", "en": "Your signature has been recorded and a certificate has been generated." },
+      "emailSent": { "fr": "Un courriel de confirmation a été envoyé à {{email}}", "en": "A confirmation email has been sent to {{email}}" },
+      "nextSteps": { "fr": "Prochaines étapes", "en": "Next Steps" }
+    }
+  },
+  "dashboard": {
+    "title": { "fr": "Tableau de bord", "en": "Dashboard" },
+    "welcome": { "fr": "Bienvenue, {{name}}", "en": "Welcome, {{name}}" },
+    "quickActions": {
+      "title": { "fr": "Actions rapides", "en": "Quick Actions" },
+      "createWarranty": { "fr": "Créer une garantie", "en": "Create Warranty" },
+      "viewClaims": { "fr": "Voir les réclamations", "en": "View Claims" },
+      "exportData": { "fr": "Exporter les données", "en": "Export Data" },
+      "manageInventory": { "fr": "Gérer l'inventaire", "en": "Manage Inventory" },
+      "viewReports": { "fr": "Voir les rapports", "en": "View Reports" },
+      "settings": { "fr": "Paramètres", "en": "Settings" }
+    },
+    "kpis": {
+      "revenue": {
+        "title": { "fr": "Revenu", "en": "Revenue" },
+        "thisMonth": { "fr": "Ce mois-ci", "en": "This month" },
+        "trend": { "fr": "{{value}}% vs mois dernier", "en": "{{value}}% vs last month" }
+      },
+      "warranties": {
+        "title": { "fr": "Garanties actives", "en": "Active Warranties" },
+        "thisWeek": { "fr": "Cette semaine", "en": "This week" }
+      },
+      "claims": {
+        "title": { "fr": "Réclamations", "en": "Claims" },
+        "pending": { "fr": "En attente", "en": "Pending" },
+        "avgResolution": { "fr": "Résolution moy.", "en": "Avg. resolution" },
+        "days": { "fr": "jours", "en": "days" }
+      },
+      "conversion": {
+        "title": { "fr": "Taux de conversion", "en": "Conversion Rate" },
+        "description": { "fr": "Ventes vs prospects", "en": "Sales vs prospects" }
+      }
+    },
+    "activity": {
+      "title": { "fr": "Activité récente", "en": "Recent Activity" },
+      "viewAll": { "fr": "Voir tout", "en": "View All" },
+      "noActivity": { "fr": "Aucune activité récente", "en": "No recent activity" },
+      "justNow": { "fr": "À l'instant", "en": "Just now" },
+      "minutesAgo": { "fr": "il y a {{count}} min", "en": "{{count}} min ago" },
+      "hoursAgo": { "fr": "il y a {{count}}h", "en": "{{count}}h ago" },
+      "daysAgo": { "fr": "il y a {{count}}j", "en": "{{count}}d ago" }
+    },
+    "chart": {
+      "revenue30Days": { "fr": "Revenu - 30 derniers jours", "en": "Revenue - Last 30 Days" },
+      "noData": { "fr": "Aucune donnée disponible", "en": "No data available" }
+    }
+  },
+  "export": {
+    "title": { "fr": "Exporter les données", "en": "Export Data" },
+    "selectDateRange": { "fr": "Sélectionner une période", "en": "Select Date Range" },
+    "startDate": { "fr": "Date de début", "en": "Start Date" },
+    "endDate": { "fr": "Date de fin", "en": "End Date" },
+    "selectColumns": { "fr": "Sélectionner les colonnes", "en": "Select Columns" },
+    "selectAll": { "fr": "Tout sélectionner", "en": "Select All" },
+    "format": { "fr": "Format", "en": "Format" },
+    "formatCSV": { "fr": "CSV (Excel)", "en": "CSV (Excel)" },
+    "formatXLSX": { "fr": "Excel (.xlsx)", "en": "Excel (.xlsx)" },
+    "generating": { "fr": "Génération en cours...", "en": "Generating..." },
+    "success": { "fr": "Export réussi", "en": "Export successful" },
+    "error": { "fr": "Erreur lors de l'export", "en": "Export error" }
+  },
+  "inventory": {
+    "title": { "fr": "Inventaire", "en": "Inventory" },
+    "addItem": { "fr": "Ajouter un article", "en": "Add Item" },
+    "bulkActions": { "fr": "Actions groupées", "en": "Bulk Actions" },
+    "selected": { "fr": "{{count}} sélectionné(s)", "en": "{{count}} selected" },
+    "columns": {
+      "vin": { "fr": "NIV", "en": "VIN" },
+      "make": { "fr": "Marque", "en": "Make" },
+      "model": { "fr": "Modèle", "en": "Model" },
+      "year": { "fr": "Année", "en": "Year" },
+      "status": { "fr": "Statut", "en": "Status" },
+      "price": { "fr": "Prix", "en": "Price" },
+      "actions": { "fr": "Actions", "en": "Actions" }
+    },
+    "status": {
+      "available": { "fr": "Disponible", "en": "Available" },
+      "sold": { "fr": "Vendu", "en": "Sold" },
+      "reserved": { "fr": "Réservé", "en": "Reserved" },
+      "maintenance": { "fr": "En maintenance", "en": "In Maintenance" }
+    },
+    "empty": { "fr": "Aucun article dans l'inventaire", "en": "No items in inventory" }
+  },
+  "notifications": {
+    "title": { "fr": "Notifications", "en": "Notifications" },
+    "markAllRead": { "fr": "Tout marquer comme lu", "en": "Mark all as read" },
+    "viewAll": { "fr": "Voir toutes", "en": "View All" },
+    "noNotifications": { "fr": "Aucune notification", "en": "No notifications" },
+    "unread": { "fr": "{{count}} non lue(s)", "en": "{{count}} unread" }
+  }
+}

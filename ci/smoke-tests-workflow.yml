@@ -1,0 +1,160 @@
+# .github/workflows/smoke-tests.yml
+#
+# GitHub Actions workflow for automated smoke tests
+#
+# Triggers:
+#   - After successful deployment to staging
+#   - Scheduled daily at 6 AM UTC
+#   - Manual trigger via workflow_dispatch
+#
+# Requirements:
+#   - Repository secrets configured (see below)
+#   - Staging environment deployed and accessible
+#
+
+name: Smoke Tests - Staging
+
+on:
+  # Run after successful staging deployment
+  workflow_run:
+    workflows: ["Deploy to Staging"]
+    types:
+      - completed
+    branches:
+      - main
+
+  # Scheduled run (daily at 6 AM UTC)
+  schedule:
+    - cron: '0 6 * * *'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'true'
+          - 'false'
+
+jobs:
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+
+    # Only run if previous workflow succeeded (for workflow_run trigger)
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+
+    env:
+      STAGING_API_URL: ${{ secrets.STAGING_API_URL }}
+      STAGING_API_KEY: ${{ secrets.STAGING_API_KEY }}
+      STAGING_SERVICE_KEY: ${{ secrets.STAGING_SERVICE_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      VERBOSE: ${{ github.event.inputs.verbose || 'false' }}
+      CLEANUP_ON_SUCCESS: 'true'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq curl
+
+      - name: Verify environment
+        run: |
+          echo "Testing staging environment: $STAGING_API_URL"
+          if [ -z "$STAGING_API_KEY" ]; then
+            echo "::error::STAGING_API_KEY secret not configured"
+            exit 1
+          fi
+
+      - name: Run smoke tests
+        id: smoke_tests
+        run: |
+          chmod +x scripts/smoke-tests.sh
+          ./scripts/smoke-tests.sh 2>&1 | tee smoke-tests-output.log
+        continue-on-error: true
+
+      - name: Check test results
+        run: |
+          if [ ${{ steps.smoke_tests.outcome }} == 'failure' ]; then
+            echo "::error::Smoke tests failed"
+            exit 1
+          fi
+
+      - name: Upload test logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-test-logs-${{ github.run_number }}
+          path: smoke-tests-output.log
+          retention-days: 30
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const log = fs.readFileSync('smoke-tests-output.log', 'utf8');
+            const summary = log.split('\n').filter(l => l.includes('[PASS]') || l.includes('[FAIL]')).join('\n');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: `## Smoke Tests Results\n\n\`\`\`\n${summary}\n\`\`\``
+            });
+
+      - name: Notify on failure
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
+        run: |
+          curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🚨 Smoke Tests Failed on Staging",
+              "attachments": [{
+                "color": "danger",
+                "fields": [
+                  {"title": "Workflow", "value": "${{ github.workflow }}", "short": true},
+                  {"title": "Run", "value": "${{ github.run_number }}", "short": true},
+                  {"title": "Branch", "value": "${{ github.ref_name }}", "short": true},
+                  {"title": "Commit", "value": "${{ github.sha }}", "short": true}
+                ],
+                "actions": [{
+                  "type": "button",
+                  "text": "View Logs",
+                  "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                }]
+              }]
+            }'
+
+  # Optional: Block deployment to production if smoke tests fail
+  gate-production-deployment:
+    name: Gate Production Deployment
+    needs: smoke-tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_run'
+
+    steps:
+      - name: Smoke tests passed
+        run: |
+          echo "✅ Smoke tests passed - safe to deploy to production"
+          echo "SMOKE_TESTS_PASSED=true" >> $GITHUB_ENV
+
+      - name: Set deployment status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              sha: context.sha,
+              state: 'success',
+              context: 'smoke-tests/staging',
+              description: 'Smoke tests passed on staging'
+            });
