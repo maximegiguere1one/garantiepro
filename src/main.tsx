@@ -48,6 +48,18 @@ import { performanceMonitor } from './lib/monitoring/performance-monitor';
   const origError = console.error;
   console.error = function(...args: any[]) {
     const msg = args.join(' ');
+
+    // Toujours afficher les erreurs Auth/Supabase importantes
+    if (
+      msg.includes('[AuthContext]') ||
+      msg.includes('Sign in error') ||
+      msg.includes('auth/') ||
+      msg.includes('AuthApiError')
+    ) {
+      return origError.apply(console, args);
+    }
+
+    // Filtrer seulement le bruit StackBlitz
     if (
       msg.includes('ad_conversions') ||
       msg.includes('ad conversion') ||
@@ -56,6 +68,7 @@ import { performanceMonitor } from './lib/monitoring/performance-monitor';
     ) {
       return; // Ignore silencieusement
     }
+
     return origError.apply(console, args);
   };
 
