@@ -160,11 +160,17 @@ export function TaxSettings() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[TaxSettings.handleSubmit] CALLED - Form submitted');
+    console.log('[TaxSettings.handleSubmit] profile:', profile);
+    console.log('[TaxSettings.handleSubmit] organization:', organization);
 
     if (!profile?.user_id || !organization?.id) {
+      console.error('[TaxSettings.handleSubmit] Missing user or org!');
       showToast('Error: user not connected', 'error');
       return;
     }
+
+    console.log('[TaxSettings.handleSubmit] Starting save process...');
 
     setSaving(true);
     try {
