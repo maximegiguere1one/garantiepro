@@ -1,4 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM_EMAIL = "noreply@locationproremorque.ca";
@@ -9,6 +10,46 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
 };
+
+/**
+ * Verify authentication - CRITICAL SECURITY
+ */
+async function verifyAuth(req: Request) {
+  const authHeader = req.headers.get('Authorization');
+  if (!authHeader) {
+    throw new Error('UNAUTHORIZED');
+  }
+
+  const token = authHeader.replace('Bearer ', '');
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } }
+  );
+
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) {
+    throw new Error('INVALID_TOKEN');
+  }
+
+  // Get user profile and verify role
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, email, role')
+    .eq('id', user.id)
+    .single();
+
+  if (profileError || !profile) {
+    throw new Error('PROFILE_NOT_FOUND');
+  }
+
+  // Only admin and master can send emails
+  if (!['admin', 'master', 'employee'].includes(profile.role)) {
+    throw new Error('FORBIDDEN');
+  }
+
+  return { user, profile };
+}
 
 interface Attachment {
   filename: string;
@@ -74,6 +115,9 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // SECURITY: Verify authentication first
+    await verifyAuth(req);
+
     console.log('Received email request');
     const { to, subject, body, html, variables, attachments, checkConfigOnly }: EmailRequest = await req.json();
 
@@ -230,6 +274,21 @@ Deno.serve(async (req: Request) => {
       }
     );
   } catch (error: any) {
+    // Handle auth errors specifically
+    if (error.message === 'UNAUTHORIZED' || error.message === 'INVALID_TOKEN') {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized', message: 'Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (error.message === 'FORBIDDEN') {
+      return new Response(
+        JSON.stringify({ error: 'Forbidden', message: 'Insufficient permissions' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     console.error('Unexpected error in send-email function:', error);
     console.error('Error stack:', error.stack);
     return createErrorResponse(

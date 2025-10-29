@@ -4,6 +4,7 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
+import { safeLog } from './safe-logger';
 
 /**
  * Sanitize search query - évite undefined/null qui causent 400
@@ -132,7 +133,7 @@ export async function safeUpsert<T extends Record<string, any>>(
     Object.entries(data).filter(([_, v]) => v !== undefined)
   );
 
-  console.log(`[safeUpsert:${table}] Starting upsert with:`, {
+  safeLog.debug(`[safeUpsert:${table}] Starting upsert with:`, {
     table,
     conflictColumn,
     dataKeys: Object.keys(cleanData),
@@ -159,7 +160,7 @@ export async function safeUpsert<T extends Record<string, any>>(
     throw error;
   }
 
-  console.log(`[safeUpsert:${table}] Success:`, result);
+  safeLog.debug(`[safeUpsert:${table}] Success:`, result);
   return result;
 }
 

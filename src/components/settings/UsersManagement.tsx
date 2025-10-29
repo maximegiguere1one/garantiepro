@@ -7,6 +7,7 @@ import { Button } from '../common/Button';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getResetPasswordUrl } from '../../config/constants';
+import { safeLog } from '../../lib/safe-logger';
 
 interface User {
   id: string;
@@ -76,11 +77,7 @@ export function UsersManagement() {
 
       if (error) throw error;
 
-      console.log('Loaded users:', data?.map(u => ({
-        email: u.email,
-        id: u.id,
-        has_id: !!u.id
-      })));
+      safeLog.debug('Loaded users count:', data?.length);
 
       setUsers(data || []);
     } catch (error: any) {
