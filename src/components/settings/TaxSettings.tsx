@@ -11,6 +11,7 @@ interface TaxSettings {
   id?: string;
   user_id?: string;
   organization_id: string;
+  province_code?: string;
   gst_rate: number;
   qst_rate: number;
   pst_rate: number;
@@ -47,6 +48,7 @@ export function TaxSettings() {
   const [settings, setSettings] = useState<TaxSettings>({
     user_id: '',
     organization_id: '',
+    province_code: 'QC',
     gst_rate: 5.0,
     qst_rate: 9.975,
     pst_rate: 0,
@@ -81,13 +83,13 @@ export function TaxSettings() {
       if (error && error.code !== 'PGRST116') throw error;
 
       if (data) {
-        setSettings({
+        const loadedSettings = {
           ...data,
           user_id: profile.id,
           organization_id: organization.id
-        });
+        };
+        setSettings(loadedSettings);
       } else {
-        // Créer les paramètres par défaut avec UPSERT (Québec par défaut)
         await createDefaultSettings();
       }
     } catch (error: any) {
@@ -105,6 +107,7 @@ export function TaxSettings() {
       const defaultSettings = {
         user_id: profile.id,
         organization_id: organization.id,
+        province_code: 'QC',
         gst_rate: 5.0,
         qst_rate: 9.975,
         pst_rate: 0,
@@ -146,6 +149,7 @@ export function TaxSettings() {
     if (province) {
       setSettings({
         ...settings,
+        province_code: provinceCode,
         gst_rate: province.gst,
         qst_rate: province.qst,
         pst_rate: province.pst,
@@ -172,6 +176,7 @@ export function TaxSettings() {
       const settingsData = sanitizeTaxSettings({
         user_id: profile.id,
         organization_id: organization.id,
+        province_code: settings.province_code || 'QC',
         gst_rate: settings.gst_rate,
         qst_rate: settings.qst_rate,
         pst_rate: settings.pst_rate,
@@ -247,6 +252,7 @@ export function TaxSettings() {
             </div>
           </div>
           <select
+            value={settings.province_code || ''}
             onChange={(e) => handleProvinceChange(e.target.value)}
             className="w-full px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white"
           >
