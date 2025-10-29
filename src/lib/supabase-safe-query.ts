@@ -132,6 +132,13 @@ export async function safeUpsert<T extends Record<string, any>>(
     Object.entries(data).filter(([_, v]) => v !== undefined)
   );
 
+  console.log(`[safeUpsert:${table}] Starting upsert with:`, {
+    table,
+    conflictColumn,
+    dataKeys: Object.keys(cleanData),
+    conflictValue: cleanData[conflictColumn],
+  });
+
   const { data: result, error } = await supabase
     .from(table)
     .upsert(cleanData, {
@@ -142,10 +149,17 @@ export async function safeUpsert<T extends Record<string, any>>(
     .maybeSingle();
 
   if (error) {
-    console.error(`[safeUpsert:${table}] Error:`, error);
+    console.error(`[safeUpsert:${table}] Error:`, {
+      message: error.message,
+      code: error.code,
+      details: error.details,
+      hint: error.hint,
+      cleanData,
+    });
     throw error;
   }
 
+  console.log(`[safeUpsert:${table}] Success:`, result);
   return result;
 }
 
