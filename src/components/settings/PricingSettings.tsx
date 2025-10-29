@@ -75,7 +75,7 @@ export function PricingSettings() {
       if (data) {
         setSettings({
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id
         });
       } else {
@@ -95,7 +95,7 @@ export function PricingSettings() {
 
     try {
       const defaultSettings = {
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         default_margin_percentage: 20.0,
         minimum_warranty_price: 50.0,
@@ -121,7 +121,7 @@ export function PricingSettings() {
       if (data) {
         setSettings({
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id
         });
         showToast('Paramètres de tarification créés automatiquement', 'success');
@@ -147,7 +147,7 @@ export function PricingSettings() {
     setSaving(true);
     try {
       const settingsData = {
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         default_margin_percentage: settings.default_margin_percentage,
         minimum_warranty_price: settings.minimum_warranty_price,

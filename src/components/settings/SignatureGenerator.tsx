@@ -42,7 +42,7 @@ export function SignatureGenerator() {
     try {
       const [stylesData, signaturesData] = await Promise.all([
         getSignatureStyles(),
-        profile?.user_id ? getUserSignatures(profile.user_id) : Promise.resolve([]),
+        profile?.user_id ? getUserSignatures(profile.id) : Promise.resolve([]),
       ]);
       setStyles(stylesData);
       setSignatures(signaturesData);
@@ -70,7 +70,7 @@ export function SignatureGenerator() {
     setLoading(true);
     try {
       await saveSignature({
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         full_name: fullName,
         signature_type: 'generated',

@@ -103,7 +103,7 @@ export function ClaimSettings() {
       if (data) {
         const loadedSettings = {
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id,
           sla_hours: safeNumber(data.sla_hours, 48),
           auto_approval_threshold: safeNumber(data.auto_approval_threshold, 500),
@@ -129,7 +129,7 @@ export function ClaimSettings() {
 
     try {
       const defaultSettings = {
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         sla_hours: 48,
         auto_approval_threshold: 500,
@@ -153,7 +153,7 @@ export function ClaimSettings() {
       if (data) {
         setSettings({
           ...data,
-          user_id: profile.user_id,
+          user_id: profile.id,
           organization_id: organization.id,
           exclusion_keywords: Array.isArray(data.exclusion_keywords) ? data.exclusion_keywords : COMMON_EXCLUSIONS,
           workflow_steps: Array.isArray(data.workflow_steps) ? data.workflow_steps : DEFAULT_WORKFLOW,
@@ -205,7 +205,7 @@ export function ClaimSettings() {
     setSaving(true);
     try {
       const settingsData = {
-        user_id: profile.user_id,
+        user_id: profile.id,
         organization_id: organization.id,
         sla_hours: safeNumber(settings.sla_hours, 48),
         auto_approval_threshold: safeNumber(settings.auto_approval_threshold, 500),
@@ -216,7 +216,7 @@ export function ClaimSettings() {
       };
 
       // Backup before saving
-      backupSettings('claim_settings', organization.id, profile.user_id, settingsData);
+      backupSettings('claim_settings', organization.id, profile.id, settingsData);
 
       // Save with retry logic
       const result = await saveWithRetry(async () => {
