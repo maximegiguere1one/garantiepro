@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test de Connexion Supabase</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #1e293b;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #334155;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      background: #dc2626;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background: #b91c1c;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .result {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      font-size: 14px;
+    }
+    .success {
+      background: #dcfce7;
+      border: 2px solid #22c55e;
+      color: #166534;
+    }
+    .error {
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      color: #991b1b;
+    }
+    .info {
+      background: #dbeafe;
+      border: 2px solid #3b82f6;
+      color: #1e40af;
+      margin-bottom: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Diagnostic de Connexion</h1>
+
+    <div class="info">
+      <strong>Configuration Supabase détectée:</strong><br>
+      URL: https://fkxldrkkqvputdgfpayi.supabase.co<br>
+      Anon Key: eyJhbG...Zdxg (configurée)
+    </div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label for="email">Email:</label>
+        <input
+          type="email"
+          id="email"
+          value="maxime@giguere-influence.com"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe:</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Entrez votre mot de passe"
+          required
+        >
+      </div>
+
+      <button type="submit" id="submitBtn">Tester la connexion</button>
+    </form>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzE4NDUsImV4cCI6MjA3NTEwNzg0NX0.cfWvm-NeUcVONV1VWd6U65lwg-2JdEBMWhSFWUJZdxg';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const form = document.getElementById('loginForm');
+    const resultDiv = document.getElementById('result');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Test en cours...';
+      resultDiv.innerHTML = '';
+
+      try {
+        console.log('🔐 Tentative de connexion avec:', email);
+
+        // Test 1: Connexion
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('✅ Connexion réussie!', data);
+
+        // Test 2: Charger le profil
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profileError) {
+          throw new Error('Erreur lors du chargement du profil: ' + profileError.message);
+        }
+
+        // Test 3: Charger l'organisation
+        let orgInfo = 'Aucune organisation';
+        if (profile.organization_id) {
+          const { data: org, error: orgError } = await supabase
+            .from('organizations')
+            .select('*')
+            .eq('id', profile.organization_id)
+            .maybeSingle();
+
+          if (!orgError && org) {
+            orgInfo = `${org.name} (${org.type})`;
+          }
+        }
+
+        const successMessage = `✅ CONNEXION RÉUSSIE!
+
+📧 Email: ${data.user.email}
+👤 User ID: ${data.user.id}
+
+📋 PROFIL:
+- Nom: ${profile.full_name || 'Non défini'}
+- Rôle: ${profile.role}
+- Organisation: ${orgInfo}
+- Téléphone: ${profile.phone || 'Non défini'}
+
+🔑 SESSION:
+- Access Token: ${data.session.access_token.substring(0, 50)}...
+- Expires: ${new Date(data.session.expires_at * 1000).toLocaleString('fr-CA')}
+
+✅ Tous les tests sont passés avec succès!
+Vous pouvez maintenant vous connecter à l'application principale.`;
+
+        resultDiv.className = 'result success';
+        resultDiv.textContent = successMessage;
+
+      } catch (error) {
+        console.error('❌ Erreur de connexion:', error);
+
+        const errorMessage = `❌ ERREUR DE CONNEXION
+
+📧 Email testé: ${email}
+
+⚠️ Message d'erreur:
+${error.message}
+
+🔍 Type d'erreur: ${error.name || 'Unknown'}
+${error.status ? '📊 Status: ' + error.status : ''}
+
+💡 Solutions possibles:
+
+1. Mot de passe incorrect
+   → Vérifiez que vous utilisez le bon mot de passe
+
+2. Utilisateur non trouvé
+   → Cet email n'existe peut-être pas dans la base de données
+
+3. Email non confirmé
+   → Vérifiez votre boîte email
+
+4. Problème de réseau
+   → Vérifiez votre connexion internet
+
+Pour réinitialiser le mot de passe:
+1. Allez sur https://app.supabase.com
+2. Projet: fkxldrkkqvputdgfpayi
+3. Authentication → Users
+4. Trouvez ${email}
+5. Reset Password
+
+📝 Détails techniques:
+${JSON.stringify(error, null, 2)}`;
+
+        resultDiv.className = 'result error';
+        resultDiv.textContent = errorMessage;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Tester la connexion';
+      }
+    });
+
+    // Test de connexion au démarrage
+    window.addEventListener('load', async () => {
+      try {
+        const { data, error } = await supabase.from('profiles').select('count', { count: 'exact', head: true });
+        if (!error) {
+          console.log('✅ Connexion Supabase OK');
+        }
+      } catch (e) {
+        console.error('❌ Erreur de connexion Supabase:', e);
+      }
+    });
+  </script>
+</body>
+</html>
