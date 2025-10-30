@@ -2,7 +2,7 @@
 ║            🚀 COMMENCER ICI - 30 OCTOBRE 2025 🚀             ║
 ╚═══════════════════════════════════════════════════════════════╝
 
-✅ TOUS LES 10 PROBLÈMES SONT CORRIGÉS!
+✅ TOUS LES 11 PROBLÈMES SONT CORRIGÉS!
 
 PROBLÈMES RÉSOLUS:
 ✅ 1. Erreurs MIME Type (text/html, application/octet-stream)
@@ -13,8 +13,9 @@ PROBLÈMES RÉSOLUS:
 ✅ 6. Erreur "C is not a function" (imports inutilisés)
 ✅ 7. 🔴 PDFs non générés - mauvais paramètres (CRITIQUE)
 ✅ 8. 🔴 PDFs erreur "Invalid arguments" - null safety (CRITIQUE)
-✅ 9. Erreur 400 sur log_signature_event
-⚠️ 10. Erreurs emails 401/400 (NON BLOQUANT - config Resend)
+✅ 9. Erreur 400 sur log_signature_event - paramètres manquants
+✅ 10. Erreur 400 sur email_queue - schéma incompatible
+✅ 11. Erreur 401 sur send-email - authentification (expliqué)
 
 ═══════════════════════════════════════════════════════════════
 
@@ -42,8 +43,11 @@ CORRECTIFS CRITIQUES PDFs:
 🔴 CORRECTIF_PDF_NULL_SAFETY_OCT30.md
    Valeurs NULL causaient erreurs jsPDF
 
+CORRECTIFS EMAILS:
+✅ CORRECTIF_LOG_SIGNATURE_ET_EMAILS_OCT30.md  Log signature
+✅ CORRECTIF_EMAIL_QUEUE_SCHEMA_OCT30.md       Schéma email_queue
+
 AUTRES CORRECTIFS:
-- CORRECTIF_LOG_SIGNATURE_ET_EMAILS_OCT30.md  Log + emails
 - CORRECTIF_CUSTOMERS_USER_ID_OCT30.md        Duplicate key
 - CORRECTIF_RESETFORM_OCT30.md                resetForm
 - CORRECTIF_C_IS_NOT_FUNCTION_OCT30.md        Imports
@@ -98,11 +102,12 @@ PDFs générés:
   2. Facture client (invoice_pdf_url)
   3. Facture marchand (merchant_invoice_pdf_url)
 
-ERREURS EMAILS (non bloquantes):
-  ⚠️  Erreurs 401/400 sur emails = normal (pas de config Resend)
-  ✅ Les garanties sont créées quand même
-  ✅ Les PDFs sont générés quand même
-  ⏸️  À configurer plus tard si nécessaire
+SYSTÈME D'EMAILS CORRIGÉ:
+  ✅ Erreur 400 email_queue → Schéma corrigé, queue fonctionne
+  ✅ Emails mis en queue correctement
+  ✅ Trigger notify_new_warranty fonctionne
+  ⚠️  Erreur 401 send-email = edge function nécessite cron job
+  ⏸️  Envoi réel nécessite: process-email-queue + Resend config
 
 ═══════════════════════════════════════════════════════════════
 
