@@ -244,15 +244,17 @@ export function generateOptimizedContractPDF(
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
-  doc.text(`L'ACHETEUR: ${customer.first_name} ${customer.last_name}`, 25, yPos);
+  doc.text(`L'ACHETEUR: ${customer.first_name || ''} ${customer.last_name || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(customer.address, 25, yPos);
+  if (customer.address) {
+    doc.text(customer.address, 25, yPos);
+    yPos += 5;
+  }
+  doc.text(`${customer.city || ''}, ${customer.province || 'QC'} ${customer.postal_code || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`${customer.city}, ${customer.province} ${customer.postal_code}`, 25, yPos);
+  doc.text(`Téléphone: ${customer.phone || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Téléphone: ${customer.phone}`, 25, yPos);
-  yPos += 5;
-  doc.text(`Courriel: ${customer.email}`, 25, yPos);
+  doc.text(`Courriel: ${customer.email || 'N/A'}`, 25, yPos);
 
   yPos += 12;
 
@@ -275,17 +277,17 @@ export function generateOptimizedContractPDF(
   doc.roundedRect(20, yPos, pageWidth - 40, 35, 2, 2, 'S');
   yPos += 6;
 
-  doc.text(`Année: ${trailer.year}`, 25, yPos);
+  doc.text(`Année: ${trailer.year || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Marque: ${trailer.make}`, 25, yPos);
+  doc.text(`Marque: ${trailer.make || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Modèle: ${trailer.model}`, 25, yPos);
+  doc.text(`Modèle: ${trailer.model || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type}`, 25, yPos);
+  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Numéro d'identification du véhicule (NIV): ${trailer.vin}`, 25, yPos);
+  doc.text(`Numéro d'identification du véhicule (NIV): ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price)} $ CAD`, 25, yPos);
+  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price || 0)} $ CAD`, 25, yPos);
 
   yPos += 15;
 
@@ -608,15 +610,17 @@ export function generateOptimizedContractPDF(
   doc.roundedRect(invoiceCol2X, customerY, invoiceCol1Width, 30, 2, 2, 'S');
   customerY += 5;
 
-  doc.text(`${customer.first_name} ${customer.last_name}`, invoiceCol2X + 5, customerY);
+  doc.text(`${customer.first_name || ''} ${customer.last_name || ''}`, invoiceCol2X + 5, customerY);
   customerY += 5;
-  doc.text(customer.address, invoiceCol2X + 5, customerY);
+  if (customer.address) {
+    doc.text(customer.address, invoiceCol2X + 5, customerY);
+    customerY += 5;
+  }
+  doc.text(`${customer.city || ''}, ${customer.province || 'QC'} ${customer.postal_code || ''}`, invoiceCol2X + 5, customerY);
   customerY += 5;
-  doc.text(`${customer.city}, ${customer.province} ${customer.postal_code}`, invoiceCol2X + 5, customerY);
+  doc.text(`Email: ${customer.email || 'N/A'}`, invoiceCol2X + 5, customerY);
   customerY += 5;
-  doc.text(`Email: ${customer.email}`, invoiceCol2X + 5, customerY);
-  customerY += 5;
-  doc.text(`Tél: ${customer.phone}`, invoiceCol2X + 5, customerY);
+  doc.text(`Tél: ${customer.phone || 'N/A'}`, invoiceCol2X + 5, customerY);
 
   yPos += 40;
 
@@ -626,13 +630,13 @@ export function generateOptimizedContractPDF(
   doc.roundedRect(20, yPos, pageWidth - 40, 25, 2, 2, 'S');
   yPos += 5;
 
-  doc.text(`${trailer.year} ${trailer.make} ${trailer.model}`, 25, yPos);
+  doc.text(`${trailer.year || ''} ${trailer.make || ''} ${trailer.model || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type}`, 25, yPos);
+  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`NIV: ${trailer.vin}`, 25, yPos);
+  doc.text(`NIV: ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price)} $`, 25, yPos);
+  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price || 0)} $`, 25, yPos);
 
   yPos += 15;
 
@@ -818,13 +822,19 @@ export function generateOptimizedMerchantInvoicePDF(data: InvoiceData): any {
   doc.roundedRect(20, yPos, pageWidth - 40, 30, 2, 2, 'S');
   yPos += 5;
 
-  doc.text(`Nom: ${customer.first_name} ${customer.last_name}`, 25, yPos);
+  doc.text(`Nom: ${customer.first_name || ''} ${customer.last_name || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`Email: ${customer.email}`, 25, yPos);
+  doc.text(`Email: ${customer.email || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Téléphone: ${customer.phone}`, 25, yPos);
+  doc.text(`Téléphone: ${customer.phone || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Adresse: ${customer.address}, ${customer.city}, ${customer.province} ${customer.postal_code}`, 25, yPos);
+  const addressParts = [
+    customer.address || '',
+    customer.city || '',
+    customer.province || 'QC',
+    customer.postal_code || ''
+  ].filter(Boolean).join(', ');
+  doc.text(`Adresse: ${addressParts || 'N/A'}`, 25, yPos);
   yPos += 5;
   if (customer.language_preference) {
     doc.text(`Langue: ${customer.language_preference.toUpperCase()}`, 25, yPos);
@@ -838,13 +848,13 @@ export function generateOptimizedMerchantInvoicePDF(data: InvoiceData): any {
   doc.roundedRect(20, yPos, pageWidth - 40, 25, 2, 2, 'S');
   yPos += 5;
 
-  doc.text(`${trailer.year} ${trailer.make} ${trailer.model}`, 25, yPos);
+  doc.text(`${trailer.year || ''} ${trailer.make || ''} ${trailer.model || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type}`, 25, yPos);
+  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`NIV: ${trailer.vin}`, 25, yPos);
+  doc.text(`NIV: ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price)} $ CAD`, 25, yPos);
+  doc.text(`Prix d'achat: ${formatCurrency(trailer.purchase_price || 0)} $ CAD`, 25, yPos);
 
   yPos += 15;
 
