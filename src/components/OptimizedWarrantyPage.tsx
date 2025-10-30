@@ -347,10 +347,48 @@ export function OptimizedWarrantyPage({ onNavigate, onBack }: OptimizedWarrantyP
         user_id: profile!.id,
       });
 
+      // Générer les PDFs (contrat client, facture client, facture marchand)
       try {
-        await generateAndStoreDocuments(warranty);
+        console.log('[OptimizedWarrantyPage] Génération des PDFs pour warranty:', warranty.id);
+
+        // Charger toutes les données nécessaires pour la génération des PDFs
+        const { data: customer } = await supabase
+          .from('customers')
+          .select('*')
+          .eq('id', warranty.customer_id)
+          .single();
+
+        const { data: trailer } = await supabase
+          .from('trailers')
+          .select('*')
+          .eq('id', warranty.trailer_id)
+          .single();
+
+        const { data: plan } = await supabase
+          .from('warranty_plans')
+          .select('*')
+          .eq('id', warranty.plan_id)
+          .single();
+
+        if (!customer || !trailer || !plan) {
+          throw new Error('Données manquantes pour la génération des PDFs');
+        }
+
+        // Appeler generateAndStoreDocuments avec les bons paramètres
+        await generateAndStoreDocuments(
+          warranty.id,
+          {
+            warranty,
+            customer,
+            trailer,
+            plan
+          }
+        );
+
+        console.log('[OptimizedWarrantyPage] ✓ PDFs générés avec succès');
       } catch (docError) {
-        console.error('Erreur génération documents:', docError);
+        console.error('[OptimizedWarrantyPage] ❌ Erreur génération documents:', docError);
+        // Ne pas bloquer la création de la garantie si les PDFs échouent
       }
 
       const qbConnected = await isIntegrationConnected(currentOrganization!.id, 'quickbooks');
