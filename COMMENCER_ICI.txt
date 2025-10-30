@@ -4,10 +4,21 @@
 
 ✅ TOUS LES PROBLÈMES SONT CORRIGÉS ET PRÊTS À DÉPLOYER
 
-3 PROBLÈMES RÉSOLUS:
+4 PROBLÈMES RÉSOLUS:
 ✅ Erreurs MIME Type (text/html, application/octet-stream)
 ✅ Erreur 400 sur company_settings  
 ✅ Logs de débogage pour signature papier
+✅ Erreur "duplicate key" sur customers.user_id (NOUVEAU!)
+
+═══════════════════════════════════════════════════════════════
+
+🆕 NOUVEAU CORRECTIF (30 OCT):
+
+Problème: "duplicate key value violates unique constraint customers_user_id_key"
+Solution: Contrainte UNIQUE sur user_id supprimée
+Maintenant: Un vendeur peut créer plusieurs clients différents ✅
+
+Voir: CORRECTIF_CUSTOMERS_USER_ID_OCT30.md
 
 ═══════════════════════════════════════════════════════════════
 
@@ -27,9 +38,10 @@
 
 📚 DOCUMENTATION:
 
-- START_HERE_OCT30.md          Guide complet (5 min)
-- RESUME_FINAL_OCT30.md         Détails de tous les changements
-- 00_LIRE_EN_PREMIER_OCT30.md  Index de navigation
+- CORRECTIF_CUSTOMERS_USER_ID_OCT30.md  Nouveau correctif
+- START_HERE_OCT30.md                   Guide complet (5 min)
+- RESUME_FINAL_OCT30.md                 Détails de tous les changements
+- 00_LIRE_EN_PREMIER_OCT30.md          Index de navigation
 
 ═══════════════════════════════════════════════════════════════
 
@@ -38,12 +50,21 @@
 ✅ Plus d'erreur MIME dans la console
 ✅ Page Réglages charge correctement  
 ✅ Logs détaillés pour signature papier
+✅ Création de plusieurs garanties sans erreur "duplicate key"
 
 ═══════════════════════════════════════════════════════════════
 
 🔑 CONNEXION:
 Email: maxime@giguere-influence.com
 Pass: ProRemorque2025!
+
+═══════════════════════════════════════════════════════════════
+
+🧪 TESTEZ MAINTENANT:
+
+1. Créez une première garantie avec un nouveau client  → ✅ OK
+2. Créez une deuxième garantie avec un autre client   → ✅ OK
+3. Plus d'erreur "duplicate key"                      → ✅ OK
 
 ═══════════════════════════════════════════════════════════════
 
