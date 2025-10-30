@@ -54,7 +54,7 @@ export function OptimizedWarrantyForm({ onSubmit, onCancel }: OptimizedWarrantyF
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const { values, setValue, setMultipleValues, isDirty, resetForm } = useFormState({
+  const { values, setValue, setMultipleValues, isDirty, reset } = useFormState({
     initialValues: {
       firstName: '',
       lastName: '',
@@ -197,7 +197,10 @@ export function OptimizedWarrantyForm({ onSubmit, onCancel }: OptimizedWarrantyF
       };
 
       await onSubmit(formData);
-      resetForm();
+      reset();
+      setStep(1);
+      setCustomerFound(false);
+      setShowOptionalFields(false);
       toast.success('Garantie créée', 'La garantie a été créée avec succès');
     } catch (error: any) {
       toast.error('Erreur', error.message || 'Une erreur est survenue');
