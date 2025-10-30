@@ -304,41 +304,22 @@ export function NewWarranty() {
   };
 
   const calculatePrice = () => {
-    console.log('[NewWarranty] calculatePrice called - selectedPlan:', selectedPlan?.id, selectedPlan?.base_price);
-
     if (!selectedPlan) {
-      console.warn('[NewWarranty] calculatePrice - No selected plan');
       return { subtotal: 0, taxes: 0, total: 0 };
     }
 
     try {
       // CRITIQUE: Utiliser safeNumber pour garantir des valeurs numériques valides
       const basePrice = safeNumber(selectedPlan.base_price, 0);
-      console.log('[NewWarranty] calculatePrice - basePrice:', basePrice);
 
       // CRITIQUE: Utiliser safeAdd pour additionner les prix d'options de manière sécurisée
       const optionsPrice = options
         .filter((opt) => selectedOptions.includes(opt.id))
         .reduce((sum, opt) => safeAdd(sum, safeNumber(opt.price, 0)), 0);
-      console.log('[NewWarranty] calculatePrice - optionsPrice:', optionsPrice);
 
       const subtotal = safeAdd(basePrice, optionsPrice);
-      console.log('[NewWarranty] calculatePrice - subtotal:', subtotal);
-
-      console.log('[NewWarranty] calculatePrice - province:', customer.province, 'taxRates keys:', Object.keys(taxRates));
       const taxes = safeNumber(calculateTaxes(subtotal, customer.province, taxRates), 0);
-      console.log('[NewWarranty] calculatePrice - taxes:', taxes);
-
       const total = safeAdd(subtotal, taxes);
-      console.log('[NewWarranty] calculatePrice - total:', total);
-
-      console.log('[NewWarranty] calculatePrice result:', {
-        basePrice: { value: basePrice, type: typeof basePrice, isValid: !isNaN(basePrice) },
-        optionsPrice: { value: optionsPrice, type: typeof optionsPrice, isValid: !isNaN(optionsPrice) },
-        subtotal: { value: subtotal, type: typeof subtotal, isValid: !isNaN(subtotal) },
-        taxes: { value: taxes, type: typeof taxes, isValid: !isNaN(taxes) },
-        total: { value: total, type: typeof total, isValid: !isNaN(total) }
-      });
 
       return {
         subtotal,
@@ -709,10 +690,9 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
 
       if (existingCustomer) {
         console.log('[NewWarranty] Step 2/6: Customer exists, using existing customer:', existingCustomer.id);
-        customerData = existingCustomer;
 
         // Update customer info if needed (keep most recent data)
-        const { error: updateError } = await supabase
+        const { data: updatedCustomer, error: updateError } = await supabase
           .from('customers')
           .update({
             first_name: customer.firstName,
@@ -726,10 +706,28 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
             consent_marketing: customer.consentMarketing,
             consent_date: customer.consentMarketing ? new Date().toISOString() : existingCustomer.consent_date,
           })
-          .eq('id', existingCustomer.id);
+          .eq('id', existingCustomer.id)
+          .select()
+          .single();
 
         if (updateError) {
           console.warn('[NewWarranty] Warning: Could not update customer info:', updateError);
+          // Use existing customer with updated fields manually if update fails
+          customerData = {
+            ...existingCustomer,
+            first_name: customer.firstName,
+            last_name: customer.lastName,
+            phone: customer.phone,
+            address: customer.address,
+            city: customer.city,
+            province: customer.province,
+            postal_code: customer.postalCode,
+            language_preference: customer.languagePreference,
+            consent_marketing: customer.consentMarketing,
+          };
+        } else {
+          // Use the updated customer data from the database
+          customerData = updatedCustomer;
         }
       } else {
         console.log('[NewWarranty] Step 2/6: Creating new customer');
