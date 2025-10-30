@@ -341,11 +341,23 @@ export function OptimizedWarrantyPage({ onNavigate, onBack }: OptimizedWarrantyP
       setCreatedWarrantyId(warranty.id);
 
       const mappedMethod = selectedSignatureMethod === 'online' ? 'electronic' : 'in_person';
-      await logSignatureEvent(warranty.id, 'created', {
-        source: 'optimized_form',
-        method: mappedMethod,
-        user_id: profile!.id,
-      });
+      try {
+        const sessionId = `WRT-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        await logSignatureEvent(
+          warranty.id,
+          currentOrganization!.id,
+          'created',
+          {
+            source: 'optimized_form',
+            method: mappedMethod,
+            user_id: profile!.id,
+          },
+          sessionId
+        );
+      } catch (logError) {
+        console.error('[OptimizedWarrantyPage] Error logging signature event:', logError);
+        // Ne pas bloquer la création si le log échoue
+      }
 
       // Générer les PDFs (contrat client, facture client, facture marchand)
       try {
