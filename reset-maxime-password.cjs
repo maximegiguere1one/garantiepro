@@ -1,14 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
 
 const supabaseUrl = 'https://fkxldrkkqvputdgfpayi.supabase.co';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'VOTRE_CLE_ICI';
-
-if (supabaseServiceKey === 'VOTRE_CLE_ICI') {
-  console.error('❌ ERREUR: SUPABASE_SERVICE_ROLE_KEY non configurée');
-  console.error('Veuillez définir la variable d\'environnement SUPABASE_SERVICE_ROLE_KEY');
-  console.error('Exemple: SUPABASE_SERVICE_ROLE_KEY=votre_clé node reset-maxime-password.cjs');
-  process.exit(1);
-}
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTUzMTg0NSwiZXhwIjoyMDc1MTA3ODQ1fQ.rb_ASs-pfk-2Z80u2ZrqhnC9xuJaSbPBYfaHj3CeL8o';
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {
@@ -18,66 +11,51 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
 });
 
 async function resetPassword() {
-  const email = 'maxime@giguere-influence.com';
-  const newPassword = 'ProRemorque2025!';
-
-  console.log('🔄 Réinitialisation du mot de passe pour:', email);
-  console.log('');
-
   try {
-    // Vérifier si l'utilisateur existe
-    console.log('1️⃣ Vérification de l\'existence de l\'utilisateur...');
+    console.log('🔍 Recherche de l\'utilisateur maxime@giguere-influence.com...');
+
     const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
 
     if (listError) {
-      throw new Error(`Erreur lors de la récupération des utilisateurs: ${listError.message}`);
-    }
-
-    const user = users.find(u => u.email === email);
-
-    if (!user) {
-      console.error('❌ Utilisateur non trouvé:', email);
-      console.log('');
-      console.log('📋 Utilisateurs disponibles:');
-      users.slice(0, 5).forEach(u => {
-        console.log(`   - ${u.email} (ID: ${u.id})`);
-      });
+      console.error('❌ Erreur lors de la liste des utilisateurs:', listError);
       process.exit(1);
     }
 
-    console.log('✅ Utilisateur trouvé:', user.email);
-    console.log('   ID:', user.id);
-    console.log('   Créé le:', new Date(user.created_at).toLocaleDateString('fr-CA'));
-    console.log('');
+    console.log(`📊 Total d'utilisateurs trouvés: ${users.length}`);
 
-    // Réinitialiser le mot de passe
-    console.log('2️⃣ Réinitialisation du mot de passe...');
-    const { data: updateData, error: updateError } = await supabase.auth.admin.updateUserById(
+    const user = users.find(u => u.email === 'maxime@giguere-influence.com');
+
+    if (!user) {
+      console.error('❌ Utilisateur non trouvé: maxime@giguere-influence.com');
+      console.log('\n📋 Utilisateurs disponibles:');
+      users.forEach(u => console.log(`  - ${u.email} (ID: ${u.id})`));
+      process.exit(1);
+    }
+
+    console.log('✅ Utilisateur trouvé!');
+    console.log(`   ID: ${user.id}`);
+    console.log(`   Email: ${user.email}`);
+    console.log(`   Créé le: ${new Date(user.created_at).toLocaleString('fr-CA')}`);
+
+    console.log('\n🔐 Réinitialisation du mot de passe...');
+
+    const { data, error: updateError } = await supabase.auth.admin.updateUserById(
       user.id,
-      { password: newPassword }
+      { password: 'ProRemorque2025!' }
     );
 
     if (updateError) {
-      throw new Error(`Erreur lors de la mise à jour: ${updateError.message}`);
+      console.error('❌ Erreur lors de la réinitialisation:', updateError);
+      process.exit(1);
     }
 
-    console.log('✅ Mot de passe réinitialisé avec succès!');
-    console.log('');
-    console.log('═════════════════════════════════════════════');
-    console.log('📧 Email:', email);
-    console.log('🔑 Nouveau mot de passe:', newPassword);
-    console.log('═════════════════════════════════════════════');
-    console.log('');
-    console.log('💡 Vous pouvez maintenant vous connecter avec ces identifiants');
-    console.log('');
+    console.log('\n✅ ✅ ✅ MOT DE PASSE RÉINITIALISÉ AVEC SUCCÈS! ✅ ✅ ✅');
+    console.log('\n📧 Email: maxime@giguere-influence.com');
+    console.log('🔑 Nouveau mot de passe: ProRemorque2025!');
+    console.log('\n🎉 Vous pouvez maintenant vous connecter avec ces identifiants!');
 
   } catch (error) {
-    console.error('');
-    console.error('❌ ERREUR:', error.message);
-    console.error('');
-    if (error.stack) {
-      console.error('Stack trace:', error.stack);
-    }
+    console.error('❌ Erreur inattendue:', error);
     process.exit(1);
   }
 }
