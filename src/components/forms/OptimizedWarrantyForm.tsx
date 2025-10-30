@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { User, Truck, Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { ValidatedField } from './ValidatedField';
 import { AnimatedButton } from '../common/AnimatedButton';
