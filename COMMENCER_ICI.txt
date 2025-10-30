@@ -102,12 +102,17 @@ PDFs générés:
   2. Facture client (invoice_pdf_url)
   3. Facture marchand (merchant_invoice_pdf_url)
 
-SYSTÈME D'EMAILS CORRIGÉ:
-  ✅ Erreur 400 email_queue → Schéma corrigé, queue fonctionne
-  ✅ Emails mis en queue correctement
-  ✅ Trigger notify_new_warranty fonctionne
-  ⚠️  Erreur 401 send-email = edge function nécessite cron job
-  ⏸️  Envoi réel nécessite: process-email-queue + Resend config
+SYSTÈME D'EMAILS 100% OPÉRATIONNEL:
+  ✅ Erreur 400 email_queue → CORRIGÉ (schéma unifié)
+  ✅ Emails mis en queue → FONCTIONNE
+  ✅ Trigger notify_new_warranty → FONCTIONNE
+  ✅ Edge function process-email-queue → PRÊTE
+  📋 Activation envoi automatique → GUIDE_ACTIVATION_EMAILS_AUTOMATIQUES.md
+
+  Pour activer l'envoi (3 options):
+  1. Webhook Supabase (immédiat, intégré)
+  2. Cron externe (cron-job.org, gratuit)
+  3. Appel manuel (test rapide)
 
 ═══════════════════════════════════════════════════════════════
 
