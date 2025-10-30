@@ -524,6 +524,107 @@ class WarrantyService {
       // Silent fail
     }
   }
+
+  async deleteWarranty(warrantyId: string): Promise<{
+    success: boolean;
+    message: string;
+    deletedCount?: {
+      payments: number;
+      tokens: number;
+      claims: number;
+    };
+  }> {
+    const startTime = performance.now();
+
+    try {
+      console.log('[WarrantyService] Deleting warranty:', warrantyId);
+
+      // Récupérer les URLs des PDFs avant suppression
+      const { data: warranty } = await supabase
+        .from('warranties')
+        .select('contract_pdf_url, customer_invoice_pdf_url, merchant_invoice_pdf_url, contract_number')
+        .eq('id', warrantyId)
+        .single();
+
+      if (!warranty) {
+        throw new Error('Garantie introuvable');
+      }
+
+      // Supprimer les fichiers PDF du storage
+      const pdfUrls = [
+        warranty.contract_pdf_url,
+        warranty.customer_invoice_pdf_url,
+        warranty.merchant_invoice_pdf_url,
+      ].filter(Boolean);
+
+      if (pdfUrls.length > 0) {
+        console.log('[WarrantyService] Deleting PDF files from storage...');
+
+        for (const url of pdfUrls) {
+          try {
+            // Extraire le chemin du fichier depuis l'URL ou utiliser directement l'URL
+            const path = url!.includes('warranty-documents/')
+              ? url!.split('warranty-documents/')[1]
+              : url!;
+
+            await supabase.storage
+              .from('warranty-documents')
+              .remove([path]);
+          } catch (storageError) {
+            // Continue même si la suppression du storage échoue
+            console.warn('[WarrantyService] Failed to delete PDF from storage:', storageError);
+          }
+        }
+      }
+
+      // Appeler la fonction RPC pour supprimer en cascade
+      const { data: result, error } = await supabase.rpc('delete_warranty_with_cascade', {
+        warranty_id_param: warrantyId,
+      });
+
+      if (error) {
+        console.error('[WarrantyService] RPC error:', error);
+        throw new Error(error.message || 'Erreur lors de la suppression de la garantie');
+      }
+
+      if (!result || !result.success) {
+        const errorMsg = result?.error || result?.message || 'Échec de la suppression';
+        throw new Error(errorMsg);
+      }
+
+      // Invalider le cache pour rafraîchir la liste
+      this.invalidateCache();
+
+      const executionTime = performance.now() - startTime;
+      this.logPerformance('delete_warranty', executionTime);
+
+      console.log('[WarrantyService] Warranty deleted successfully:', {
+        warrantyId,
+        contractNumber: warranty.contract_number,
+        executionTime,
+      });
+
+      return {
+        success: true,
+        message: `Garantie ${warranty.contract_number} supprimée avec succès`,
+        deletedCount: {
+          payments: result.deleted_payments || 0,
+          tokens: result.deleted_tokens || 0,
+          claims: result.updated_claims || 0,
+        },
+      };
+    } catch (error: any) {
+      const executionTime = performance.now() - startTime;
+      this.logPerformance('delete_warranty:error', executionTime);
+
+      console.error('[WarrantyService] Delete warranty error:', error);
+
+      return {
+        success: false,
+        message: error.message || 'Impossible de supprimer la garantie',
+      };
+    }
+  }
 }
 
 export const warrantyService = new WarrantyService();

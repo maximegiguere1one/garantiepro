@@ -1,5 +1,5 @@
 import { memo, useState, useEffect, useRef } from 'react';
-import { Eye, Download, MapPin, Phone, Mail, Calendar } from 'lucide-react';
+import { Eye, Download, MapPin, Phone, Mail, Calendar, Trash2 } from 'lucide-react';
 import { AnimatedButton } from './AnimatedButton';
 import type { WarrantyListItem } from '../../lib/warranty-service';
 
@@ -7,10 +7,12 @@ interface LazyWarrantyCardProps {
   warranty: WarrantyListItem;
   onViewDetails: (warranty: WarrantyListItem) => void;
   onDownload: (warranty: WarrantyListItem) => void;
+  onDelete?: (warranty: WarrantyListItem) => void;
   getStatusColor: (status: string) => string;
+  canDelete?: boolean;
 }
 
-export const LazyWarrantyCard = memo(({ warranty, onViewDetails, onDownload, getStatusColor }: LazyWarrantyCardProps) => {
+export const LazyWarrantyCard = memo(({ warranty, onViewDetails, onDownload, onDelete, getStatusColor, canDelete = false }: LazyWarrantyCardProps) => {
   const [isVisible, setIsVisible] = useState(false);
   const [showFullDetails, setShowFullDetails] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -143,6 +145,16 @@ export const LazyWarrantyCard = memo(({ warranty, onViewDetails, onDownload, get
                 <AnimatedButton variant="secondary" size="sm" onClick={() => onDownload(warranty)} icon={<Download className="w-4 h-4" />}>
                   PDF
                 </AnimatedButton>
+              )}
+              {canDelete && onDelete && (
+                <button
+                  onClick={() => onDelete(warranty)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors group"
+                  title="Supprimer définitivement cette garantie"
+                  aria-label="Supprimer la garantie"
+                >
+                  <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                </button>
               )}
             </div>
           </div>

@@ -17,6 +17,7 @@ import { Pagination } from './Pagination';
 import { WarrantyListSkeleton, PerformanceBadge } from './common/WarrantySkeleton';
 import { WarrantyDiagnosticsPanel } from './WarrantyDiagnosticsPanel';
 import { LazyWarrantyCard } from './common/LazyWarrantyCard';
+import { WarrantyDeleteConfirmationModal } from './common/WarrantyDeleteConfirmationModal';
 // import { WarrantyDocumentsManager } from './warranty/WarrantyDocumentsManager';
 
 type Warranty = WarrantyListItem;
@@ -38,6 +39,8 @@ export const WarrantiesList = memo(() => {
   const [fromCache, setFromCache] = useState(false);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [warrantyToDelete, setWarrantyToDelete] = useState<Warranty | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const itemsPerPage = 10;
 
   const loadWarranties = useCallback(async (retryCount = 0) => {
@@ -178,6 +181,54 @@ export const WarrantiesList = memo(() => {
       setRefreshing(false);
     }
   };
+
+  const handleDeleteWarranty = async () => {
+    if (!warrantyToDelete) return;
+
+    setIsDeleting(true);
+
+    try {
+      console.log('[WarrantiesList] Deleting warranty:', warrantyToDelete.id);
+
+      const result = await warrantyService.deleteWarranty(warrantyToDelete.id);
+
+      if (result.success) {
+        // Retirer la garantie de la liste locale avec animation
+        setWarranties((prev) => prev.filter((w) => w.id !== warrantyToDelete.id));
+        setTotalCount((prev) => Math.max(0, prev - 1));
+
+        // Fermer le modal
+        setWarrantyToDelete(null);
+
+        // Afficher un toast de succès
+        toast.success(
+          'Garantie supprimée',
+          result.message,
+          5000
+        );
+
+        // Recharger la liste après un court délai pour synchroniser
+        setTimeout(() => {
+          loadWarranties(0);
+        }, 1000);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error: any) {
+      console.error('[WarrantiesList] Delete error:', error);
+      toast.error(
+        'Erreur de suppression',
+        error.message || 'Impossible de supprimer la garantie. Veuillez réessayer.',
+        7000
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const canDeleteWarranty = useMemo(() => {
+    return profile?.role === 'admin' || profile?.role === 'master';
+  }, [profile?.role]);
 
   return (
     <div className="animate-fadeIn">
@@ -322,6 +373,8 @@ export const WarrantiesList = memo(() => {
               warranty={warranty}
               onViewDetails={setSelectedWarranty}
               onDownload={(w) => w.contract_pdf_url && downloadBase64PDF(w.contract_pdf_url, `Contrat-${w.contract_number}.pdf`)}
+              onDelete={canDeleteWarranty ? setWarrantyToDelete : undefined}
+              canDelete={canDeleteWarranty}
               getStatusColor={getStatusColor}
             />
           ))
@@ -482,6 +535,14 @@ export const WarrantiesList = memo(() => {
 
       {showDiagnostics && (
         <WarrantyDiagnosticsPanel onClose={() => setShowDiagnostics(false)} />
+      )}
+
+      {warrantyToDelete && (
+        <WarrantyDeleteConfirmationModal
+          warranty={warrantyToDelete}
+          onConfirm={handleDeleteWarranty}
+          onCancel={() => setWarrantyToDelete(null)}
+        />
       )}
     </div>
   );
