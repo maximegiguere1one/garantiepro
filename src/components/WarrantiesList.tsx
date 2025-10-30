@@ -117,6 +117,10 @@ export const WarrantiesList = memo(() => {
     return warranties;
   }, [warranties]);
 
+  const canDeleteWarranty = useMemo(() => {
+    return profile?.role === 'admin' || profile?.role === 'master';
+  }, [profile?.role]);
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -225,10 +229,6 @@ export const WarrantiesList = memo(() => {
       setIsDeleting(false);
     }
   };
-
-  const canDeleteWarranty = useMemo(() => {
-    return profile?.role === 'admin' || profile?.role === 'master';
-  }, [profile?.role]);
 
   return (
     <div className="animate-fadeIn">
