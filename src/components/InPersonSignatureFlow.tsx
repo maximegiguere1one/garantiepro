@@ -554,39 +554,60 @@ export function InPersonSignatureFlow({
   };
 
   const handleComplete = async () => {
+    console.log('[InPersonSignatureFlow] handleComplete called');
+    console.log('[InPersonSignatureFlow] clientSignatureDataUrl length:', clientSignatureDataUrl?.length || 0);
+    console.log('[InPersonSignatureFlow] witnessSignatureDataUrl length:', witnessSignatureDataUrl?.length || 0);
+    console.log('[InPersonSignatureFlow] identityPhotoFile:', !!identityPhotoFile);
+    console.log('[InPersonSignatureFlow] clientPhotoFile:', !!clientPhotoFile);
+
     if (!clientSignatureDataUrl || !witnessSignatureDataUrl || !identityPhotoFile || !clientPhotoFile) {
-      alert(language === 'fr'
-        ? 'Veuillez compléter toutes les étapes requises'
-        : 'Please complete all required steps');
+      const missing = [];
+      if (!clientSignatureDataUrl) missing.push('Signature du client');
+      if (!witnessSignatureDataUrl) missing.push('Signature du témoin');
+      if (!identityPhotoFile) missing.push('Photo du document d\'identité');
+      if (!clientPhotoFile) missing.push('Photo du client');
+
+      const message = language === 'fr'
+        ? `Veuillez compléter toutes les étapes requises:\n\n${missing.join('\n')}`
+        : `Please complete all required steps:\n\n${missing.join('\n')}`;
+
+      alert(message);
       return;
     }
 
     setUploading(true);
 
     try {
+      console.log('[InPersonSignatureFlow] Uploading identity document photo...');
       // Upload identity document photo
       const identityPhotoUrl = await uploadFile(
         identityPhotoFile,
         `${organizationId}/identity/${physicalDocumentNumber}-id.jpg`
       );
+      console.log('[InPersonSignatureFlow] Identity photo uploaded:', identityPhotoUrl);
 
+      console.log('[InPersonSignatureFlow] Uploading client photo...');
       // Upload client photo
       const clientPhotoUrl = await uploadFile(
         clientPhotoFile,
         `${organizationId}/identity/${physicalDocumentNumber}-client.jpg`
       );
+      console.log('[InPersonSignatureFlow] Client photo uploaded:', clientPhotoUrl);
 
       // Upload scanned document if provided
       let scannedDocUrl: string | undefined;
       if (scannedDocFile) {
+        console.log('[InPersonSignatureFlow] Uploading scanned document...');
         scannedDocUrl = await uploadFile(
           scannedDocFile,
           `${organizationId}/scanned/${physicalDocumentNumber}-scan.pdf`
         );
+        console.log('[InPersonSignatureFlow] Scanned document uploaded:', scannedDocUrl);
       }
 
-      onComplete({
-        signatureMethod: 'in_person',
+      console.log('[InPersonSignatureFlow] Calling onComplete with data');
+      const completionData = {
+        signatureMethod: 'in_person' as const,
         physicalDocumentNumber,
         signerFullName,
         signerEmail,
@@ -600,12 +621,20 @@ export function InPersonSignatureFlow({
         signatureLocationType: locationType,
         geolocation,
         verificationNotes
+      };
+
+      console.log('[InPersonSignatureFlow] Completion data:', {
+        ...completionData,
+        clientSignatureDataUrl: `${completionData.clientSignatureDataUrl?.substring(0, 50)}... (${completionData.clientSignatureDataUrl?.length} chars)`,
+        witnessSignatureDataUrl: `${completionData.witnessSignatureDataUrl?.substring(0, 50)}... (${completionData.witnessSignatureDataUrl?.length} chars)`
       });
+
+      onComplete(completionData);
     } catch (error) {
-      console.error('Error uploading files:', error);
+      console.error('[InPersonSignatureFlow] Error uploading files:', error);
       alert(language === 'fr'
-        ? 'Erreur lors du téléversement des fichiers'
-        : 'Error uploading files');
+        ? `Erreur lors du téléversement des fichiers: ${error.message}`
+        : `Error uploading files: ${error.message}`);
     } finally {
       setUploading(false);
     }

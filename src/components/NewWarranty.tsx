@@ -572,6 +572,21 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       }
 
       console.log('[NewWarranty] Processing in-person signature completion');
+      console.log('[NewWarranty] Physical signature data received:', {
+        signerFullName: physicalSignatureData.signerFullName,
+        signerEmail: physicalSignatureData.signerEmail,
+        clientSignatureDataUrl: physicalSignatureData.clientSignatureDataUrl ? `${physicalSignatureData.clientSignatureDataUrl.substring(0, 50)}... (${physicalSignatureData.clientSignatureDataUrl.length} chars)` : 'EMPTY',
+        witnessName: physicalSignatureData.witnessName,
+        witnessSignatureDataUrl: physicalSignatureData.witnessSignatureDataUrl ? `${physicalSignatureData.witnessSignatureDataUrl.substring(0, 50)}... (${physicalSignatureData.witnessSignatureDataUrl.length} chars)` : 'EMPTY'
+      });
+
+      // VALIDATION CRITIQUE: Vérifier que clientSignatureDataUrl n'est pas vide
+      if (!physicalSignatureData.clientSignatureDataUrl) {
+        console.error('[NewWarranty] ERREUR CRITIQUE: clientSignatureDataUrl est vide!');
+        alert('Erreur: La signature du client est manquante. Veuillez réessayer.');
+        setLoading(false);
+        return;
+      }
 
       // Prepare signature data in the same format as online signature
       const signatureData = {
@@ -592,6 +607,10 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
         interfaceLanguage: customer.languagePreference,
         signatureSessionId: physicalSignatureData.physicalDocumentNumber
       };
+
+      console.log('[NewWarranty] Signature data prepared for finalizeWarranty:', {
+        signatureDataUrl: signatureData.signatureDataUrl ? `${signatureData.signatureDataUrl.substring(0, 50)}... (${signatureData.signatureDataUrl.length} chars)` : 'EMPTY'
+      });
 
       // Create warranty with the signature data, but will add physical signature specific fields
       await finalizeWarranty(signatureData, {

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Diagnostic - Création de Garantie</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 8px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    .success { color: green; }
+    .error { color: red; }
+    pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Diagnostic - Création de Garantie en Production</h1>
+  
+  <div class="section">
+    <h2>Test 1: Vérifier la connexion Supabase</h2>
+    <button onclick="testConnection()">Tester Connexion</button>
+    <div id="connectionResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>Test 2: Vérifier les permissions RLS sur warranties</h2>
+    <button onclick="testWarrantiesAccess()">Tester Accès Warranties</button>
+    <div id="warrantiesResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>Test 3: Simuler création de garantie</h2>
+    <button onclick="testWarrantyCreation()">Créer Garantie Test</button>
+    <div id="creationResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>Test 4: Vérifier les erreurs console</h2>
+    <button onclick="showConsoleErrors()">Afficher Erreurs</button>
+    <div id="consoleErrors"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzE4NDUsImV4cCI6MjA3NTEwNzg0NX0.Bt5fWwsgX7QEXjCYM6Aqq5L6D0GKEwxTHzO3tpEW70Y';
+    
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    let consoleErrors = [];
+    const originalError = console.error;
+    console.error = function(...args) {
+      consoleErrors.push({
+        time: new Date().toISOString(),
+        message: args.join(' ')
+      });
+      originalError.apply(console, args);
+    };
+
+    async function testConnection() {
+      const el = document.getElementById('connectionResult');
+      el.innerHTML = '<p>Test en cours...</p>';
+      
+      try {
+        // Test auth
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          el.innerHTML = `<p class="error">❌ Erreur: ${error.message}</p>`;
+          return;
+        }
+        
+        if (!session) {
+          el.innerHTML = `
+            <p class="error">❌ Pas de session active</p>
+            <p>Vous devez être connecté pour créer une garantie</p>
+            <p><a href="/" style="color: blue;">Retour à la page de connexion</a></p>
+          `;
+          return;
+        }
+        
+        el.innerHTML = `
+          <p class="success">✅ Session active</p>
+          <pre>${JSON.stringify({
+            user: session.user.email,
+            role: session.user.role,
+            expires: new Date(session.expires_at * 1000).toLocaleString()
+          }, null, 2)}</pre>
+        `;
+      } catch (err) {
+        el.innerHTML = `<p class="error">❌ Exception: ${err.message}</p>`;
+      }
+    }
+
+    async function testWarrantiesAccess() {
+      const el = document.getElementById('warrantiesResult');
+      el.innerHTML = '<p>Test en cours...</p>';
+      
+      try {
+        const { data, error } = await supabase
+          .from('warranties')
+          .select('id')
+          .limit(1);
+        
+        if (error) {
+          el.innerHTML = `
+            <p class="error">❌ Erreur RLS: ${error.message}</p>
+            <p>Code: ${error.code}</p>
+            <p>Détails: ${error.details || 'Aucun'}</p>
+          `;
+          return;
+        }
+        
+        el.innerHTML = `
+          <p class="success">✅ Accès warranties autorisé</p>
+          <p>Nombre de garanties trouvées: ${data?.length || 0}</p>
+        `;
+      } catch (err) {
+        el.innerHTML = `<p class="error">❌ Exception: ${err.message}</p>`;
+      }
+    }
+
+    async function testWarrantyCreation() {
+      const el = document.getElementById('creationResult');
+      el.innerHTML = '<p>Création en cours...</p>';
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          el.innerHTML = '<p class="error">❌ Pas de session - Connectez-vous d\'abord</p>';
+          return;
+        }
+
+        // Récupérer le profil
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profileError) {
+          el.innerHTML = `<p class="error">❌ Erreur profil: ${profileError.message}</p>`;
+          return;
+        }
+
+        // Créer une garantie test
+        const testWarranty = {
+          customer_name: 'Test Client - ' + new Date().toLocaleString(),
+          customer_email: 'test@example.com',
+          customer_phone: '514-123-4567',
+          customer_address: '123 Test Street',
+          customer_city: 'Montreal',
+          customer_province: 'QC',
+          customer_postal_code: 'H1A 1A1',
+          vehicle_year: 2024,
+          vehicle_make: 'Test',
+          vehicle_model: 'Model',
+          vehicle_vin: 'TEST' + Date.now(),
+          warranty_plan_id: 1,
+          start_date: new Date().toISOString().split('T')[0],
+          purchase_price: 1000,
+          warranty_price: 100,
+          tax_amount: 15,
+          total_price: 115,
+          payment_method: 'cash',
+          payment_status: 'paid',
+          organization_id: profile.organization_id,
+          created_by: session.user.id
+        };
+
+        const { data, error } = await supabase
+          .from('warranties')
+          .insert([testWarranty])
+          .select()
+          .single();
+
+        if (error) {
+          el.innerHTML = `
+            <p class="error">❌ Erreur création: ${error.message}</p>
+            <p>Code: ${error.code}</p>
+            <p>Détails: ${error.details || 'Aucun'}</p>
+            <pre>${JSON.stringify(error, null, 2)}</pre>
+          `;
+          return;
+        }
+
+        el.innerHTML = `
+          <p class="success">✅ Garantie créée avec succès!</p>
+          <p>ID: ${data.id}</p>
+          <p>VIN: ${data.vehicle_vin}</p>
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        `;
+      } catch (err) {
+        el.innerHTML = `<p class="error">❌ Exception: ${err.message}</p><pre>${err.stack}</pre>`;
+      }
+    }
+
+    function showConsoleErrors() {
+      const el = document.getElementById('consoleErrors');
+      
+      if (consoleErrors.length === 0) {
+        el.innerHTML = '<p class="success">✅ Aucune erreur console détectée</p>';
+        return;
+      }
+      
+      el.innerHTML = `
+        <p class="error">❌ ${consoleErrors.length} erreur(s) détectée(s):</p>
+        <pre>${JSON.stringify(consoleErrors, null, 2)}</pre>
+      `;
+    }
+
+    // Auto-test au chargement
+    window.addEventListener('load', () => {
+      console.log('🔍 Page de diagnostic chargée');
+      testConnection();
+    });
+  </script>
+</body>
+</html>
