@@ -115,6 +115,15 @@ export async function getSupabaseInfo(): Promise<{
 export function getConnectionErrorMessage(error: any): string {
   const message = error?.message || error?.toString() || 'Unknown error';
 
+  // Log pour diagnostic
+  console.error('[DIAGNOSTIC] Erreur reçue:', {
+    error,
+    message,
+    type: typeof error,
+    keys: error ? Object.keys(error) : [],
+    stack: error?.stack
+  });
+
   if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
     return 'Impossible de se connecter au serveur. Vérifiez votre connexion internet.';
   }
@@ -135,5 +144,6 @@ export function getConnectionErrorMessage(error: any): string {
     return 'Erreur de permission corrigée. Veuillez vous reconnecter pour appliquer les nouvelles règles de sécurité.';
   }
 
-  return 'Erreur de connexion à la base de données. Veuillez réessayer.';
+  // Retourner le message d'erreur complet pour diagnostic
+  return `Erreur: ${message}`;
 }
