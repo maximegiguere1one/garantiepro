@@ -35,8 +35,8 @@ export async function saveSignatureMethodSelection(
       warranty_id: warrantyId,
       organization_id: organizationId,
       selected_by: userId,
-      method_chosen: method,
-      selection_reason: method === 'electronic' ? 'Digital signature selected' : 'Physical signature selected',
+      method_chosen: method === 'hybrid' ? 'online' : method,
+      selection_reason: method === 'online' ? 'Digital signature selected' : 'Physical signature selected',
       selection_context: {
         userAgent: navigator.userAgent,
         language: navigator.language,
