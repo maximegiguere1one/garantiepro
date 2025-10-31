@@ -717,7 +717,7 @@ export function generateOptimizedContractPDF(
   // Add description and coverage details if available
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(BRAND_COLORS.text);
+  doc.setTextColor(...BRAND_COLORS.text);
 
   if (plan.description) {
     doc.setFont('helvetica', 'bold');
