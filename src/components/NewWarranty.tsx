@@ -927,7 +927,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
           geolocation: signatureData.geolocation,
           signature_ip: signatureData.ipAddress,
         })
-        .select('id, contract_number, organization_id, customer_id, contract_pdf_url, created_at')
+        .select('id, contract_number, organization_id, customer_id, trailer_id, plan_id, status, start_date, end_date, base_price, total_price, contract_pdf_url, created_at')
         .single();
 
       if (warrantyError) {
