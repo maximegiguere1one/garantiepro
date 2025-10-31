@@ -477,6 +477,283 @@ export function generateProfessionalContractPDF(
   ];
   yPos = addInfoBox(doc, 20, yPos, pageWidth - 40, coverageLines);
 
+  // SECTION 3.1: DÉTAILS COMPLETS DE COUVERTURE DU PLAN
+  yPos += 10;
+
+  // Parser le coverage_matrix pour afficher tous les détails
+  const coverageMatrix = plan.coverage_matrix as any;
+
+  if (coverageMatrix) {
+    yPos = addSection(doc, '3.1 DÉTAILS COMPLETS DE LA COUVERTURE', yPos);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...BRAND_COLORS.text);
+
+    // COMPOSANTS COUVERTS
+    if (coverageMatrix.coverage) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('COMPOSANTS ET SYSTÈMES COUVERTS:', 25, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      // Freins
+      if (coverageMatrix.coverage.freins) {
+        const freins = coverageMatrix.coverage.freins;
+        doc.setFont('helvetica', 'bold');
+        doc.text('• FREINS', 30, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (freins.note) {
+          doc.text(`  ${freins.note}`, 35, yPos);
+          yPos += 5;
+        }
+        if (freins.value) {
+          doc.text(`  Valeur maximale: ${freins.value.toLocaleString('fr-CA')} $`, 35, yPos);
+          yPos += 5;
+        }
+        if (freins.includes && freins.includes.length > 0) {
+          doc.text('  Inclus:', 35, yPos);
+          yPos += 5;
+          freins.includes.forEach((item: string) => {
+            doc.text(`    - ${item}`, 40, yPos);
+            yPos += 4;
+          });
+        }
+        yPos += 3;
+      }
+
+      // Système électrique
+      if (coverageMatrix.coverage.systeme_electrique) {
+        const elec = coverageMatrix.coverage.systeme_electrique;
+        doc.setFont('helvetica', 'bold');
+        doc.text('• SYSTÈME ÉLECTRIQUE', 30, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (elec.includes && elec.includes.length > 0) {
+          doc.text('  Couverture complète incluant:', 35, yPos);
+          yPos += 5;
+          elec.includes.forEach((item: string) => {
+            doc.text(`    - ${item}`, 40, yPos);
+            yPos += 4;
+          });
+        }
+        yPos += 3;
+      }
+
+      // Structure et châssis
+      if (coverageMatrix.coverage.structure_chassis) {
+        const structure = coverageMatrix.coverage.structure_chassis;
+        doc.setFont('helvetica', 'bold');
+        doc.text('• STRUCTURE ET CHÂSSIS', 30, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (structure.includes && structure.includes.length > 0) {
+          doc.text('  Couverture complète incluant:', 35, yPos);
+          yPos += 5;
+          structure.includes.forEach((item: string) => {
+            doc.text(`    - ${item}`, 40, yPos);
+            yPos += 4;
+          });
+        }
+        yPos += 3;
+      }
+
+      // Entretien annuel inclus
+      if (coverageMatrix.coverage.entretien_annuel) {
+        const entretien = coverageMatrix.coverage.entretien_annuel;
+        doc.setFont('helvetica', 'bold');
+        doc.setFillColor(34, 197, 94); // Vert pour avantage
+        doc.rect(25, yPos - 4, 3, 6, 'F');
+        doc.text('• ENTRETIEN ANNUEL INCLUS (AVANTAGE)', 30, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (entretien.services && entretien.services.length > 0) {
+          doc.text('  Services inclus chaque année:', 35, yPos);
+          yPos += 5;
+          entretien.services.forEach((service: string) => {
+            doc.text(`    - ${service}`, 40, yPos);
+            yPos += 4;
+          });
+        }
+        if (entretien.value_per_year) {
+          doc.text(`  Valeur annuelle: ${entretien.value_per_year.toLocaleString('fr-CA')} $`, 35, yPos);
+          yPos += 5;
+        }
+        if (entretien.total_value) {
+          doc.setFont('helvetica', 'bold');
+          doc.text(`  Valeur totale du programme: ${entretien.total_value.toLocaleString('fr-CA')} $`, 35, yPos);
+          doc.setFont('helvetica', 'normal');
+          yPos += 5;
+        }
+        yPos += 3;
+      }
+    }
+
+    // LIMITES ANNUELLES PAR TRANCHE DE PRIX
+    if (coverageMatrix.annual_limits) {
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('LIMITES DE RÉPARATION ANNUELLES:', 25, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Selon le prix d\'achat de votre remorque:', 30, yPos);
+      yPos += 5;
+
+      const limits = coverageMatrix.annual_limits;
+      Object.keys(limits).forEach((range: string) => {
+        const limit = limits[range];
+        doc.text(`  • Remorque ${range} $: jusqu\'à ${limit.toLocaleString('fr-CA')} $ / an`, 35, yPos);
+        yPos += 5;
+      });
+      yPos += 3;
+    }
+
+    // FRANCHISE
+    if (coverageMatrix.franchise !== undefined) {
+      yPos += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('FRANCHISE:', 25, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text(`Franchise par réclamation: ${coverageMatrix.franchise.toLocaleString('fr-CA')} $ CAD`, 30, yPos);
+      yPos += 7;
+    }
+
+    // AVANTAGES SUPPLÉMENTAIRES
+    if (coverageMatrix.avantages) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setFillColor(34, 197, 94);
+      doc.rect(25, yPos - 4, 3, 6, 'F');
+      doc.text('AVANTAGES SUPPLÉMENTAIRES INCLUS:', 30, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+
+      // Programme de fidélité
+      if (coverageMatrix.avantages.programme_fidelite) {
+        const fidelite = coverageMatrix.avantages.programme_fidelite;
+        doc.setFont('helvetica', 'bold');
+        doc.text('• Programme de fidélité', 35, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (fidelite.remorque_10000_ou_moins) {
+          doc.text(`  - Crédit pour remorque ≤ 10 000 $: ${fidelite.remorque_10000_ou_moins.toLocaleString('fr-CA')} $`, 40, yPos);
+          yPos += 4;
+        }
+        if (fidelite.remorque_plus_10000) {
+          doc.text(`  - Crédit pour remorque > 10 000 $: ${fidelite.remorque_plus_10000.toLocaleString('fr-CA')} $`, 40, yPos);
+          yPos += 4;
+        }
+        if (fidelite.note) {
+          doc.setFontSize(8);
+          doc.setTextColor(...BRAND_COLORS.textLight);
+          doc.text(`  Note: ${fidelite.note}`, 40, yPos);
+          doc.setTextColor(...BRAND_COLORS.text);
+          doc.setFontSize(9);
+          yPos += 4;
+        }
+        yPos += 3;
+      }
+
+      // Assistance remorquage
+      if (coverageMatrix.avantages.assistance_remorquage) {
+        const remorquage = coverageMatrix.avantages.assistance_remorquage;
+        doc.setFont('helvetica', 'bold');
+        doc.text('• Assistance remorquage', 35, yPos);
+        yPos += 5;
+        doc.setFont('helvetica', 'normal');
+        if (remorquage.description) {
+          doc.text(`  ${remorquage.description}`, 40, yPos);
+          yPos += 4;
+        }
+        if (remorquage.montant_par_evenement) {
+          doc.text(`  Montant par événement: ${remorquage.montant_par_evenement.toLocaleString('fr-CA')} $`, 40, yPos);
+          yPos += 4;
+        }
+        yPos += 3;
+      }
+      yPos += 5;
+    }
+
+    // DURÉE ET TRANSFÉRABILITÉ
+    if (coverageMatrix.duration) {
+      const duration = coverageMatrix.duration;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('DURÉE ET TRANSFÉRABILITÉ:', 25, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      if (duration.years) {
+        doc.text(`• Durée totale: ${duration.years} ans`, 30, yPos);
+        yPos += 5;
+      }
+      if (duration.starts_after_manufacturer) {
+        doc.text('• Débute après la garantie du fabricant', 30, yPos);
+        yPos += 5;
+      }
+      if (duration.transferable) {
+        doc.text('• Garantie transférable au nouveau propriétaire', 30, yPos);
+        yPos += 5;
+        if (duration.transfer_fee) {
+          doc.text(`  Frais de transfert: ${duration.transfer_fee.toLocaleString('fr-CA')} $`, 35, yPos);
+          yPos += 4;
+        }
+        if (duration.transfer_notice_days) {
+          doc.text(`  Délai de notification: ${duration.transfer_notice_days} jours`, 35, yPos);
+          yPos += 4;
+        }
+      }
+      yPos += 5;
+    }
+
+    // EXCLUSIONS
+    if (coverageMatrix.exclusions && coverageMatrix.exclusions.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setFillColor(...BRAND_COLORS.warning);
+      doc.rect(25, yPos - 4, 3, 6, 'F');
+      doc.text('EXCLUSIONS:', 30, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Les éléments suivants NE sont PAS couverts par cette garantie:', 30, yPos);
+      yPos += 5;
+      coverageMatrix.exclusions.forEach((exclusion: string) => {
+        doc.text(`• ${exclusion}`, 35, yPos);
+        yPos += 5;
+      });
+      yPos += 5;
+    }
+
+    // OBLIGATIONS DE L'ACHETEUR
+    if (coverageMatrix.obligations && coverageMatrix.obligations.length > 0) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.setFillColor(...BRAND_COLORS.primary);
+      doc.rect(25, yPos - 4, 3, 6, 'F');
+      doc.text('OBLIGATIONS DE L\'ACHETEUR (IMPORTANT):', 30, yPos);
+      yPos += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.text('Pour maintenir la validité de cette garantie, vous DEVEZ:', 30, yPos);
+      yPos += 5;
+      coverageMatrix.obligations.forEach((obligation: string) => {
+        const splitObligation = doc.splitTextToSize(`• ${obligation}`, pageWidth - 70);
+        doc.text(splitObligation, 35, yPos);
+        yPos += splitObligation.length * 5;
+      });
+      yPos += 5;
+    }
+  }
+
   yPos += 10;
   yPos = addSection(doc, '4. CONDITIONS FINANCIÈRES', yPos);
 

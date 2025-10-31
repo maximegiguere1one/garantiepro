@@ -320,6 +320,64 @@ export function generateOptimizedContractPDF(
 
   yPos += 15;
 
+  // SECTION 3.1: DÉTAILS COMPLETS DE COUVERTURE
+  const coverageMatrix = plan.coverage_matrix as any;
+  if (coverageMatrix) {
+    yPos = checkPageOverflow(doc, yPos, 50);
+    yPos = addSection(doc, '3.1 DÉTAILS COMPLETS DE LA COUVERTURE', yPos);
+
+    doc.setFontSize(8);
+    doc.text('Votre plan inclut la couverture suivante:', 25, yPos);
+    yPos += 7;
+
+    // Composants couverts (version compacte)
+    if (coverageMatrix.coverage) {
+      if (coverageMatrix.coverage.freins) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('• FREINS', 25, yPos);
+        yPos += 4;
+        doc.setFont('helvetica', 'normal');
+        if (coverageMatrix.coverage.freins.note) {
+          doc.text(`  ${coverageMatrix.coverage.freins.note}`, 27, yPos);
+          yPos += 4;
+        }
+      }
+
+      if (coverageMatrix.coverage.systeme_electrique) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('• SYSTÈME ÉLECTRIQUE COMPLET', 25, yPos);
+        yPos += 4;
+        doc.setFont('helvetica', 'normal');
+      }
+
+      if (coverageMatrix.coverage.structure_chassis) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('• STRUCTURE ET CHÂSSIS', 25, yPos);
+        yPos += 4;
+        doc.setFont('helvetica', 'normal');
+      }
+
+      if (coverageMatrix.coverage.entretien_annuel) {
+        doc.setFont('helvetica', 'bold');
+        doc.text('• ENTRETIEN ANNUEL INCLUS', 25, yPos);
+        yPos += 4;
+        doc.setFont('helvetica', 'normal');
+        if (coverageMatrix.coverage.entretien_annuel.value_per_year) {
+          doc.text(`  Valeur: ${coverageMatrix.coverage.entretien_annuel.value_per_year.toLocaleString('fr-CA')} $/an`, 27, yPos);
+          yPos += 4;
+        }
+      }
+    }
+
+    yPos += 3;
+    doc.setFontSize(7);
+    doc.setTextColor(112, 112, 112);
+    doc.text('Voir section 3.1 du contrat complet pour tous les détails de couverture.', 25, yPos);
+    doc.setTextColor(0, 0, 0);
+    doc.setFontSize(9);
+    yPos += 10;
+  }
+
   // SECTION 4: OPTIONS ADDITIONNELLES (Section qui manquait!)
   const selectedOptions = normalizedWarranty.selected_options as any[] || [];
   if (selectedOptions.length > 0) {
