@@ -356,10 +356,10 @@ export function ResetPassword() {
 
         <p className="text-center text-sm text-slate-500 mt-6">
           <a
-            href="https://app.garantieproremorque.com"
+            href="https://www.garantieproremorque.com"
             className="text-primary-600 hover:text-primary-700 font-medium"
           >
-            app.garantieproremorque.com
+            www.garantieproremorque.com
           </a>
         </p>
       </div>

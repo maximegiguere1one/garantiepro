@@ -119,7 +119,7 @@ function generateInvitationEmailHTML(params: {
                       Plateforme professionnelle de gestion de garanties
                     </p>
                     <p style="color: #94a3b8; font-size: 13px; margin: 20px 0 0;">
-                      <a href="https://app.garantieproremorque.com" style="color: #1e40af; text-decoration: none; font-weight: 600;">app.garantieproremorque.com</a>
+                      <a href="https://www.garantieproremorque.com" style="color: #1e40af; text-decoration: none; font-weight: 600;">www.garantieproremorque.com</a>
                     </p>
                   </td>
                 </tr>

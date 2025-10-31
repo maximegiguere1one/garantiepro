@@ -138,7 +138,7 @@ export function LicenseAgreement() {
               <div className="mt-3 bg-slate-50 rounded-lg p-4 border border-slate-200">
                 <p className="font-medium text-slate-900">Garantie Pro Remorque</p>
                 <p className="text-slate-600">Email: info@garantieproremorque.com</p>
-                <p className="text-slate-600">Site web: https://app.garantieproremorque.com</p>
+                <p className="text-slate-600">Site web: https://www.garantieproremorque.com</p>
               </div>
             </section>
 

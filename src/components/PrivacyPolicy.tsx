@@ -220,7 +220,7 @@ export function PrivacyPolicy() {
               <div className="bg-slate-50 rounded-lg p-4 border border-slate-200 mb-4">
                 <p className="font-medium text-slate-900">Garantie Pro Remorque</p>
                 <p className="text-slate-600">Email: info@garantieproremorque.com</p>
-                <p className="text-slate-600">Site web: https://app.garantieproremorque.com</p>
+                <p className="text-slate-600">Site web: https://www.garantieproremorque.com</p>
               </div>
               <p className="leading-relaxed">
                 Si vous n'êtes pas satisfait de notre réponse, vous pouvez déposer une plainte auprès du
