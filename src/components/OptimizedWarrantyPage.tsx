@@ -332,7 +332,7 @@ export function OptimizedWarrantyPage({ onNavigate, onBack }: OptimizedWarrantyP
           next_entretien_due: pprData.nextEntretienDue.toISOString().split('T')[0],
           signature_method: selectedSignatureMethod || 'in_person',
         })
-        .select()
+        .select('id, contract_number, organization_id, customer_id, contract_pdf_url, created_at')
         .single();
 
       if (warrantyError) throw warrantyError;
