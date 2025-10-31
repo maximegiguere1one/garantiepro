@@ -390,18 +390,37 @@ export function generateProfessionalContractPDF(
 
   yPos += 6;
   doc.setFont('helvetica', 'normal');
-  const vendorLines = [
-    `Le VENDEUR: ${companyInfo.name}`,
-    companyInfo.address || '',
-    companyInfo.businessNumber ? `NEQ: ${companyInfo.businessNumber}` : '',
-    companyInfo.phone ? `Téléphone: ${companyInfo.phone}` : '',
-    companyInfo.email ? `Courriel: ${companyInfo.email}` : '',
-  ].filter(Boolean);
 
-  vendorLines.forEach(line => {
-    doc.text(line, 25, yPos);
+  // Vendeur - Première ligne
+  doc.text(`Le VENDEUR: ${companyInfo.name}`, 25, yPos);
+  yPos += 5;
+
+  // Adresse - Split par ligne si elle contient des \n
+  if (companyInfo.address) {
+    const addressLines = companyInfo.address.split('\n').filter(line => line.trim());
+    addressLines.forEach(line => {
+      doc.text(line.trim(), 25, yPos);
+      yPos += 5;
+    });
+  }
+
+  // NEQ
+  if (companyInfo.businessNumber) {
+    doc.text(`NEQ: ${companyInfo.businessNumber}`, 25, yPos);
     yPos += 5;
-  });
+  }
+
+  // Téléphone
+  if (companyInfo.phone) {
+    doc.text(`Téléphone: ${companyInfo.phone}`, 25, yPos);
+    yPos += 5;
+  }
+
+  // Courriel
+  if (companyInfo.email) {
+    doc.text(`Courriel: ${companyInfo.email}`, 25, yPos);
+    yPos += 5;
+  }
 
   yPos += 5;
   doc.setFont('helvetica', 'bold');
@@ -511,8 +530,17 @@ export function generateProfessionalContractPDF(
 
   yPos += splitRetract.length * 4.5 + 10;
 
-  const deadlineDate = new Date(normalizedWarranty.created_at);
+  // Calculer la date limite (10 jours après created_at ou aujourd'hui si invalide)
+  let deadlineDate: Date;
+  if (normalizedWarranty.created_at && !isNaN(new Date(normalizedWarranty.created_at).getTime())) {
+    deadlineDate = new Date(normalizedWarranty.created_at);
+  } else if (normalizedWarranty.signed_at && !isNaN(new Date(normalizedWarranty.signed_at).getTime())) {
+    deadlineDate = new Date(normalizedWarranty.signed_at);
+  } else {
+    deadlineDate = new Date();
+  }
   deadlineDate.setDate(deadlineDate.getDate() + 10);
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.text(`Date limite pour exercer ce droit: ${deadlineDate.toLocaleDateString('fr-CA')}`, 25, yPos);

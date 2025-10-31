@@ -221,9 +221,13 @@ export function generateOptimizedContractPDF(
   doc.text(`Le VENDEUR: ${companyInfo.name}`, 25, yPos);
   yPos += 5;
 
+  // Adresse - Split par ligne si elle contient des \n
   if (companyInfo.address) {
-    doc.text(companyInfo.address, 25, yPos);
-    yPos += 5;
+    const addressLines = companyInfo.address.split('\n').filter(line => line.trim());
+    addressLines.forEach(line => {
+      doc.text(line.trim(), 25, yPos);
+      yPos += 5;
+    });
   }
 
   if (companyInfo.phone) {
@@ -353,8 +357,17 @@ export function generateOptimizedContractPDF(
   doc.text(splitRetract, 25, yPos);
   yPos += splitRetract.length * 4.5 + 8;
 
-  const deadlineDate = new Date(normalizedWarranty.created_at);
+  // Calculer la date limite (10 jours après created_at ou aujourd'hui si invalide)
+  let deadlineDate: Date;
+  if (normalizedWarranty.created_at && !isNaN(new Date(normalizedWarranty.created_at).getTime())) {
+    deadlineDate = new Date(normalizedWarranty.created_at);
+  } else if (normalizedWarranty.signed_at && !isNaN(new Date(normalizedWarranty.signed_at).getTime())) {
+    deadlineDate = new Date(normalizedWarranty.signed_at);
+  } else {
+    deadlineDate = new Date();
+  }
   deadlineDate.setDate(deadlineDate.getDate() + 10);
+
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10);
   doc.text(`Date limite pour exercer ce droit: ${deadlineDate.toLocaleDateString('fr-CA')}`, 25, yPos);
