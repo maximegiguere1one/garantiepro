@@ -714,6 +714,31 @@ export function generateOptimizedContractPDF(
   // Détails de la couverture avec tableau
   yPos = addSection(doc, 'DÉTAILS DE LA COUVERTURE', yPos);
 
+  // Add description and coverage details if available
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(BRAND_COLORS.text);
+
+  if (plan.description) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description:', 20, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const descriptionLines = doc.splitTextToSize(plan.description, 170);
+    doc.text(descriptionLines, 20, yPos);
+    yPos += (descriptionLines.length * 5) + 3;
+  }
+
+  if (plan.coverage_details) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Couverture:', 20, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const coverageLines = doc.splitTextToSize(plan.coverage_details, 170);
+    doc.text(coverageLines, 20, yPos);
+    yPos += (coverageLines.length * 5) + 5;
+  }
+
   const invoiceTableData: any[] = [
     [
       'Plan de garantie',

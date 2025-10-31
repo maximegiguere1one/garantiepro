@@ -380,6 +380,7 @@ Prix d'achat: ${trailer.purchasePrice.toFixed(2)} $
 
 Détails de la Garantie:
 Plan: ${selectedPlan?.name}
+${selectedPlan?.description ? `\nDescription:\n${selectedPlan.description}\n` : ''}${selectedPlan?.coverage_details ? `\nCouverture:\n${selectedPlan.coverage_details}\n` : ''}
 Durée: ${PPR_DURATION_MONTHS} mois (${PPR_DURATION_MONTHS / 12} ans)
 Franchise: ${PPR_DEDUCTIBLE}.00 $
 Limite annuelle: ${formatAnnualLimit(pprData.annualLimit)}

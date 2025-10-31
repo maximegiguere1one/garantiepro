@@ -573,6 +573,30 @@ export function generateMerchantInvoicePDF(data: InvoiceData): any {
   doc.setFont('helvetica', 'normal');
   doc.text(`Plan: ${plan.name_fr || plan.name}`, 20, yPos);
   yPos += 5;
+
+  // Add description if available
+  if (plan.description) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Description:', 20, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const descriptionLines = doc.splitTextToSize(plan.description, 170);
+    doc.text(descriptionLines, 20, yPos);
+    yPos += (descriptionLines.length * 5);
+  }
+
+  // Add coverage details if available
+  if (plan.coverage_details) {
+    doc.setFont('helvetica', 'bold');
+    doc.text('Couverture:', 20, yPos);
+    yPos += 5;
+    doc.setFont('helvetica', 'normal');
+    const coverageLines = doc.splitTextToSize(plan.coverage_details, 170);
+    doc.text(coverageLines, 20, yPos);
+    yPos += (coverageLines.length * 5);
+  }
+
+  yPos += 3;
   doc.text(`Durée: ${safeNumber(normalizedWarranty.duration_months, 0)} mois`, 20, yPos);
   yPos += 5;
   doc.text(`Province: ${normalizedWarranty.province}`, 20, yPos);
