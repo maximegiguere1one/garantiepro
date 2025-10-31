@@ -263,7 +263,7 @@ export function OptimizedWarrantyPage({ onNavigate, onBack }: OptimizedWarrantyP
 
   const handleSignatureMethodSelected = async (method: SignatureMethod) => {
     // Map 'online' -> 'electronic', 'in_person' reste 'in_person'
-    const mappedMethod = method === 'online' ? 'electronic' : 'in_person';
+    const mappedMethod = method; // 'online' or 'in_person' - no mapping needed
 
     setSelectedSignatureMethod(method);
     setShowSignatureMethodSelector(false);
@@ -340,7 +340,7 @@ export function OptimizedWarrantyPage({ onNavigate, onBack }: OptimizedWarrantyP
 
       setCreatedWarrantyId(warranty.id);
 
-      const mappedMethod = selectedSignatureMethod === 'online' ? 'electronic' : 'in_person';
+      const mappedMethod = selectedSignatureMethod; // 'online' or 'in_person' - no mapping needed
       try {
         const sessionId = `WRT-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         await logSignatureEvent(

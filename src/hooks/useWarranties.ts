@@ -152,7 +152,7 @@ export function useCreateWarranty() {
         const { data, error } = await supabase
           .from('warranties')
           .insert(warrantyData)
-          .select()
+          .select('id, contract_number, organization_id, customer_id, status, created_at, contract_pdf_url')
           .single();
 
         if (error) throw error;
@@ -174,7 +174,7 @@ export function useUpdateWarranty() {
         .from('warranties')
         .update(updates)
         .eq('id', id)
-        .select()
+        .select('id, contract_number, organization_id, customer_id, status, updated_at')
         .single();
 
       if (error) throw error;
