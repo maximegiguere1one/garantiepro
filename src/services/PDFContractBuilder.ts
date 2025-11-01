@@ -108,6 +108,18 @@ export class PDFContractBuilder {
   }
 
   /**
+   * Check if we need a page break and add one if necessary
+   */
+  private checkPageBreak(requiredSpace: number = 30): void {
+    const pageHeight = this.doc.internal.pageSize.height;
+    const bottomMargin = 40; // Space for footer
+
+    if (this.yPos + requiredSpace > pageHeight - bottomMargin) {
+      this.addPage();
+    }
+  }
+
+  /**
    * Get page width
    */
   getPageWidth(): number {
@@ -130,12 +142,16 @@ export class PDFContractBuilder {
 
     const pageWidth = this.getPageWidth();
 
+    this.checkPageBreak(35);
+
     // Title
     this.doc.setFontSize(this.config.fontSize.title);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('CONTRAT DE GARANTIE', pageWidth / 2, this.yPos, { align: 'center' });
 
     this.addSpace(15);
+
+    this.checkPageBreak(10);
 
     // Contract info
     this.doc.setFontSize(this.config.fontSize.body);
@@ -156,23 +172,28 @@ export class PDFContractBuilder {
   addVendorSection(companyInfo: InvoiceData['companyInfo']): this {
     logger.debug('Adding vendor section');
 
+    this.checkPageBreak(30);
+
     this.doc.setFontSize(this.config.fontSize.heading);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('ENTRE:', 20, this.yPos);
 
     this.addSpace(7);
 
+    this.checkPageBreak(6);
     this.doc.setFontSize(this.config.fontSize.body);
     this.doc.setFont(this.config.fontFamily, 'normal');
     this.doc.text(`Le vendeur: ${companyInfo.name}`, 20, this.yPos);
     this.addSpace(5);
 
     if (companyInfo.address) {
+      this.checkPageBreak(6);
       this.doc.text(companyInfo.address, 20, this.yPos);
       this.addSpace(5);
     }
 
     if (companyInfo.businessNumber) {
+      this.checkPageBreak(6);
       this.doc.text(`NEQ: ${companyInfo.businessNumber}`, 20, this.yPos);
       this.addSpace(5);
     }
@@ -188,17 +209,21 @@ export class PDFContractBuilder {
   addCustomerSection(customer: Customer): this {
     logger.debug('Adding customer section');
 
+    this.checkPageBreak(30);
+
     this.doc.setFontSize(this.config.fontSize.heading);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('ET:', 20, this.yPos);
 
     this.addSpace(7);
 
+    this.checkPageBreak(6);
     this.doc.setFontSize(this.config.fontSize.body);
     this.doc.setFont(this.config.fontFamily, 'normal');
     this.doc.text(`Le client: ${customer.first_name} ${customer.last_name}`, 20, this.yPos);
     this.addSpace(5);
 
+    this.checkPageBreak(6);
     this.doc.text(
       `${customer.address}, ${customer.city}, ${customer.province} ${customer.postal_code}`,
       20,
@@ -221,6 +246,9 @@ export class PDFContractBuilder {
     const maxWidth = this.getPageWidth() - 40;
 
     sections.forEach((section) => {
+      // Check page break before section title
+      this.checkPageBreak(20);
+
       this.doc.setFontSize(this.config.fontSize.heading);
       this.doc.setFont(this.config.fontFamily, 'bold');
       this.doc.text(section.name.toUpperCase(), 20, this.yPos);
@@ -230,8 +258,15 @@ export class PDFContractBuilder {
       this.doc.setFontSize(this.config.fontSize.body);
       this.doc.setFont(this.config.fontFamily, 'normal');
       const splitContent = this.doc.splitTextToSize(section.content, maxWidth);
-      this.doc.text(splitContent, 20, this.yPos);
-      this.yPos += splitContent.length * 5 + 10;
+
+      // Render content line by line with page break checks
+      for (let i = 0; i < splitContent.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(splitContent[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+
+      this.yPos += 10;
     });
 
     return this;
@@ -250,12 +285,15 @@ export class PDFContractBuilder {
 
     this.addSpace(5);
 
+    this.checkPageBreak(40);
+
     this.doc.setFontSize(this.config.fontSize.heading);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('INFORMATIONS DE COUVERTURE', 20, this.yPos);
 
     this.addSpace(7);
 
+    this.checkPageBreak(6);
     this.doc.setFontSize(this.config.fontSize.body);
     this.doc.setFont(this.config.fontFamily, 'normal');
 
@@ -266,6 +304,7 @@ export class PDFContractBuilder {
     );
     this.addSpace(5);
 
+    this.checkPageBreak(6);
     this.doc.text(
       `Durée: ${safeNumber(normalizedWarranty.duration_months, 0)} mois (${new Date(
         normalizedWarranty.start_date
@@ -275,6 +314,7 @@ export class PDFContractBuilder {
     );
     this.addSpace(5);
 
+    this.checkPageBreak(6);
     this.doc.text(
       `Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`,
       20,
@@ -282,6 +322,7 @@ export class PDFContractBuilder {
     );
     this.addSpace(5);
 
+    this.checkPageBreak(6);
     this.doc.text(`Province: ${normalizedWarranty.province}`, 20, this.yPos);
     this.addSpace(10);
 
@@ -299,11 +340,15 @@ export class PDFContractBuilder {
       ...normalizeWarrantyNumbers(data.warranty),
     };
 
+    this.checkPageBreak(20);
+
     this.doc.setFontSize(this.config.fontSize.heading);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('MONTANT TOTAL', 20, this.yPos);
 
     this.addSpace(7);
+
+    this.checkPageBreak(6);
 
     this.doc.setFontSize(14);
     this.doc.setFont(this.config.fontFamily, 'bold');
@@ -331,6 +376,7 @@ export class PDFContractBuilder {
     const pageWidth = this.getPageWidth();
 
     // Title
+    this.checkPageBreak(15);
     this.doc.setFontSize(18);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.setTextColor(...this.config.primaryColor);
@@ -347,10 +393,17 @@ export class PDFContractBuilder {
     const claimText =
       `En cas de problème couvert par votre garantie, vous pouvez soumettre une réclamation facilement en utilisant le lien unique ci-dessous ou en scannant le code QR avec votre téléphone.`;
     const splitClaimText = this.doc.splitTextToSize(claimText, maxWidth);
-    this.doc.text(splitClaimText, 20, this.yPos);
-    this.yPos += splitClaimText.length * 6 + 10;
+
+    // Render instruction text line by line with page break checks
+    for (let i = 0; i < splitClaimText.length; i++) {
+      this.checkPageBreak(6);
+      this.doc.text(splitClaimText[i], 20, this.yPos);
+      this.yPos += 6;
+    }
+    this.yPos += 10;
 
     // Highlight box with URL
+    this.checkPageBreak(55);
     this.doc.setFillColor(241, 245, 249);
     this.doc.rect(15, this.yPos, pageWidth - 30, 50, 'F');
 
@@ -385,11 +438,13 @@ export class PDFContractBuilder {
     // QR Code
     try {
       const qrSize = APP_CONFIG.pdf.qrCodeSize;
+      this.checkPageBreak(qrSize + 15);
       const qrX = (pageWidth - qrSize) / 2;
       this.doc.addImage(qrCodeDataUrl, 'PNG', qrX, this.yPos, qrSize, qrSize);
 
       this.yPos += qrSize + 8;
 
+      this.checkPageBreak(6);
       this.doc.setFontSize(9);
       this.doc.setFont(this.config.fontFamily, 'bold');
       this.doc.text('Scannez ce code QR avec votre téléphone', pageWidth / 2, this.yPos, {
@@ -402,12 +457,14 @@ export class PDFContractBuilder {
     this.addSpace(15);
 
     // Instructions list
+    this.checkPageBreak(50);
     this.doc.setDrawColor(226, 232, 240);
     this.doc.setLineWidth(0.5);
     this.doc.line(20, this.yPos, pageWidth - 20, this.yPos);
 
     this.addSpace(10);
 
+    this.checkPageBreak(8);
     this.doc.setFontSize(11);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.text('Instructions pour soumettre une réclamation:', 20, this.yPos);
@@ -426,6 +483,7 @@ export class PDFContractBuilder {
     this.doc.setFont(this.config.fontFamily, 'normal');
 
     instructions.forEach((instruction) => {
+      this.checkPageBreak(6);
       this.doc.text(instruction, 25, this.yPos);
       this.addSpace(6);
     });
@@ -433,11 +491,13 @@ export class PDFContractBuilder {
     this.addSpace(10);
 
     // Important note
+    this.checkPageBreak(35);
     this.doc.setFillColor(254, 243, 199);
     this.doc.rect(15, this.yPos, pageWidth - 30, 25, 'F');
 
     this.addSpace(8);
 
+    this.checkPageBreak(6);
     this.doc.setFontSize(9);
     this.doc.setFont(this.config.fontFamily, 'bold');
     this.doc.setTextColor(146, 64, 14);
@@ -450,7 +510,13 @@ export class PDFContractBuilder {
       companyInfo.phone || 'voir coordonnées sur le contrat'
     }.`;
     const splitImportant = this.doc.splitTextToSize(importantText, maxWidth - 10);
-    this.doc.text(splitImportant, 20, this.yPos);
+
+    // Render important text line by line with page break checks
+    for (let i = 0; i < splitImportant.length; i++) {
+      this.checkPageBreak(6);
+      this.doc.text(splitImportant[i], 20, this.yPos);
+      this.yPos += 5;
+    }
     this.doc.setTextColor(0, 0, 0);
 
     return this;
