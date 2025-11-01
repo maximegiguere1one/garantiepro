@@ -273,7 +273,7 @@ export class PDFContractBuilder {
   }
 
   /**
-   * Add coverage information
+   * Add coverage information (basic - inline with contract)
    */
   addCoverageInfo(data: InvoiceData): this {
     logger.debug('Adding coverage information');
@@ -325,6 +325,209 @@ export class PDFContractBuilder {
     this.checkPageBreak(6);
     this.doc.text(`Province: ${normalizedWarranty.province}`, 20, this.yPos);
     this.addSpace(10);
+
+    return this;
+  }
+
+  /**
+   * Add dedicated coverage details page - Full page for all coverage information
+   */
+  addCoverageDetailsPage(data: InvoiceData): this {
+    logger.debug('Adding dedicated coverage details page');
+
+    // Start fresh page for coverage details
+    this.addPage();
+
+    const normalizedWarranty = {
+      ...data.warranty,
+      ...normalizeWarrantyNumbers(data.warranty),
+    };
+
+    const pageWidth = this.getPageWidth();
+    const maxWidth = pageWidth - 40;
+
+    // Page Title
+    this.doc.setFontSize(18);
+    this.doc.setFont(this.config.fontFamily, 'bold');
+    this.doc.setTextColor(...this.config.primaryColor);
+    this.doc.text('DÉTAILS DE LA COUVERTURE', pageWidth / 2, this.yPos, { align: 'center' });
+    this.doc.setTextColor(0, 0, 0);
+
+    this.addSpace(20);
+
+    // Trailer and Purchase Info
+    this.doc.setFontSize(14);
+    this.doc.setFont(this.config.fontFamily, 'bold');
+    this.doc.text(`${data.trailer.year} ${data.trailer.make} ${data.trailer.model}`, 20, this.yPos);
+
+    this.addSpace(7);
+
+    this.doc.setFontSize(this.config.fontSize.body);
+    this.doc.setFont(this.config.fontFamily, 'normal');
+    this.doc.text(`Type: ${data.trailer.type || 'N/A'}`, 20, this.yPos);
+
+    this.addSpace(5);
+
+    this.doc.text(`NIV: ${data.trailer.vin}`, 20, this.yPos);
+
+    this.addSpace(5);
+
+    this.doc.text(
+      `Prix d'achat: ${safeLocaleString(normalizedWarranty.purchase_price, 'fr-CA')} $`,
+      20,
+      this.yPos
+    );
+
+    this.addSpace(15);
+
+    // Description Section
+    this.doc.setFillColor(220, 38, 38);
+    this.doc.rect(15, this.yPos, pageWidth - 30, 10, 'F');
+
+    this.addSpace(7);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont(this.config.fontFamily, 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Description:', 20, this.yPos);
+    this.doc.setTextColor(0, 0, 0);
+
+    this.addSpace(10);
+
+    // Plan description
+    this.doc.setFontSize(this.config.fontSize.body);
+    this.doc.setFont(this.config.fontFamily, 'normal');
+    this.doc.text(data.plan.name, 20, this.yPos);
+
+    this.addSpace(5);
+
+    if (data.plan.description) {
+      const descLines = this.doc.splitTextToSize(data.plan.description, maxWidth);
+      for (let i = 0; i < descLines.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(descLines[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+    }
+
+    this.addSpace(10);
+
+    // Coverage Section
+    this.doc.setFillColor(220, 38, 38);
+    this.doc.rect(15, this.yPos, pageWidth - 30, 10, 'F');
+
+    this.addSpace(7);
+
+    this.doc.setFontSize(12);
+    this.doc.setFont(this.config.fontFamily, 'bold');
+    this.doc.setTextColor(255, 255, 255);
+    this.doc.text('Couverture:', 20, this.yPos);
+    this.doc.setTextColor(0, 0, 0);
+
+    this.addSpace(10);
+
+    // Coverage details from plan
+    if (data.plan.coverage_details) {
+      const coverageLines = this.doc.splitTextToSize(data.plan.coverage_details, maxWidth);
+      this.doc.setFontSize(this.config.fontSize.body);
+      this.doc.setFont(this.config.fontFamily, 'normal');
+
+      for (let i = 0; i < coverageLines.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(coverageLines[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+    }
+
+    this.addSpace(10);
+
+    // Exclusions Section
+    if (data.plan.exclusions) {
+      this.checkPageBreak(30);
+
+      this.doc.setFillColor(220, 38, 38);
+      this.doc.rect(15, this.yPos, pageWidth - 30, 10, 'F');
+
+      this.addSpace(7);
+
+      this.doc.setFontSize(12);
+      this.doc.setFont(this.config.fontFamily, 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text('Exclusions:', 20, this.yPos);
+      this.doc.setTextColor(0, 0, 0);
+
+      this.addSpace(10);
+
+      const exclusionLines = this.doc.splitTextToSize(data.plan.exclusions, maxWidth);
+      this.doc.setFontSize(this.config.fontSize.body);
+      this.doc.setFont(this.config.fontFamily, 'normal');
+
+      for (let i = 0; i < exclusionLines.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(exclusionLines[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+
+      this.addSpace(10);
+    }
+
+    // Customer Obligations Section
+    if (data.plan.customer_obligations) {
+      this.checkPageBreak(30);
+
+      this.doc.setFillColor(220, 38, 38);
+      this.doc.rect(15, this.yPos, pageWidth - 30, 10, 'F');
+
+      this.addSpace(7);
+
+      this.doc.setFontSize(12);
+      this.doc.setFont(this.config.fontFamily, 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text('Obligations du propriétaire:', 20, this.yPos);
+      this.doc.setTextColor(0, 0, 0);
+
+      this.addSpace(10);
+
+      const obligationLines = this.doc.splitTextToSize(data.plan.customer_obligations, maxWidth);
+      this.doc.setFontSize(this.config.fontSize.body);
+      this.doc.setFont(this.config.fontFamily, 'normal');
+
+      for (let i = 0; i < obligationLines.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(obligationLines[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+
+      this.addSpace(10);
+    }
+
+    // Claim Process Section
+    if (data.plan.claim_process) {
+      this.checkPageBreak(30);
+
+      this.doc.setFillColor(220, 38, 38);
+      this.doc.rect(15, this.yPos, pageWidth - 30, 10, 'F');
+
+      this.addSpace(7);
+
+      this.doc.setFontSize(12);
+      this.doc.setFont(this.config.fontFamily, 'bold');
+      this.doc.setTextColor(255, 255, 255);
+      this.doc.text('Processus de réclamation:', 20, this.yPos);
+      this.doc.setTextColor(0, 0, 0);
+
+      this.addSpace(10);
+
+      const claimProcessLines = this.doc.splitTextToSize(data.plan.claim_process, maxWidth);
+      this.doc.setFontSize(this.config.fontSize.body);
+      this.doc.setFont(this.config.fontFamily, 'normal');
+
+      for (let i = 0; i < claimProcessLines.length; i++) {
+        this.checkPageBreak(6);
+        this.doc.text(claimProcessLines[i], 20, this.yPos);
+        this.yPos += 5;
+      }
+    }
 
     return this;
   }
@@ -653,6 +856,9 @@ export function generateContractPDF(
   builder
     .addCoverageInfo(data)
     .addTotalAmount(data);
+
+  // Add dedicated coverage details page with full plan information
+  builder.addCoverageDetailsPage(data);
 
   // Add claim submission page if URL and QR code provided
   if (claimSubmissionUrl && qrCodeDataUrl) {
