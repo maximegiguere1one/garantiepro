@@ -53,6 +53,8 @@ const WarrantyDownloadPage = lazy(() => import('./components/WarrantyDownloadPag
 const HelpCenter = lazy(() => import('./components/HelpCenter').then(m => ({ default: m.default })));
 const UIV2Demo = lazy(() => import('./components/UIV2Demo').then(m => ({ default: m.UIV2Demo })));
 const PromoteMasterPage = lazy(() => import('./components/PromoteMasterPage'));
+const AutomationDashboard = lazy(() => import('./components/AutomationDashboard').then(m => ({ default: m.AutomationDashboard })));
+const NotificationPreferences = lazy(() => import('./components/NotificationPreferences').then(m => ({ default: m.NotificationPreferences })));
 
 function AppContent() {
   const { user, loading, profileError, retryLoadProfile, signOut } = useAuth();
@@ -149,6 +151,10 @@ function AppContent() {
         return <SettingsPage />;
       case 'ui-v2-demo':
         return <UIV2Demo />;
+      case 'automation':
+        return <AutomationDashboard />;
+      case 'notification-preferences':
+        return <NotificationPreferences />;
       default:
         return <Dashboard />;
     }

@@ -24,6 +24,8 @@ import {
   UserPlus,
   MessageCircle,
   HelpCircle,
+  Zap,
+  Bell,
 } from 'lucide-react';
 import { NavigationSection, NavigationItem } from '../types/navigation';
 
@@ -240,6 +242,21 @@ export const standardNavigation: NavigationSection[] = [
         description: 'File d\'attente et historique',
         icon: Mail,
         roles: ['admin', 'master'],
+      },
+      {
+        id: 'automation',
+        label: 'Automatisation',
+        description: 'Workflows et notifications automatiques',
+        icon: Zap,
+        roles: ['admin', 'master', 'franchisee_admin'],
+        badge: 'Nouveau',
+      },
+      {
+        id: 'notification-preferences',
+        label: 'Préférences notifications',
+        description: 'Gérer vos notifications',
+        icon: Bell,
+        roles: ['admin', 'master', 'f_and_i', 'operations', 'franchisee_admin'],
       },
     ],
   },
