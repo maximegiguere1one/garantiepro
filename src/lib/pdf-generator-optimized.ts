@@ -269,8 +269,13 @@ export function generateOptimizedContractPDF(
   doc.setFont('helvetica', 'normal');
   const objetText = `Le présent contrat de garantie prolongée (ci-après "le Contrat") a pour objet de couvrir les réparations et remplacements des pièces et composantes de la remorque décrite ci-après, conformément aux conditions générales et particulières énoncées dans ce document.`;
   const splitObjet = doc.splitTextToSize(objetText, pageWidth - 40);
-  doc.text(splitObjet, 20, yPos);
-  yPos += splitObjet.length * 5 + 10;
+  // Render line by line with page break checks
+  for (let i = 0; i < splitObjet.length; i++) {
+    yPos = checkPageOverflow(doc, yPos, 6);
+    doc.text(splitObjet[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 10;
 
   // SECTION 2: BIEN COUVERT
   yPos = checkPageOverflow(doc, yPos, 40);
@@ -330,8 +335,13 @@ export function generateOptimizedContractPDF(
     if (plan.coverage_details && plan.coverage_details.trim()) {
       doc.setFontSize(8);
       const coverageDetailsLines = doc.splitTextToSize(plan.coverage_details, pageWidth - 50);
-      doc.text(coverageDetailsLines, 25, yPos);
-      yPos += (coverageDetailsLines.length * 4) + 7;
+      // Render line by line with page break checks
+      for (let i = 0; i < coverageDetailsLines.length; i++) {
+        yPos = checkPageOverflow(doc, yPos, 5);
+        doc.text(coverageDetailsLines[i], 25, yPos);
+        yPos += 4;
+      }
+      yPos += 7;
     }
 
     doc.setFontSize(8);
@@ -420,8 +430,13 @@ export function generateOptimizedContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
   const retractText = `Conformément à la Loi sur la protection du consommateur du Québec (LCCJTI, articles 54.8 à 54.16), l'acheteur dispose d'un délai de RÉSOLUTION de DIX (10) JOURS suivant la réception du contrat pour l'annuler SANS FRAIS ni pénalité. Pour exercer ce droit, l'acheteur doit transmettre au vendeur, par écrit (lettre, courriel ou fax), un avis de résolution avant l'expiration du délai. En cas d'annulation, le vendeur remboursera intégralement toutes les sommes perçues dans les 15 jours suivant la réception de l'avis.`;
   const splitRetract = doc.splitTextToSize(retractText, pageWidth - 50);
-  doc.text(splitRetract, 25, yPos);
-  yPos += splitRetract.length * 4.5 + 8;
+  // Render line by line with page break checks
+  for (let i = 0; i < splitRetract.length; i++) {
+    yPos = checkPageOverflow(doc, yPos, 5);
+    doc.text(splitRetract[i], 25, yPos);
+    yPos += 4.5;
+  }
+  yPos += 8;
 
   // Calculer la date limite (10 jours après created_at ou aujourd'hui si invalide)
   let deadlineDate: Date;
@@ -490,8 +505,13 @@ export function generateOptimizedContractPDF(
 
   const claimText = `Pour soumettre une réclamation, l'acheteur doit communiquer avec le vendeur par téléphone au ${phoneText} ou par courriel à ${emailText} dès la survenance du bris. Un numéro de dossier sera attribué et les instructions de réparation seront transmises. Toute réparation effectuée sans autorisation préalable ne sera pas couverte.`;
   const splitClaim = doc.splitTextToSize(claimText, pageWidth - 40);
-  doc.text(splitClaim, 20, yPos);
-  yPos += splitClaim.length * 5 + 10;
+  // Render line by line with page break checks
+  for (let i = 0; i < splitClaim.length; i++) {
+    yPos = checkPageOverflow(doc, yPos, 6);
+    doc.text(splitClaim[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 10;
 
   // Soumission en ligne avec QR code
   if (claimSubmissionUrl && qrCodeDataUrl) {
@@ -521,8 +541,12 @@ export function generateOptimizedContractPDF(
     }
 
     const urlLines = doc.splitTextToSize(displayUrl, pageWidth - 80);
-    doc.text(urlLines, 25, yPos);
-    yPos += urlLines.length * 4;
+    // Render line by line with page break checks
+    for (let i = 0; i < urlLines.length; i++) {
+      yPos = checkPageOverflow(doc, yPos, 5);
+      doc.text(urlLines[i], 25, yPos);
+      yPos += 4;
+    }
 
     // QR Code à droite
     if (qrCodeDataUrl && qrCodeDataUrl.startsWith('data:image/')) {
@@ -546,16 +570,26 @@ export function generateOptimizedContractPDF(
 
   const legalText = `Le présent contrat est régi par les lois du Québec et du Canada. Tout litige découlant du présent contrat sera de la compétence exclusive des tribunaux du district judiciaire de [DISTRICT], Province de Québec. Les parties conviennent que la langue officielle du contrat est le français, conformément à la Charte de la langue française.`;
   const splitLegal = doc.splitTextToSize(legalText, pageWidth - 40);
-  doc.text(splitLegal, 20, yPos);
-  yPos += splitLegal.length * 5 + 15;
+  // Render line by line with page break checks
+  for (let i = 0; i < splitLegal.length; i++) {
+    yPos = checkPageOverflow(doc, yPos, 6);
+    doc.text(splitLegal[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 15;
 
   // SECTION 10: SIGNATURES
   yPos = addSection(doc, '10. SIGNATURES', yPos);
 
   const signText = `Les parties reconnaissent avoir lu, compris et accepté l'intégralité du présent contrat, incluant toutes les conditions générales, exclusions et limitations. Ce contrat constitue l'accord complet entre les parties et remplace toute entente antérieure.`;
   const splitSign = doc.splitTextToSize(signText, pageWidth - 40);
-  doc.text(splitSign, 20, yPos);
-  yPos += splitSign.length * 5 + 15;
+  // Render line by line with page break checks
+  for (let i = 0; i < splitSign.length; i++) {
+    yPos = checkPageOverflow(doc, yPos, 6);
+    doc.text(splitSign[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 15;
 
   // Cadres de signature
   const col1Width = (pageWidth - 50) / 2;
@@ -728,23 +762,35 @@ export function generateOptimizedContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
 
   if (plan.description) {
+    yPos = checkPageOverflow(doc, yPos, 8);
     doc.setFont('helvetica', 'bold');
     doc.text('Description:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const descriptionLines = doc.splitTextToSize(plan.description, 170);
-    doc.text(descriptionLines, 20, yPos);
-    yPos += (descriptionLines.length * 5) + 3;
+    // Render line by line with page break checks
+    for (let i = 0; i < descriptionLines.length; i++) {
+      yPos = checkPageOverflow(doc, yPos, 6);
+      doc.text(descriptionLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 3;
   }
 
   if (plan.coverage_details) {
+    yPos = checkPageOverflow(doc, yPos, 8);
     doc.setFont('helvetica', 'bold');
     doc.text('Couverture:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const coverageLines = doc.splitTextToSize(plan.coverage_details, 170);
-    doc.text(coverageLines, 20, yPos);
-    yPos += (coverageLines.length * 5) + 5;
+    // Render line by line with page break checks
+    for (let i = 0; i < coverageLines.length; i++) {
+      yPos = checkPageOverflow(doc, yPos, 6);
+      doc.text(coverageLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 5;
   }
 
   const invoiceTableData: any[] = [
