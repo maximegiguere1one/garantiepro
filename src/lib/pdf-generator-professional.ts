@@ -230,23 +230,37 @@ export function generateProfessionalInvoicePDF(data: InvoiceData): any {
   doc.setTextColor(...BRAND_COLORS.text);
 
   if (plan.description) {
+    yPos = checkPageBreak(doc, yPos, 15);
     doc.setFont('helvetica', 'bold');
     doc.text('Description:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const descriptionLines = doc.splitTextToSize(plan.description, 170);
-    doc.text(descriptionLines, 20, yPos);
-    yPos += (descriptionLines.length * 5) + 3;
+
+    // Render description line by line with page break checks
+    for (let i = 0; i < descriptionLines.length; i++) {
+      yPos = checkPageBreak(doc, yPos, 5);
+      doc.text(descriptionLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 3;
   }
 
   if (plan.coverage_details) {
+    yPos = checkPageBreak(doc, yPos, 15);
     doc.setFont('helvetica', 'bold');
     doc.text('Couverture:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const coverageLines = doc.splitTextToSize(plan.coverage_details, 170);
-    doc.text(coverageLines, 20, yPos);
-    yPos += (coverageLines.length * 5) + 5;
+
+    // Render coverage details line by line with page break checks
+    for (let i = 0; i < coverageLines.length; i++) {
+      yPos = checkPageBreak(doc, yPos, 5);
+      doc.text(coverageLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 5;
   }
 
   const tableData: any[] = [
@@ -350,7 +364,14 @@ export function generateProfessionalInvoicePDF(data: InvoiceData): any {
   doc.setTextColor(...BRAND_COLORS.text);
   const paymentText = `Cette facture est payable immédiatement. Garantie active dès réception du paiement complet. Durée de couverture: ${safeNumber(normalizedWarranty.duration_months, 0)} mois (du ${new Date(normalizedWarranty.start_date).toLocaleDateString('fr-CA')} au ${new Date(normalizedWarranty.end_date).toLocaleDateString('fr-CA')}).`;
   const splitPayment = doc.splitTextToSize(paymentText, pageWidth - 50);
-  doc.text(splitPayment, 25, yPos);
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitPayment.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitPayment[i], 25, yPos);
+    yPos += 5;
+  }
+  yPos -= 5;
 
   yPos += 25;
 
@@ -368,7 +389,14 @@ export function generateProfessionalInvoicePDF(data: InvoiceData): any {
   doc.setTextColor(...BRAND_COLORS.text);
   const importantText = `Franchise applicable: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $ par réclamation. Droit de rétractation: 10 jours. Cette garantie est régie par les lois du Québec.`;
   const splitImportant = doc.splitTextToSize(importantText, pageWidth - 50);
-  doc.text(splitImportant, 25, yPos);
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitImportant.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitImportant[i], 25, yPos);
+    yPos += 5;
+  }
+  yPos -= 5;
 
   addFooter(doc, 1, 1, companyInfo);
 
@@ -439,6 +467,7 @@ export function generateProfessionalContractPDF(
   if (companyInfo.address) {
     const addressLines = companyInfo.address.split('\n').filter(line => line.trim());
     addressLines.forEach(line => {
+      yPos = checkPageBreak(doc, yPos, 6);
       doc.text(line.trim(), 25, yPos);
       yPos += 5;
     });
@@ -477,6 +506,7 @@ export function generateProfessionalContractPDF(
   ];
 
   clientLines.forEach(line => {
+    yPos = checkPageBreak(doc, yPos, 6);
     doc.text(line, 25, yPos);
     yPos += 5;
   });
@@ -489,8 +519,14 @@ export function generateProfessionalContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
   const objetText = `Le présent contrat de garantie prolongée (ci-après "le Contrat") a pour objet de couvrir les réparations et remplacements des pièces et composantes de la remorque décrite ci-après, conformément aux conditions générales et particulières énoncées dans ce document.`;
   const splitObjet = doc.splitTextToSize(objetText, pageWidth - 40);
-  doc.text(splitObjet, 20, yPos);
-  yPos += splitObjet.length * 5 + 10;
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitObjet.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitObjet[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 10;
 
   yPos = addSection(doc, '2. BIEN COUVERT', yPos);
 
@@ -532,9 +568,14 @@ export function generateProfessionalContractPDF(
     // Afficher d'abord le coverage_details (texte libre) si présent
     if (plan.coverage_details && plan.coverage_details.trim()) {
       const coverageDetailsLines = doc.splitTextToSize(plan.coverage_details, pageWidth - 50);
-      yPos = checkPageBreak(doc, yPos, coverageDetailsLines.length * 5 + 10);
-      doc.text(coverageDetailsLines, 25, yPos);
-      yPos += (coverageDetailsLines.length * 5) + 10;
+
+      // Render coverage details line by line with page break checks
+      for (let i = 0; i < coverageDetailsLines.length; i++) {
+        yPos = checkPageBreak(doc, yPos, 6);
+        doc.text(coverageDetailsLines[i], 25, yPos);
+        yPos += 5;
+      }
+      yPos += 10;
     }
 
     // COMPOSANTS COUVERTS
@@ -684,6 +725,7 @@ export function generateProfessionalContractPDF(
 
     // FRANCHISE
     if (coverageMatrix.franchise !== undefined) {
+      yPos = checkPageBreak(doc, yPos, 20);
       yPos += 5;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
@@ -697,6 +739,7 @@ export function generateProfessionalContractPDF(
 
     // AVANTAGES SUPPLÉMENTAIRES
     if (coverageMatrix.avantages) {
+      yPos = checkPageBreak(doc, yPos, 25);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setFillColor(34, 197, 94);
@@ -709,19 +752,23 @@ export function generateProfessionalContractPDF(
       // Programme de fidélité
       if (coverageMatrix.avantages.programme_fidelite) {
         const fidelite = coverageMatrix.avantages.programme_fidelite;
+        yPos = checkPageBreak(doc, yPos, 20);
         doc.setFont('helvetica', 'bold');
         doc.text('• Programme de fidélité', 35, yPos);
         yPos += 5;
         doc.setFont('helvetica', 'normal');
         if (fidelite.remorque_10000_ou_moins) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  - Crédit pour remorque ≤ 10 000 $: ${fidelite.remorque_10000_ou_moins.toLocaleString('fr-CA')} $`, 40, yPos);
           yPos += 4;
         }
         if (fidelite.remorque_plus_10000) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  - Crédit pour remorque > 10 000 $: ${fidelite.remorque_plus_10000.toLocaleString('fr-CA')} $`, 40, yPos);
           yPos += 4;
         }
         if (fidelite.note) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.setFontSize(8);
           doc.setTextColor(...BRAND_COLORS.textLight);
           doc.text(`  Note: ${fidelite.note}`, 40, yPos);
@@ -735,15 +782,18 @@ export function generateProfessionalContractPDF(
       // Assistance remorquage
       if (coverageMatrix.avantages.assistance_remorquage) {
         const remorquage = coverageMatrix.avantages.assistance_remorquage;
+        yPos = checkPageBreak(doc, yPos, 15);
         doc.setFont('helvetica', 'bold');
         doc.text('• Assistance remorquage', 35, yPos);
         yPos += 5;
         doc.setFont('helvetica', 'normal');
         if (remorquage.description) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  ${remorquage.description}`, 40, yPos);
           yPos += 4;
         }
         if (remorquage.montant_par_evenement) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  Montant par événement: ${remorquage.montant_par_evenement.toLocaleString('fr-CA')} $`, 40, yPos);
           yPos += 4;
         }
@@ -755,6 +805,7 @@ export function generateProfessionalContractPDF(
     // DURÉE ET TRANSFÉRABILITÉ
     if (coverageMatrix.duration) {
       const duration = coverageMatrix.duration;
+      yPos = checkPageBreak(doc, yPos, 30);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.text('DURÉE ET TRANSFÉRABILITÉ:', 25, yPos);
@@ -762,21 +813,26 @@ export function generateProfessionalContractPDF(
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
       if (duration.years) {
+        yPos = checkPageBreak(doc, yPos, 5);
         doc.text(`• Durée totale: ${duration.years} ans`, 30, yPos);
         yPos += 5;
       }
       if (duration.starts_after_manufacturer) {
+        yPos = checkPageBreak(doc, yPos, 5);
         doc.text('• Débute après la garantie du fabricant', 30, yPos);
         yPos += 5;
       }
       if (duration.transferable) {
+        yPos = checkPageBreak(doc, yPos, 15);
         doc.text('• Garantie transférable au nouveau propriétaire', 30, yPos);
         yPos += 5;
         if (duration.transfer_fee) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  Frais de transfert: ${duration.transfer_fee.toLocaleString('fr-CA')} $`, 35, yPos);
           yPos += 4;
         }
         if (duration.transfer_notice_days) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  Délai de notification: ${duration.transfer_notice_days} jours`, 35, yPos);
           yPos += 4;
         }
@@ -822,9 +878,13 @@ export function generateProfessionalContractPDF(
       yPos += 5;
       coverageMatrix.obligations.forEach((obligation: string) => {
         const splitObligation = doc.splitTextToSize(`• ${obligation}`, pageWidth - 70);
-        yPos = checkPageBreak(doc, yPos, splitObligation.length * 5 + 5);
-        doc.text(splitObligation, 35, yPos);
-        yPos += splitObligation.length * 5;
+
+        // Render obligation line by line with page break checks
+        for (let i = 0; i < splitObligation.length; i++) {
+          yPos = checkPageBreak(doc, yPos, 6);
+          doc.text(splitObligation[i], 35, yPos);
+          yPos += 5;
+        }
       });
       yPos += 5;
     }
@@ -839,9 +899,11 @@ export function generateProfessionalContractPDF(
 
   const selectedOptions = normalizedWarranty.selected_options as any[] || [];
   if (selectedOptions.length > 0) {
+    yPos = checkPageBreak(doc, yPos, 10);
     doc.text('Options additionnelles:', 25, yPos);
     yPos += 5;
     selectedOptions.forEach((option: any) => {
+      yPos = checkPageBreak(doc, yPos, 6);
       doc.text(`  • ${option.name}: ${safeToFixed(option.price, 2)} $ CAD`, 30, yPos);
       yPos += 5;
     });
@@ -879,7 +941,14 @@ export function generateProfessionalContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
   const retractText = `Conformément à la Loi sur la protection du consommateur du Québec (LCCJTI, articles 54.8 à 54.16), l'acheteur dispose d'un délai de RÉSOLUTION de DIX (10) JOURS suivant la réception du contrat pour l'annuler SANS FRAIS ni pénalité. Pour exercer ce droit, l'acheteur doit transmettre au vendeur, par écrit (lettre, courriel ou fax), un avis de résolution avant l'expiration du délai. En cas d'annulation, le vendeur remboursera intégralement toutes les sommes perçues dans les 15 jours suivant la réception de l'avis.`;
   const splitRetract = doc.splitTextToSize(retractText, pageWidth - 50);
-  doc.text(splitRetract, 25, yPos);
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitRetract.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 5);
+    doc.text(splitRetract[i], 25, yPos);
+    yPos += 4.5;
+  }
+  yPos -= 4.5;
 
   yPos += splitRetract.length * 4.5 + 10;
 
@@ -913,6 +982,7 @@ export function generateProfessionalContractPDF(
   ];
 
   exclusions.forEach(exclusion => {
+    yPos = checkPageBreak(doc, yPos, 6);
     doc.text(exclusion, 25, yPos);
     yPos += 5;
   });
@@ -929,6 +999,7 @@ export function generateProfessionalContractPDF(
   ];
 
   obligations.forEach(obligation => {
+    yPos = checkPageBreak(doc, yPos, 6);
     doc.text(obligation, 25, yPos);
     yPos += 5;
   });
@@ -939,8 +1010,14 @@ export function generateProfessionalContractPDF(
   doc.setFontSize(9);
   const claimText = `Pour soumettre une réclamation, l'acheteur doit communiquer avec le vendeur par téléphone au ${companyInfo.phone || '[TÉLÉPHONE]'} ou par courriel à ${companyInfo.email || '[EMAIL]'} dès la survenance du bris. Un numéro de dossier sera attribué et les instructions de réparation seront transmises. Toute réparation effectuée sans autorisation préalable ne sera pas couverte.`;
   const splitClaim = doc.splitTextToSize(claimText, pageWidth - 40);
-  doc.text(splitClaim, 20, yPos);
-  yPos += splitClaim.length * 5 + 5;
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitClaim.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitClaim[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 5;
 
   if (claimSubmissionUrl && qrCodeDataUrl) {
     yPos += 5;
@@ -995,16 +1072,28 @@ export function generateProfessionalContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
   const legalText = `Le présent contrat est régi par les lois du Québec et du Canada. Tout litige découlant du présent contrat sera de la compétence exclusive des tribunaux du district judiciaire de [DISTRICT], Province de Québec. Les parties conviennent que la langue officielle du contrat est le français, conformément à la Charte de la langue française.`;
   const splitLegal = doc.splitTextToSize(legalText, pageWidth - 40);
-  doc.text(splitLegal, 20, yPos);
-  yPos += splitLegal.length * 5 + 15;
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitLegal.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitLegal[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 15;
 
   yPos = addSection(doc, '10. SIGNATURES', yPos);
 
   doc.setFontSize(9);
   const signText = `Les parties reconnaissent avoir lu, compris et accepté l'intégralité du présent contrat, incluant toutes les conditions générales, exclusions et limitations. Ce contrat constitue l'accord complet entre les parties et remplace toute entente antérieure.`;
   const splitSign = doc.splitTextToSize(signText, pageWidth - 40);
-  doc.text(splitSign, 20, yPos);
-  yPos += splitSign.length * 5 + 15;
+
+  // Render text line by line with page break checks
+  for (let i = 0; i < splitSign.length; i++) {
+    yPos = checkPageBreak(doc, yPos, 6);
+    doc.text(splitSign[i], 20, yPos);
+    yPos += 5;
+  }
+  yPos += 15;
 
   const col1Width = (pageWidth - 50) / 2;
   const col2X = 20 + col1Width + 10;
@@ -1199,23 +1288,37 @@ export function generateProfessionalContractPDF(
   doc.setTextColor(...BRAND_COLORS.text);
 
   if (plan.description) {
+    yPos = checkPageBreak(doc, yPos, 15);
     doc.setFont('helvetica', 'bold');
     doc.text('Description:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const descriptionLines = doc.splitTextToSize(plan.description, 170);
-    doc.text(descriptionLines, 20, yPos);
-    yPos += (descriptionLines.length * 5) + 3;
+
+    // Render description line by line with page break checks
+    for (let i = 0; i < descriptionLines.length; i++) {
+      yPos = checkPageBreak(doc, yPos, 5);
+      doc.text(descriptionLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 3;
   }
 
   if (plan.coverage_details) {
+    yPos = checkPageBreak(doc, yPos, 15);
     doc.setFont('helvetica', 'bold');
     doc.text('Couverture:', 20, yPos);
     yPos += 5;
     doc.setFont('helvetica', 'normal');
     const coverageLines = doc.splitTextToSize(plan.coverage_details, 170);
-    doc.text(coverageLines, 20, yPos);
-    yPos += (coverageLines.length * 5) + 5;
+
+    // Render coverage details line by line with page break checks
+    for (let i = 0; i < coverageLines.length; i++) {
+      yPos = checkPageBreak(doc, yPos, 5);
+      doc.text(coverageLines[i], 20, yPos);
+      yPos += 5;
+    }
+    yPos += 5;
   }
 
   // Tableau des items
@@ -1465,6 +1568,7 @@ export function generateProfessionalMerchantInvoicePDF(data: InvoiceData): any {
   ];
 
   metrics.forEach(metric => {
+    yPos = checkPageBreak(doc, yPos, 7);
     doc.setFontSize(9);
     doc.text(metric, 25, yPos);
     yPos += 6;
