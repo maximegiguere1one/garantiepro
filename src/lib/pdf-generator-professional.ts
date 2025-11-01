@@ -91,7 +91,20 @@ function addFooter(doc: any, pageNumber: number, totalPages: number, companyInfo
   }
 }
 
+function checkPageBreak(doc: any, yPos: number, requiredSpace: number = 30): number {
+  const pageHeight = doc.internal.pageSize.height;
+  const bottomMargin = 40; // Space for footer
+
+  if (yPos + requiredSpace > pageHeight - bottomMargin) {
+    doc.addPage();
+    return 50; // Start position after header on new page
+  }
+  return yPos;
+}
+
 function addSection(doc: any, title: string, yPos: number): number {
+  yPos = checkPageBreak(doc, yPos, 20);
+
   doc.setFillColor(...BRAND_COLORS.light);
   doc.rect(15, yPos - 2, doc.internal.pageSize.width - 30, 8, 'F');
 
@@ -105,6 +118,8 @@ function addSection(doc: any, title: string, yPos: number): number {
 }
 
 function addInfoBox(doc: any, x: number, y: number, width: number, lines: string[]) {
+  y = checkPageBreak(doc, y, lines.length * 5 + 10);
+
   doc.setDrawColor(...BRAND_COLORS.light);
   doc.setLineWidth(0.5);
   doc.roundedRect(x, y, width, lines.length * 5 + 6, 2, 2, 'S');
@@ -517,6 +532,7 @@ export function generateProfessionalContractPDF(
     // Afficher d'abord le coverage_details (texte libre) si présent
     if (plan.coverage_details && plan.coverage_details.trim()) {
       const coverageDetailsLines = doc.splitTextToSize(plan.coverage_details, pageWidth - 50);
+      yPos = checkPageBreak(doc, yPos, coverageDetailsLines.length * 5 + 10);
       doc.text(coverageDetailsLines, 25, yPos);
       yPos += (coverageDetailsLines.length * 5) + 10;
     }
@@ -533,6 +549,9 @@ export function generateProfessionalContractPDF(
       // Freins
       if (coverageMatrix.coverage.freins) {
         const freins = coverageMatrix.coverage.freins;
+        const estimatedLines = 5 + (freins.includes?.length || 0) * 4;
+        yPos = checkPageBreak(doc, yPos, estimatedLines);
+
         doc.setFont('helvetica', 'bold');
         doc.text('• FREINS', 30, yPos);
         yPos += 5;
@@ -549,6 +568,7 @@ export function generateProfessionalContractPDF(
           doc.text('  Inclus:', 35, yPos);
           yPos += 5;
           freins.includes.forEach((item: string) => {
+            yPos = checkPageBreak(doc, yPos, 5);
             doc.text(`    - ${item}`, 40, yPos);
             yPos += 4;
           });
@@ -559,6 +579,9 @@ export function generateProfessionalContractPDF(
       // Système électrique
       if (coverageMatrix.coverage.systeme_electrique) {
         const elec = coverageMatrix.coverage.systeme_electrique;
+        const estimatedLines = 10 + (elec.includes?.length || 0) * 4;
+        yPos = checkPageBreak(doc, yPos, estimatedLines);
+
         doc.setFont('helvetica', 'bold');
         doc.text('• SYSTÈME ÉLECTRIQUE', 30, yPos);
         yPos += 5;
@@ -567,6 +590,7 @@ export function generateProfessionalContractPDF(
           doc.text('  Couverture complète incluant:', 35, yPos);
           yPos += 5;
           elec.includes.forEach((item: string) => {
+            yPos = checkPageBreak(doc, yPos, 5);
             doc.text(`    - ${item}`, 40, yPos);
             yPos += 4;
           });
@@ -577,6 +601,9 @@ export function generateProfessionalContractPDF(
       // Structure et châssis
       if (coverageMatrix.coverage.structure_chassis) {
         const structure = coverageMatrix.coverage.structure_chassis;
+        const estimatedLines = 10 + (structure.includes?.length || 0) * 4;
+        yPos = checkPageBreak(doc, yPos, estimatedLines);
+
         doc.setFont('helvetica', 'bold');
         doc.text('• STRUCTURE ET CHÂSSIS', 30, yPos);
         yPos += 5;
@@ -585,6 +612,7 @@ export function generateProfessionalContractPDF(
           doc.text('  Couverture complète incluant:', 35, yPos);
           yPos += 5;
           structure.includes.forEach((item: string) => {
+            yPos = checkPageBreak(doc, yPos, 5);
             doc.text(`    - ${item}`, 40, yPos);
             yPos += 4;
           });
@@ -595,6 +623,9 @@ export function generateProfessionalContractPDF(
       // Entretien annuel inclus
       if (coverageMatrix.coverage.entretien_annuel) {
         const entretien = coverageMatrix.coverage.entretien_annuel;
+        const estimatedLines = 15 + (entretien.services?.length || 0) * 4;
+        yPos = checkPageBreak(doc, yPos, estimatedLines);
+
         doc.setFont('helvetica', 'bold');
         doc.setFillColor(34, 197, 94); // Vert pour avantage
         doc.rect(25, yPos - 4, 3, 6, 'F');
@@ -605,15 +636,18 @@ export function generateProfessionalContractPDF(
           doc.text('  Services inclus chaque année:', 35, yPos);
           yPos += 5;
           entretien.services.forEach((service: string) => {
+            yPos = checkPageBreak(doc, yPos, 5);
             doc.text(`    - ${service}`, 40, yPos);
             yPos += 4;
           });
         }
         if (entretien.value_per_year) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.text(`  Valeur annuelle: ${entretien.value_per_year.toLocaleString('fr-CA')} $`, 35, yPos);
           yPos += 5;
         }
         if (entretien.total_value) {
+          yPos = checkPageBreak(doc, yPos, 5);
           doc.setFont('helvetica', 'bold');
           doc.text(`  Valeur totale du programme: ${entretien.total_value.toLocaleString('fr-CA')} $`, 35, yPos);
           doc.setFont('helvetica', 'normal');
@@ -625,6 +659,9 @@ export function generateProfessionalContractPDF(
 
     // LIMITES ANNUELLES PAR TRANCHE DE PRIX
     if (coverageMatrix.annual_limits) {
+      const limitsCount = Object.keys(coverageMatrix.annual_limits).length;
+      yPos = checkPageBreak(doc, yPos, 20 + limitsCount * 5);
+
       yPos += 5;
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
@@ -637,6 +674,7 @@ export function generateProfessionalContractPDF(
 
       const limits = coverageMatrix.annual_limits;
       Object.keys(limits).forEach((range: string) => {
+        yPos = checkPageBreak(doc, yPos, 5);
         const limit = limits[range];
         doc.text(`  • Remorque ${range} $: jusqu\'à ${limit.toLocaleString('fr-CA')} $ / an`, 35, yPos);
         yPos += 5;
@@ -748,6 +786,8 @@ export function generateProfessionalContractPDF(
 
     // EXCLUSIONS
     if (coverageMatrix.exclusions && coverageMatrix.exclusions.length > 0) {
+      yPos = checkPageBreak(doc, yPos, 20 + coverageMatrix.exclusions.length * 5);
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setFillColor(...BRAND_COLORS.warning);
@@ -759,6 +799,7 @@ export function generateProfessionalContractPDF(
       doc.text('Les éléments suivants NE sont PAS couverts par cette garantie:', 30, yPos);
       yPos += 5;
       coverageMatrix.exclusions.forEach((exclusion: string) => {
+        yPos = checkPageBreak(doc, yPos, 5);
         doc.text(`• ${exclusion}`, 35, yPos);
         yPos += 5;
       });
@@ -767,6 +808,8 @@ export function generateProfessionalContractPDF(
 
     // OBLIGATIONS DE L'ACHETEUR
     if (coverageMatrix.obligations && coverageMatrix.obligations.length > 0) {
+      yPos = checkPageBreak(doc, yPos, 30);
+
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.setFillColor(...BRAND_COLORS.primary);
@@ -779,6 +822,7 @@ export function generateProfessionalContractPDF(
       yPos += 5;
       coverageMatrix.obligations.forEach((obligation: string) => {
         const splitObligation = doc.splitTextToSize(`• ${obligation}`, pageWidth - 70);
+        yPos = checkPageBreak(doc, yPos, splitObligation.length * 5 + 5);
         doc.text(splitObligation, 35, yPos);
         yPos += splitObligation.length * 5;
       });

@@ -21,6 +21,17 @@ interface InvoiceData {
   };
 }
 
+function checkPageBreak(doc: any, yPos: number, requiredSpace: number = 30): number {
+  const pageHeight = doc.internal.pageSize.height;
+  const bottomMargin = 40;
+
+  if (yPos + requiredSpace > pageHeight - bottomMargin) {
+    doc.addPage();
+    return 20; // Start position on new page
+  }
+  return yPos;
+}
+
 export function generateInvoicePDF(data: InvoiceData): any {
   const jsPDF = (globalThis as any).jspdf?.jsPDF;
   if (!jsPDF) {
@@ -240,6 +251,9 @@ export function generateContractPDF(
     const maxWidth = pageWidth - 40;
 
     customSections.forEach((section: any) => {
+      const splitContent = doc.splitTextToSize(section.content, maxWidth);
+      yPos = checkPageBreak(doc, yPos, splitContent.length * 5 + 20);
+
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
       doc.text(section.name.toUpperCase(), 20, yPos);
@@ -247,7 +261,6 @@ export function generateContractPDF(
       yPos += 7;
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
-      const splitContent = doc.splitTextToSize(section.content, maxWidth);
       doc.text(splitContent, 20, yPos);
       yPos += splitContent.length * 5 + 10;
     });
