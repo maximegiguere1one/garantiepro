@@ -322,16 +322,24 @@ export function generateOptimizedContractPDF(
 
   // SECTION 3.1: DÉTAILS COMPLETS DE COUVERTURE
   const coverageMatrix = plan.coverage_matrix as any;
-  if (coverageMatrix) {
+  if (coverageMatrix || plan.coverage_details) {
     yPos = checkPageOverflow(doc, yPos, 50);
     yPos = addSection(doc, '3.1 DÉTAILS COMPLETS DE LA COUVERTURE', yPos);
+
+    // Afficher d'abord le coverage_details (texte libre) si présent
+    if (plan.coverage_details && plan.coverage_details.trim()) {
+      doc.setFontSize(8);
+      const coverageDetailsLines = doc.splitTextToSize(plan.coverage_details, pageWidth - 50);
+      doc.text(coverageDetailsLines, 25, yPos);
+      yPos += (coverageDetailsLines.length * 4) + 7;
+    }
 
     doc.setFontSize(8);
     doc.text('Votre plan inclut la couverture suivante:', 25, yPos);
     yPos += 7;
 
     // Composants couverts (version compacte)
-    if (coverageMatrix.coverage) {
+    if (coverageMatrix && coverageMatrix.coverage) {
       if (coverageMatrix.coverage.freins) {
         doc.setFont('helvetica', 'bold');
         doc.text('• FREINS', 25, yPos);

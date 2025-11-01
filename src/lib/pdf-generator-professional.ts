@@ -508,14 +508,21 @@ export function generateProfessionalContractPDF(
   // Parser le coverage_matrix pour afficher tous les détails
   const coverageMatrix = plan.coverage_matrix as any;
 
-  if (coverageMatrix) {
+  if (coverageMatrix || plan.coverage_details) {
     yPos = addSection(doc, '3.1 DÉTAILS COMPLETS DE LA COUVERTURE', yPos);
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...BRAND_COLORS.text);
 
+    // Afficher d'abord le coverage_details (texte libre) si présent
+    if (plan.coverage_details && plan.coverage_details.trim()) {
+      const coverageDetailsLines = doc.splitTextToSize(plan.coverage_details, pageWidth - 50);
+      doc.text(coverageDetailsLines, 25, yPos);
+      yPos += (coverageDetailsLines.length * 5) + 10;
+    }
+
     // COMPOSANTS COUVERTS
-    if (coverageMatrix.coverage) {
+    if (coverageMatrix && coverageMatrix.coverage) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(10);
       doc.text('COMPOSANTS ET SYSTÈMES COUVERTS:', 25, yPos);
