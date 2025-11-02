@@ -62,6 +62,14 @@ export function AutomationDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'workflows' | 'executions' | 'stats'>('workflows');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newWorkflow, setNewWorkflow] = useState({
+    name: '',
+    description: '',
+    trigger_type: 'warranty_expiring',
+    trigger_config: { days_before: 30 },
+    actions: [] as Array<any>
+  });
 
   const isAdmin = profile?.role && ['master', 'admin', 'franchisee_admin'].includes(profile.role);
 
@@ -164,6 +172,50 @@ export function AutomationDashboard() {
     }
   };
 
+  const handleCreateWorkflow = async () => {
+    if (!newWorkflow.name || !newWorkflow.description) {
+      alert('Veuillez remplir tous les champs requis');
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('automation_workflows')
+        .insert({
+          organization_id: currentOrganization!.id,
+          name: newWorkflow.name,
+          description: newWorkflow.description,
+          trigger_type: newWorkflow.trigger_type,
+          trigger_config: newWorkflow.trigger_config,
+          conditions: [],
+          actions: newWorkflow.actions.length > 0 ? newWorkflow.actions : [
+            {
+              type: 'send_email',
+              template: 'warranty_expiring_notification',
+              to: 'customer',
+              subject: 'Notification automatique'
+            }
+          ],
+          is_active: true,
+        });
+
+      if (error) throw error;
+
+      setShowCreateModal(false);
+      setNewWorkflow({
+        name: '',
+        description: '',
+        trigger_type: 'warranty_expiring',
+        trigger_config: { days_before: 30 },
+        actions: []
+      });
+      await loadData();
+    } catch (error) {
+      console.error('Error creating workflow:', error);
+      alert('Erreur lors de la création du workflow');
+    }
+  };
+
   if (!isAdmin) {
     return (
       <div className="p-6">
@@ -198,7 +250,7 @@ export function AutomationDashboard() {
           </p>
         </div>
         <button
-          onClick={() => console.log('Create workflow')}
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
         >
           <Plus className="h-5 w-5" />
@@ -489,6 +541,122 @@ export function AutomationDashboard() {
           )}
         </div>
       </div>
+
+      {/* Create Workflow Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200">
+              <h2 className="text-2xl font-bold text-slate-900">Nouveau Workflow</h2>
+              <p className="text-sm text-slate-600 mt-1">
+                Créez un workflow d'automatisation personnalisé
+              </p>
+            </div>
+
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Nom du workflow *
+                </label>
+                <input
+                  type="text"
+                  value={newWorkflow.name}
+                  onChange={(e) => setNewWorkflow({ ...newWorkflow, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Ex: Rappel 30 jours avant expiration"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Description *
+                </label>
+                <textarea
+                  value={newWorkflow.description}
+                  onChange={(e) => setNewWorkflow({ ...newWorkflow, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Décrivez ce que fait ce workflow..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Type de déclencheur
+                </label>
+                <select
+                  value={newWorkflow.trigger_type}
+                  onChange={(e) => setNewWorkflow({ ...newWorkflow, trigger_type: e.target.value })}
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                >
+                  <option value="warranty_expiring">Garantie expirant bientôt</option>
+                  <option value="warranty_created">Garantie créée</option>
+                  <option value="claim_submitted">Réclamation soumise</option>
+                  <option value="claim_approved">Réclamation approuvée</option>
+                  <option value="claim_rejected">Réclamation rejetée</option>
+                  <option value="scheduled">Planifié (cron)</option>
+                  <option value="manual">Manuel</option>
+                </select>
+              </div>
+
+              {newWorkflow.trigger_type === 'warranty_expiring' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Jours avant expiration
+                  </label>
+                  <input
+                    type="number"
+                    value={newWorkflow.trigger_config.days_before}
+                    onChange={(e) => setNewWorkflow({
+                      ...newWorkflow,
+                      trigger_config: { days_before: parseInt(e.target.value) || 30 }
+                    })}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    min="1"
+                    max="365"
+                  />
+                </div>
+              )}
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900">Action par défaut</h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Ce workflow enverra automatiquement un email de notification au client
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setNewWorkflow({
+                    name: '',
+                    description: '',
+                    trigger_type: 'warranty_expiring',
+                    trigger_config: { days_before: 30 },
+                    actions: []
+                  });
+                }}
+                className="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleCreateWorkflow}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Créer le workflow
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
