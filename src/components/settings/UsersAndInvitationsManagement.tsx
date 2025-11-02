@@ -86,6 +86,7 @@ export function UsersAndInvitationsManagement() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('franchisee_employee');
+  const [selectedOrganizationId, setSelectedOrganizationId] = useState<string>('');
   const [inviteMode, setInviteMode] = useState<'email' | 'manual'>('manual');
   const [manualPassword, setManualPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -256,7 +257,7 @@ export function UsersAndInvitationsManagement() {
           email: inviteEmail.trim(),
           role: inviteRole,
           full_name: inviteEmail.split('@')[0],
-          organization_id: organization?.id,
+          organization_id: selectedOrganizationId || organization?.id,
           manualPassword: inviteMode === 'manual' ? manualPassword : undefined,
           skipEmail: inviteMode === 'manual',
         }),
@@ -1055,6 +1056,29 @@ export function UsersAndInvitationsManagement() {
                   )}
                 </select>
               </div>
+
+              {(profile?.role === 'master' || profile?.role === 'admin') && organizations.length > 0 && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Franchise
+                  </label>
+                  <select
+                    value={selectedOrganizationId}
+                    onChange={(e) => setSelectedOrganizationId(e.target.value)}
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="">Franchise actuelle ({organization?.name})</option>
+                    {organizations.map((org) => (
+                      <option key={org.id} value={org.id}>
+                        {org.name} ({org.type === 'owner' ? 'Propriétaire' : 'Franchisé'})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-slate-600 mt-1">
+                    Sélectionnez la franchise à laquelle assigner cet utilisateur
+                  </p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
