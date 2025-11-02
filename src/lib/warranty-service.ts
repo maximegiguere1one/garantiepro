@@ -72,9 +72,10 @@ class WarrantyService {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): string {
-    return `warranties:${page}:${pageSize}:${statusFilter}:${searchQuery}`;
+    return `warranties:${organizationId || 'default'}:${page}:${pageSize}:${statusFilter}:${searchQuery}`;
   }
 
   private logPerformance(queryName: string, executionTime: number, rowCount?: number): void {
@@ -98,10 +99,11 @@ class WarrantyService {
     page: number = 1,
     pageSize: number = 10, // Reduced from 25 to 10 for faster initial load
     statusFilter: string = 'all',
-    searchQuery: string = ''
+    searchQuery: string = '',
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
-    const cacheKey = this.getCacheKey(page, pageSize, statusFilter, searchQuery);
+    const cacheKey = this.getCacheKey(page, pageSize, statusFilter, searchQuery, organizationId);
 
     // Level 1: Try cache first (fastest)
     if (this.cacheConfig.enabled) {
@@ -119,7 +121,7 @@ class WarrantyService {
 
     // Level 2: Try optimized RPC function
     try {
-      const result = await this.tryOptimizedRPC(page, pageSize, statusFilter, searchQuery, startTime);
+      const result = await this.tryOptimizedRPC(page, pageSize, statusFilter, searchQuery, organizationId, startTime);
       if (result) return result;
     } catch (error: any) {
       // Silent fail, try next method
@@ -155,6 +157,7 @@ class WarrantyService {
     pageSize: number,
     statusFilter: string,
     searchQuery: string,
+    organizationId: string | undefined,
     startTime: number
   ): Promise<WarrantyListResponse | null> {
     const rpcStartTime = performance.now();
@@ -163,7 +166,8 @@ class WarrantyService {
       p_page: page,
       p_page_size: pageSize,
       p_status_filter: statusFilter,
-      p_search_query: searchQuery
+      p_search_query: searchQuery,
+      p_organization_id: organizationId
     });
 
     const { data, error } = await supabase.rpc('get_warranties_optimized', {
@@ -171,6 +175,7 @@ class WarrantyService {
       p_page_size: pageSize,
       p_status_filter: statusFilter === 'all' ? 'all' : statusFilter,
       p_search_query: searchQuery || '',
+      p_organization_id: organizationId || null,
     });
 
     const rpcTime = performance.now() - rpcStartTime;
