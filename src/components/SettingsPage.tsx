@@ -31,7 +31,7 @@ const SystemDiagnostics = lazy(() => import('./SystemDiagnostics').then(m => ({ 
 const ResponseTemplatesManager = lazy(() => import('./ResponseTemplatesManager').then(m => ({ default: m.ResponseTemplatesManager })));
 const EmailQueueManager = lazy(() => import('./EmailQueueManager').then(m => ({ default: m.EmailQueueManager })));
 const SignatureGenerator = lazy(() => import('./settings/SignatureGenerator').then(m => ({ default: m.SignatureGenerator })));
-const UsersManagement = lazy(() => import('./settings/UsersManagement').then(m => ({ default: m.UsersManagement })));
+const UsersManagement = lazy(() => import('./settings/UsersAndInvitationsManagement').then(m => ({ default: m.UsersAndInvitationsManagement })));
 const MyProfile = lazy(() => import('./settings/MyProfile').then(m => ({ default: m.MyProfile })));
 
 type SettingsTab =
