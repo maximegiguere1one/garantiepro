@@ -52,7 +52,7 @@ export function OrganizationDetailModal({ organization, onClose, onUpdate }: Org
       } else if (activeTab === 'warranties') {
         const { data } = await supabase
           .from('warranties')
-          .select('*, customers(full_name, email)')
+          .select('*, customers(first_name, last_name, email)')
           .eq('organization_id', organization.id)
           .order('created_at', { ascending: false })
           .limit(20);
@@ -60,7 +60,7 @@ export function OrganizationDetailModal({ organization, onClose, onUpdate }: Org
       } else if (activeTab === 'transactions') {
         const { data } = await supabase
           .from('warranty_transactions')
-          .select('*, warranties(warranty_number)')
+          .select('*, warranties(contract_number)')
           .eq('organization_id', organization.id)
           .order('transaction_date', { ascending: false })
           .limit(20);
@@ -312,9 +312,9 @@ function WarrantiesTab({ warranties }: any) {
           <div key={warranty.id} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium text-slate-900">{warranty.warranty_number}</div>
+                <div className="font-medium text-slate-900">{warranty.contract_number}</div>
                 <div className="text-sm text-slate-600 mt-1">
-                  {warranty.customers?.full_name} • {warranty.customers?.email}
+                  {warranty.customers?.first_name} {warranty.customers?.last_name} • {warranty.customers?.email}
                 </div>
               </div>
               <div className="text-right">
@@ -345,7 +345,7 @@ function TransactionsTab({ transactions }: any) {
           <div key={transaction.id} className="bg-slate-50 rounded-lg p-4 border border-slate-200">
             <div className="flex items-center justify-between">
               <div>
-                <div className="font-medium text-slate-900">{transaction.warranties?.warranty_number}</div>
+                <div className="font-medium text-slate-900">{transaction.warranties?.contract_number}</div>
                 <div className="text-sm text-slate-600 mt-1">
                   {new Date(transaction.transaction_date).toLocaleDateString('fr-FR')}
                 </div>
