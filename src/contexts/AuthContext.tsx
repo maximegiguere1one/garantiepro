@@ -241,9 +241,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)
       if (retryCount === 0) {
-        supabase.rpc('update_my_last_sign_in').catch(err => {
-          logger.debug('Background last_sign_in update failed:', err);
-        });
+        supabase.rpc('update_my_last_sign_in')
+          .then(() => {
+            logger.debug('Background last_sign_in updated');
+          })
+          .catch(err => {
+            logger.debug('Background last_sign_in update failed:', err);
+          });
       }
 
     } catch (error) {
