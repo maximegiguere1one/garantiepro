@@ -45,10 +45,10 @@ export function WarrantyPlansManagement() {
   });
 
   useEffect(() => {
-    if (organization) {
+    if (organization && user) {
       loadPlans();
     }
-  }, [organization]);
+  }, [organization, user]);
 
   const loadPlans = async () => {
     if (!organization?.id) return;
@@ -63,13 +63,19 @@ export function WarrantyPlansManagement() {
         query = query.eq('organization_id', organization.id);
       }
 
-      query = query.order('name');
+      query = query.order('organization_id').order('base_price');
 
       const { data, error } = await query;
 
       if (error) throw error;
+
+      console.log('[WarrantyPlans] User role:', user?.role);
+      console.log('[WarrantyPlans] Loaded plans:', data?.length);
+      console.log('[WarrantyPlans] Organizations:', [...new Set(data?.map(p => p.organizations?.name))]);
+
       setPlans(data || []);
     } catch (error) {
+      console.error('[WarrantyPlans] Error loading plans:', error);
       showToast('Erreur lors du chargement', 'error');
     } finally {
       setLoading(false);
