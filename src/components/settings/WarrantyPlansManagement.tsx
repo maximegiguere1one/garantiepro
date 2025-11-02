@@ -408,7 +408,7 @@ export function WarrantyPlansManagement() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h4 className="text-lg font-semibold text-slate-900">{plan.name}</h4>
-                    {user?.role === 'master' && plan.organizations && (
+                    {profile?.role === 'master' && plan.organizations && (
                       <span className="px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded">
                         {plan.organizations.name}
                       </span>
