@@ -86,11 +86,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               // Set activeOrganization and canSwitchOrganization from cache
               const canSwitch = parsed.profile.role === 'master' || parsed.profile.role === 'admin';
               setCanSwitchOrganization(canSwitch);
-              setActiveOrganization(parsed.organization);
 
-              setLoading(false);
-              loadingRef.current = false;
-              return;
+              // Check if there's a stored active organization different from cached
+              const storedActiveOrgId = localStorage.getItem('active_organization_id');
+              if (storedActiveOrgId && canSwitch && storedActiveOrgId !== parsed.organization?.id) {
+                logger.debug('[AuthContext] Cache: stored org differs, will reload without cache');
+                // Don't use cache, continue to full load to get stored org
+                sessionStorage.removeItem(`user_data_${userId}`);
+              } else {
+                // Use cached activeOrganization
+                setActiveOrganization(parsed.organization);
+                setLoading(false);
+                loadingRef.current = false;
+                return;
+              }
             }
           } catch (cacheError) {
             logger.warn('Cache parse error:', cacheError);
@@ -176,12 +185,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logger.info(`Setting canSwitchOrganization to: ${canSwitch} (role: ${profileData.role})`);
 
       // Check for stored active organization FIRST (for master/admin)
-      const storedActiveOrgId = sessionStorage.getItem('active_organization_id');
-      logger.info(`Checking stored active organization: ${storedActiveOrgId}`);
+      // Use localStorage for better persistence
+      const storedActiveOrgId = localStorage.getItem('active_organization_id');
+      logger.info(`[AuthContext] Checking stored active organization: ${storedActiveOrgId}`);
+      logger.info(`[AuthContext] User org: ${orgData?.id} (${orgData?.name})`);
+      logger.info(`[AuthContext] Can switch: ${canSwitch}`);
 
-      if (storedActiveOrgId && canSwitch && storedActiveOrgId !== orgData?.id) {
-        // Master/admin has a stored active organization different from their default
-        logger.info(`Loading stored active organization: ${storedActiveOrgId}`);
+      if (storedActiveOrgId && canSwitch) {
+        // Master/admin has a stored active organization
+        logger.info(`[AuthContext] Loading stored active organization: ${storedActiveOrgId}`);
 
         supabase
           .from('organizations')
@@ -190,38 +202,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle()
           .then(({ data, error }) => {
             if (error) {
-              logger.warn('Failed to load stored organization:', error);
+              logger.warn('[AuthContext] Failed to load stored organization:', error);
               // Fallback to user's org
               if (orgData) {
                 setActiveOrganization(orgData);
-                logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+                logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
               }
             } else if (data) {
               setActiveOrganization(data);
-              logger.info(`Restored active organization: ${data.name}`);
+              logger.info(`[AuthContext] ✅ Restored active organization: ${data.name} (${data.id})`);
             } else {
-              logger.warn('Stored organization not found, using user org');
+              logger.warn('[AuthContext] Stored organization not found');
+              // Clear invalid stored org
+              localStorage.removeItem('active_organization_id');
               if (orgData) {
                 setActiveOrganization(orgData);
-                logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+                logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
               }
             }
           })
           .catch((err) => {
-            logger.warn('Exception loading stored organization:', err);
+            logger.warn('[AuthContext] Exception loading stored organization:', err);
             if (orgData) {
               setActiveOrganization(orgData);
-              logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+              logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
             }
           });
       } else {
-        // No stored org, or not master/admin, or stored org is same as user's org
+        // No stored org, or not master/admin
         // Just use user's org
         if (orgData) {
           setActiveOrganization(orgData);
-          logger.info(`Setting activeOrganization to user's org: ${orgData.name}`);
+          logger.info(`[AuthContext] Setting activeOrganization to user org: ${orgData.name} (${orgData.id})`);
         } else {
-          logger.warn('No organization data available - activeOrganization will be null');
+          logger.warn('[AuthContext] No organization data available');
         }
       }
 
@@ -346,13 +360,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       if (data) {
-        setActiveOrganization(data);
+        // Store in localStorage for persistence FIRST
+        localStorage.setItem('active_organization_id', organizationId);
+        logger.info(`[AuthContext] 💾 Saved to localStorage: ${organizationId}`);
 
-        // Store in sessionStorage for persistence FIRST
-        sessionStorage.setItem('active_organization_id', organizationId);
-        logger.info(`[AuthContext] Switched to organization: ${data.name}`, {
+        setActiveOrganization(data);
+        logger.info(`[AuthContext] ✅ Switched to organization: ${data.name}`, {
           organizationId,
-          storedInSession: sessionStorage.getItem('active_organization_id')
+          storedInStorage: localStorage.getItem('active_organization_id')
         });
       }
     } catch (error) {
