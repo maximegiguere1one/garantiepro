@@ -165,13 +165,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfileError(null);
 
       // Check if user can switch organizations (master or admin only)
-      setCanSwitchOrganization(
-        profileData.role === 'master' || profileData.role === 'admin'
-      );
+      const canSwitch = profileData.role === 'master' || profileData.role === 'admin';
+      setCanSwitchOrganization(canSwitch);
 
-      // Load active organization from sessionStorage or default to user's org
+      // Always set activeOrganization initially to user's org
+      setActiveOrganization(orgData);
+
+      // Then load stored active organization if available (async, won't block)
       const storedActiveOrgId = sessionStorage.getItem('active_organization_id');
-      if (storedActiveOrgId && (profileData.role === 'master' || profileData.role === 'admin')) {
+      if (storedActiveOrgId && canSwitch && storedActiveOrgId !== orgData?.id) {
         // Load the stored active organization
         supabase
           .from('organizations')
@@ -181,12 +183,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .then(({ data }) => {
             if (data) {
               setActiveOrganization(data);
-            } else {
-              setActiveOrganization(orgData);
+              logger.info(`Restored active organization: ${data.name}`);
             }
+          })
+          .catch((err) => {
+            logger.warn('Failed to load stored organization:', err);
           });
-      } else {
-        setActiveOrganization(orgData);
       }
 
       // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)

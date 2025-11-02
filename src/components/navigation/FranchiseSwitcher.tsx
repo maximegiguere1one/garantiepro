@@ -10,10 +10,19 @@ interface Organization {
 }
 
 export function FranchiseSwitcher() {
-  const { activeOrganization, canSwitchOrganization, switchOrganization } = useAuth();
+  const { activeOrganization, canSwitchOrganization, switchOrganization, profile } = useAuth();
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Debug log
+  useEffect(() => {
+    console.log('FranchiseSwitcher Debug:', {
+      canSwitchOrganization,
+      activeOrganization,
+      profileRole: profile?.role,
+    });
+  }, [canSwitchOrganization, activeOrganization, profile]);
 
   useEffect(() => {
     if (canSwitchOrganization) {
@@ -50,8 +59,19 @@ export function FranchiseSwitcher() {
     }
   };
 
-  if (!canSwitchOrganization || !activeOrganization) {
+  // Show debug info if not available
+  if (!canSwitchOrganization) {
+    console.log('FranchiseSwitcher: Cannot switch - permission denied or not loaded yet');
     return null;
+  }
+
+  if (!activeOrganization) {
+    console.log('FranchiseSwitcher: No active organization yet');
+    return (
+      <div className="px-3 py-2 text-xs text-slate-500">
+        Chargement de la franchise...
+      </div>
+    );
   }
 
   return (
