@@ -187,13 +187,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check for stored active organization FIRST (for master/admin)
       // Use localStorage for better persistence
       const storedActiveOrgId = localStorage.getItem('active_organization_id');
-      logger.info(`[AuthContext] Checking stored active organization: ${storedActiveOrgId}`);
-      logger.info(`[AuthContext] User org: ${orgData?.id} (${orgData?.name})`);
-      logger.info(`[AuthContext] Can switch: ${canSwitch}`);
+      console.log('[AuthContext] Checking stored active organization:', storedActiveOrgId);
+      console.log('[AuthContext] User org:', orgData?.id, orgData?.name);
+      console.log('[AuthContext] Can switch:', canSwitch);
 
       if (storedActiveOrgId && canSwitch) {
         // Master/admin has a stored active organization
-        logger.info(`[AuthContext] Loading stored active organization: ${storedActiveOrgId}`);
+        console.log('[AuthContext] 🔄 Loading stored active organization:', storedActiveOrgId);
 
         supabase
           .from('organizations')
@@ -210,7 +210,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             } else if (data) {
               setActiveOrganization(data);
-              logger.info(`[AuthContext] ✅ Restored active organization: ${data.name} (${data.id})`);
+              console.log('[AuthContext] ✅ Restored active organization:', data.name, data.id);
             } else {
               logger.warn('[AuthContext] Stored organization not found');
               // Clear invalid stored org
@@ -233,7 +233,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Just use user's org
         if (orgData) {
           setActiveOrganization(orgData);
-          logger.info(`[AuthContext] Setting activeOrganization to user org: ${orgData.name} (${orgData.id})`);
+          console.log('[AuthContext] 📍 Setting activeOrganization to user org:', orgData.name, orgData.id);
         } else {
           logger.warn('[AuthContext] No organization data available');
         }
@@ -362,13 +362,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (data) {
         // Store in localStorage for persistence FIRST
         localStorage.setItem('active_organization_id', organizationId);
-        logger.info(`[AuthContext] 💾 Saved to localStorage: ${organizationId}`);
+        console.log('[AuthContext] 💾 Saved to localStorage:', organizationId);
+        console.log('[AuthContext] Verify saved:', localStorage.getItem('active_organization_id'));
 
         setActiveOrganization(data);
-        logger.info(`[AuthContext] ✅ Switched to organization: ${data.name}`, {
-          organizationId,
-          storedInStorage: localStorage.getItem('active_organization_id')
-        });
+        console.log('[AuthContext] ✅ Switched to organization:', data.name, organizationId);
       }
     } catch (error) {
       logger.error('Error switching organization:', error);
