@@ -17,10 +17,13 @@ interface WarrantyPlan {
   status: string;
   created_at: string;
   updated_at: string;
+  organizations?: {
+    name: string;
+  };
 }
 
 export function WarrantyPlansManagement() {
-  const { organization } = useAuth();
+  const { organization, user } = useAuth();
   const { showToast } = useToast();
   const [plans, setPlans] = useState<WarrantyPlan[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,11 +54,18 @@ export function WarrantyPlansManagement() {
     if (!organization?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('warranty_plans')
-        .select('*')
-        .eq('organization_id', organization.id)
-        .order('name');
+        .select('*, organizations(name)');
+
+      // Si l'utilisateur est MASTER, charger TOUS les plans de TOUTES les organizations
+      if (user?.role !== 'master') {
+        query = query.eq('organization_id', organization.id);
+      }
+
+      query = query.order('name');
+
+      const { data, error } = await query;
 
       if (error) throw error;
       setPlans(data || []);
@@ -392,6 +402,11 @@ export function WarrantyPlansManagement() {
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
                     <h4 className="text-lg font-semibold text-slate-900">{plan.name}</h4>
+                    {user?.role === 'master' && plan.organizations && (
+                      <span className="px-2 py-1 text-xs font-semibold bg-purple-100 text-purple-700 rounded">
+                        {plan.organizations.name}
+                      </span>
+                    )}
                     {plan.is_active ? (
                       <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-700 rounded">
                         Actif
