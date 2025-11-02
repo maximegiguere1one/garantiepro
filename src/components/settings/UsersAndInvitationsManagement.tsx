@@ -4,6 +4,9 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../common/Button';
+import { ConfirmationDialog } from '../common/ConfirmationDialog';
+import { AccessibleModal } from '../common/AccessibleModal';
+import { LoadingButton } from '../common/LoadingButton';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { getResetPasswordUrl } from '../../config/constants';
@@ -103,6 +106,10 @@ export function UsersAndInvitationsManagement() {
 
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [organizations, setOrganizations] = useState<any[]>([]);
+
+  // Confirmation dialogs
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState<User | null>(null);
+  const [deleteInvitationConfirm, setDeleteInvitationConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     if (organization?.id) {
@@ -456,24 +463,38 @@ export function UsersAndInvitationsManagement() {
     }
   };
 
-  const handleDeleteUser = async (user: User) => {
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur ${user.email} ?\n\nCette action est irréversible.`)) {
-      return;
-    }
+  const confirmDeleteUser = async () => {
+    if (!deleteUserConfirm) return;
 
-    setActionLoading(user.id);
+    setActionLoading(deleteUserConfirm.id);
     try {
-      const { data, error } = await supabase.functions.invoke('delete-user', {
-        body: { userId: user.id }
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session expirée, veuillez vous reconnecter');
+      }
+
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`;
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId: user.id }),
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors de la suppression');
+      }
 
       showToast('Utilisateur supprimé avec succès', 'success');
+      setDeleteUserConfirm(null);
       await loadUsers();
     } catch (error: any) {
       console.error('Error deleting user:', error);
-      showToast(error.message || 'Erreur lors de la suppression', 'error');
+      showToast(error.message || 'Erreur lors de la suppression de l\'utilisateur', 'error');
     } finally {
       setActionLoading(null);
     }
@@ -482,40 +503,54 @@ export function UsersAndInvitationsManagement() {
   const handleResendInvitation = async (invitationId: string) => {
     setResendingId(invitationId);
     try {
-      const { data, error } = await supabase.rpc('resend_invitation', {
-        p_invitation_id: invitationId,
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session expirée, veuillez vous reconnecter');
+      }
+
+      const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/resend-invitation`;
+      const response = await fetch(functionUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ invitationId }),
       });
 
-      if (error) throw error;
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erreur lors du renvoi de l\'invitation');
+      }
 
       showToast('Invitation renvoyée avec succès', 'success');
       await loadInvitations();
     } catch (error: any) {
       console.error('Error resending invitation:', error);
-      showToast(error.message || 'Erreur lors du renvoi', 'error');
+      showToast(error.message || 'Erreur lors du renvoi de l\'invitation', 'error');
     } finally {
       setResendingId(null);
     }
   };
 
-  const handleDeleteInvitation = async (invitationId: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette invitation ?')) {
-      return;
-    }
+  const confirmDeleteInvitation = async () => {
+    if (!deleteInvitationConfirm) return;
 
     try {
       const { error } = await supabase
         .from('franchisee_invitations')
         .delete()
-        .eq('id', invitationId);
+        .eq('id', deleteInvitationConfirm);
 
       if (error) throw error;
 
       showToast('Invitation supprimée avec succès', 'success');
+      setDeleteInvitationConfirm(null);
       await loadInvitations();
     } catch (error: any) {
       console.error('Error deleting invitation:', error);
-      showToast('Erreur lors de la suppression', 'error');
+      showToast('Erreur lors de la suppression de l\'invitation', 'error');
     }
   };
 
@@ -811,16 +846,15 @@ export function UsersAndInvitationsManagement() {
                               >
                                 <Mail className="w-3.5 h-3.5" />
                               </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteUser(user)}
-                                loading={actionLoading === user.id}
+                              <button
+                                onClick={() => setDeleteUserConfirm(user)}
+                                disabled={actionLoading === user.id}
                                 title="Supprimer l'utilisateur"
-                                className="text-red-600 hover:bg-red-50"
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center"
+                                aria-label="Supprimer l'utilisateur"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </Button>
+                                <Trash2 className="w-4 h-4" aria-hidden="true" />
+                              </button>
                             </>
                           )}
                           {!canManageUser(user.role) && (
@@ -897,15 +931,14 @@ export function UsersAndInvitationsManagement() {
                               <Send className="w-3.5 h-3.5" />
                             </Button>
                           )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteInvitation(invitation.id)}
+                          <button
+                            onClick={() => setDeleteInvitationConfirm(invitation.id)}
                             title="Supprimer l'invitation"
-                            className="text-red-600 hover:bg-red-50"
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
+                            aria-label="Supprimer l'invitation"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
+                            <Trash2 className="w-4 h-4" aria-hidden="true" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1254,6 +1287,31 @@ export function UsersAndInvitationsManagement() {
           </div>
         </div>
       )}
+
+      {/* Delete User Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={!!deleteUserConfirm}
+        onClose={() => setDeleteUserConfirm(null)}
+        onConfirm={confirmDeleteUser}
+        title="Supprimer l'utilisateur ?"
+        message={`Êtes-vous sûr de vouloir supprimer ${deleteUserConfirm?.email} ? Cette action est irréversible et supprimera toutes les données associées (garanties, réclamations, etc.).`}
+        variant="danger"
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        isLoading={actionLoading === deleteUserConfirm?.id}
+      />
+
+      {/* Delete Invitation Confirmation Dialog */}
+      <ConfirmationDialog
+        isOpen={!!deleteInvitationConfirm}
+        onClose={() => setDeleteInvitationConfirm(null)}
+        onConfirm={confirmDeleteInvitation}
+        title="Supprimer l'invitation ?"
+        message="Êtes-vous sûr de vouloir supprimer cette invitation ? L'utilisateur ne pourra plus créer son compte avec cette invitation."
+        variant="danger"
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+      />
     </div>
   );
 }
