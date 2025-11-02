@@ -23,7 +23,7 @@ import { WarrantyDeleteConfirmationModal } from './common/WarrantyDeleteConfirma
 type Warranty = WarrantyListItem;
 
 export const WarrantiesList = memo(() => {
-  const { profile } = useAuth();
+  const { profile, activeOrganization } = useAuth();
   const toast = useToast();
   const { viewMode } = useViewMode();
   const [warranties, setWarranties] = useState<Warranty[]>([]);
@@ -48,13 +48,17 @@ export const WarrantiesList = memo(() => {
       setLoading(true);
       setError(null);
 
-      console.log(`[WarrantiesList] Loading warranties - attempt ${retryCount + 1}`);
+      console.log(`[WarrantiesList] Loading warranties - attempt ${retryCount + 1}`, {
+        organizationId: activeOrganization?.id,
+        organizationName: activeOrganization?.name,
+      });
 
       const response = await warrantyService.getWarrantiesOptimized(
         currentPage,
         itemsPerPage,
         statusFilter,
-        search
+        search,
+        activeOrganization?.id
       );
 
       // Check if we got valid data
@@ -103,11 +107,13 @@ export const WarrantiesList = memo(() => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, itemsPerPage, statusFilter, search, toast]);
+  }, [currentPage, itemsPerPage, statusFilter, search, activeOrganization?.id, toast]);
 
   useEffect(() => {
-    loadWarranties();
-  }, [loadWarranties]);
+    if (activeOrganization) {
+      loadWarranties();
+    }
+  }, [loadWarranties, activeOrganization]);
 
   useEffect(() => {
     setCurrentPage(1);

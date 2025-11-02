@@ -29,7 +29,8 @@ export interface IWarrantyQueryStrategy {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<WarrantyListResponse>;
 }
 
@@ -44,16 +45,18 @@ export class OptimizedRPCStrategy implements IWarrantyQueryStrategy {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
-    logger.debug(`${this.name}: Executing query`, { page, pageSize, statusFilter });
+    logger.debug(`${this.name}: Executing query`, { page, pageSize, statusFilter, organizationId });
 
     const { data, error } = await supabase.rpc('get_warranties_optimized', {
       p_page: page,
       p_page_size: pageSize,
       p_status_filter: statusFilter,
       p_search_query: searchQuery,
+      p_organization_id: organizationId || null,
     });
 
     const executionTime = performance.now() - startTime;
@@ -97,16 +100,18 @@ export class SimpleRPCStrategy implements IWarrantyQueryStrategy {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
-    logger.debug(`${this.name}: Executing query`, { page, pageSize });
+    logger.debug(`${this.name}: Executing query`, { page, pageSize, organizationId });
 
     const { data, error } = await supabase.rpc('get_warranties_simple', {
       p_page: page,
       p_page_size: pageSize,
       p_status_filter: statusFilter,
       p_search_query: searchQuery,
+      p_organization_id: organizationId || null,
     });
 
     const executionTime = performance.now() - startTime;
@@ -149,15 +154,17 @@ export class DirectQueryStrategy implements IWarrantyQueryStrategy {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
-    logger.info(`${this.name}: Using fallback direct query`);
+    logger.info(`${this.name}: Using fallback direct query`, { organizationId });
 
     let query = supabase.from('warranties').select(
       `
         id,
         contract_number,
+        organization_id,
         status,
         total_price,
         created_at,
@@ -172,6 +179,11 @@ export class DirectQueryStrategy implements IWarrantyQueryStrategy {
         warranty_plans!inner(name_en)
       `
     );
+
+    // Filter by organization if specified
+    if (organizationId) {
+      query = query.eq('organization_id', organizationId);
+    }
 
     if (statusFilter !== 'all') {
       query = query.eq('status', statusFilter);
@@ -266,13 +278,14 @@ export class StrategyExecutor {
     page: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const errors: Array<{ strategy: string; error: Error }> = [];
 
     for (const strategy of this.strategies) {
       try {
-        const result = await strategy.execute(page, pageSize, statusFilter, searchQuery);
+        const result = await strategy.execute(page, pageSize, statusFilter, searchQuery, organizationId);
         return result;
       } catch (error) {
         errors.push({ strategy: strategy.name, error: error as Error });

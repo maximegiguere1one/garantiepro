@@ -207,7 +207,8 @@ export class WarrantyService {
     page: number = 1,
     pageSize: number = APP_CONFIG.performance.defaultPageSize,
     statusFilter: string = 'all',
-    searchQuery: string = ''
+    searchQuery: string = '',
+    organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
     const cacheKey = this.cacheManager.getCacheKey(page, pageSize, statusFilter, searchQuery);
@@ -218,8 +219,16 @@ export class WarrantyService {
       return cachedResult;
     }
 
+    logger.debug('Calling get_warranties_optimized with:', {
+      page,
+      pageSize,
+      statusFilter,
+      searchQuery,
+      organizationId,
+    });
+
     // Execute strategy chain
-    const result = await this.strategyExecutor.execute(page, pageSize, statusFilter, searchQuery);
+    const result = await this.strategyExecutor.execute(page, pageSize, statusFilter, searchQuery, organizationId);
 
     const totalTime = performance.now() - startTime;
     this.performanceTracker.log('getWarrantiesOptimized', totalTime);
