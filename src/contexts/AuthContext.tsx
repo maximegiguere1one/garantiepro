@@ -159,6 +159,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsOwner(ownerStatus);
       setProfileError(null);
 
+      // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)
+      if (retryCount === 0) {
+        supabase.rpc('update_my_last_sign_in').catch(err => {
+          logger.debug('Background last_sign_in update failed:', err);
+        });
+      }
+
     } catch (error) {
       logger.error('Error loading user data:', error);
 
@@ -268,6 +275,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     logger.info('Sign in successful:', data.user?.email);
+
+    // Mettre à jour la dernière connexion
+    if (data.user?.id) {
+      try {
+        await supabase.rpc('update_my_last_sign_in');
+        logger.debug('Last sign-in timestamp updated');
+      } catch (error) {
+        logger.warn('Failed to update last sign-in timestamp:', error);
+      }
+    }
   };
 
   const signUp = async (email: string, password: string, fullName: string, role: Profile['role']) => {

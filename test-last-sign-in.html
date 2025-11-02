@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Last Sign In Tracking</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 {
+      color: #dc2626;
+      margin-top: 0;
+    }
+    button {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-bottom: 8px;
+    }
+    button:hover {
+      background: #b91c1c;
+    }
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+    .log {
+      background: #1e293b;
+      color: #f1f5f9;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 16px;
+    }
+    .log div {
+      margin-bottom: 4px;
+      padding: 4px 0;
+      border-bottom: 1px solid #334155;
+    }
+    .log .success { color: #22c55e; }
+    .log .error { color: #ef4444; }
+    .log .info { color: #3b82f6; }
+    .log .warning { color: #f59e0b; }
+    .results {
+      margin-top: 16px;
+    }
+    .user-card {
+      background: #f8fafc;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+      border-left: 4px solid #dc2626;
+    }
+    .user-card .name {
+      font-weight: 600;
+      color: #1e293b;
+    }
+    .user-card .email {
+      font-size: 14px;
+      color: #64748b;
+    }
+    .user-card .last-sign-in {
+      font-size: 13px;
+      color: #475569;
+      margin-top: 4px;
+    }
+    .user-card .last-sign-in.never {
+      color: #ef4444;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔍 Test Last Sign-In Tracking</h1>
+    <p>Testez le système de tracking de dernière connexion</p>
+
+    <div>
+      <button onclick="testConnection()">1. Tester connexion Supabase</button>
+      <button onclick="syncFromAuth()">2. Synchroniser depuis auth.users</button>
+      <button onclick="loadAllUsers()">3. Charger tous les utilisateurs</button>
+      <button onclick="updateMySignIn()">4. Mettre à jour ma connexion</button>
+      <button onclick="clearLogs()">Effacer les logs</button>
+    </div>
+
+    <div class="results" id="results"></div>
+
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    // Configuration Supabase
+    const SUPABASE_URL = prompt('Entrez votre SUPABASE_URL:', 'https://your-project.supabase.co');
+    const SUPABASE_ANON_KEY = prompt('Entrez votre SUPABASE_ANON_KEY:', 'your-anon-key');
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const timestamp = new Date().toLocaleTimeString();
+      const div = document.createElement('div');
+      div.className = type;
+      div.textContent = `[${timestamp}] ${message}`;
+      logDiv.appendChild(div);
+      logDiv.scrollTop = logDiv.scrollHeight;
+      console.log(message);
+    }
+
+    function clearLogs() {
+      document.getElementById('log').innerHTML = '';
+      document.getElementById('results').innerHTML = '';
+    }
+
+    async function testConnection() {
+      try {
+        log('Test de connexion à Supabase...', 'info');
+        const { data, error } = await supabase.from('profiles').select('count').limit(1);
+
+        if (error) {
+          log(`❌ Erreur: ${error.message}`, 'error');
+        } else {
+          log('✅ Connexion réussie!', 'success');
+
+          // Tester si la fonction RPC existe
+          try {
+            const { error: rpcError } = await supabase.rpc('update_my_last_sign_in');
+            if (rpcError && !rpcError.message.includes('not authenticated')) {
+              log(`⚠️  Fonction RPC existe mais: ${rpcError.message}`, 'warning');
+            } else {
+              log('✅ Fonction RPC update_my_last_sign_in existe', 'success');
+            }
+          } catch (e) {
+            log(`⚠️  Erreur test RPC: ${e.message}`, 'warning');
+          }
+        }
+      } catch (error) {
+        log(`❌ Erreur de connexion: ${error.message}`, 'error');
+      }
+    }
+
+    async function syncFromAuth() {
+      try {
+        log('Synchronisation depuis auth.users...', 'info');
+        const { error } = await supabase.rpc('sync_last_sign_in_from_auth');
+
+        if (error) {
+          log(`❌ Erreur: ${error.message}`, 'error');
+        } else {
+          log('✅ Synchronisation réussie!', 'success');
+          log('Tous les profils ont été mis à jour avec auth.users.last_sign_in_at', 'info');
+        }
+      } catch (error) {
+        log(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadAllUsers() {
+      try {
+        log('Chargement de tous les utilisateurs...', 'info');
+        const { data: users, error } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, last_sign_in_at, role')
+          .order('last_sign_in_at', { ascending: false, nullsFirst: false });
+
+        if (error) {
+          log(`❌ Erreur: ${error.message}`, 'error');
+          return;
+        }
+
+        log(`✅ ${users.length} utilisateurs chargés`, 'success');
+
+        // Afficher les résultats
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '<h3>Utilisateurs:</h3>';
+
+        users.forEach(user => {
+          const card = document.createElement('div');
+          card.className = 'user-card';
+
+          const lastSignIn = user.last_sign_in_at
+            ? new Date(user.last_sign_in_at).toLocaleString('fr-FR', {
+                dateStyle: 'short',
+                timeStyle: 'short'
+              })
+            : 'Jamais';
+
+          const lastSignInClass = user.last_sign_in_at ? '' : 'never';
+
+          card.innerHTML = `
+            <div class="name">${user.full_name || 'Sans nom'}</div>
+            <div class="email">${user.email}</div>
+            <div class="last-sign-in ${lastSignInClass}">
+              Dernière connexion: ${lastSignIn}
+            </div>
+          `;
+
+          resultsDiv.appendChild(card);
+        });
+
+        // Stats
+        const withSignIn = users.filter(u => u.last_sign_in_at).length;
+        const withoutSignIn = users.length - withSignIn;
+        log(`📊 Stats: ${withSignIn} avec dernière connexion, ${withoutSignIn} jamais connectés`, 'info');
+
+      } catch (error) {
+        log(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    async function updateMySignIn() {
+      try {
+        log('Mise à jour de ma dernière connexion...', 'info');
+
+        // Vérifier si authentifié
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          log('❌ Vous devez être connecté pour cette action', 'error');
+          return;
+        }
+
+        const { error } = await supabase.rpc('update_my_last_sign_in');
+
+        if (error) {
+          log(`❌ Erreur: ${error.message}`, 'error');
+        } else {
+          log('✅ Votre dernière connexion a été mise à jour!', 'success');
+          log('Rechargez les utilisateurs pour voir le changement', 'info');
+        }
+      } catch (error) {
+        log(`❌ Erreur: ${error.message}`, 'error');
+      }
+    }
+
+    // Auto-test au chargement
+    window.addEventListener('load', () => {
+      log('🚀 Page de test chargée', 'info');
+      log('Cliquez sur les boutons pour tester le système', 'info');
+    });
+  </script>
+</body>
+</html>
