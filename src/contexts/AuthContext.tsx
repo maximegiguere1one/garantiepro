@@ -82,6 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setProfile(parsed.profile);
               setOrganization(parsed.organization);
               setIsOwner(parsed.isOwner);
+
+              // Set activeOrganization and canSwitchOrganization from cache
+              const canSwitch = parsed.profile.role === 'master' || parsed.profile.role === 'admin';
+              setCanSwitchOrganization(canSwitch);
+              setActiveOrganization(parsed.organization);
+
               setLoading(false);
               loadingRef.current = false;
               return;
@@ -167,9 +173,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if user can switch organizations (master or admin only)
       const canSwitch = profileData.role === 'master' || profileData.role === 'admin';
       setCanSwitchOrganization(canSwitch);
+      logger.info(`Setting canSwitchOrganization to: ${canSwitch} (role: ${profileData.role})`);
 
       // Always set activeOrganization initially to user's org
-      setActiveOrganization(orgData);
+      if (orgData) {
+        setActiveOrganization(orgData);
+        logger.info(`Setting activeOrganization to: ${orgData.name}`);
+      } else {
+        logger.warn('No organization data available - activeOrganization will be null');
+      }
 
       // Then load stored active organization if available (async, won't block)
       const storedActiveOrgId = sessionStorage.getItem('active_organization_id');
