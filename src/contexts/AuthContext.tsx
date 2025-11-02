@@ -175,32 +175,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCanSwitchOrganization(canSwitch);
       logger.info(`Setting canSwitchOrganization to: ${canSwitch} (role: ${profileData.role})`);
 
-      // Always set activeOrganization initially to user's org
-      if (orgData) {
-        setActiveOrganization(orgData);
-        logger.info(`Setting activeOrganization to: ${orgData.name}`);
-      } else {
-        logger.warn('No organization data available - activeOrganization will be null');
-      }
-
-      // Then load stored active organization if available (async, won't block)
+      // Check for stored active organization FIRST (for master/admin)
       const storedActiveOrgId = sessionStorage.getItem('active_organization_id');
+      logger.info(`Checking stored active organization: ${storedActiveOrgId}`);
+
       if (storedActiveOrgId && canSwitch && storedActiveOrgId !== orgData?.id) {
-        // Load the stored active organization
+        // Master/admin has a stored active organization different from their default
+        logger.info(`Loading stored active organization: ${storedActiveOrgId}`);
+
         supabase
           .from('organizations')
           .select('*')
           .eq('id', storedActiveOrgId)
           .maybeSingle()
-          .then(({ data }) => {
-            if (data) {
+          .then(({ data, error }) => {
+            if (error) {
+              logger.warn('Failed to load stored organization:', error);
+              // Fallback to user's org
+              if (orgData) {
+                setActiveOrganization(orgData);
+                logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+              }
+            } else if (data) {
               setActiveOrganization(data);
               logger.info(`Restored active organization: ${data.name}`);
+            } else {
+              logger.warn('Stored organization not found, using user org');
+              if (orgData) {
+                setActiveOrganization(orgData);
+                logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+              }
             }
           })
           .catch((err) => {
-            logger.warn('Failed to load stored organization:', err);
+            logger.warn('Exception loading stored organization:', err);
+            if (orgData) {
+              setActiveOrganization(orgData);
+              logger.info(`Fallback: Setting activeOrganization to: ${orgData.name}`);
+            }
           });
+      } else {
+        // No stored org, or not master/admin, or stored org is same as user's org
+        // Just use user's org
+        if (orgData) {
+          setActiveOrganization(orgData);
+          logger.info(`Setting activeOrganization to user's org: ${orgData.name}`);
+        } else {
+          logger.warn('No organization data available - activeOrganization will be null');
+        }
       }
 
       // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)
@@ -325,10 +347,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data) {
         setActiveOrganization(data);
-        logger.info(`Switched to organization: ${data.name}`);
 
-        // Store in sessionStorage for persistence
+        // Store in sessionStorage for persistence FIRST
         sessionStorage.setItem('active_organization_id', organizationId);
+        logger.info(`[AuthContext] Switched to organization: ${data.name}`, {
+          organizationId,
+          storedInSession: sessionStorage.getItem('active_organization_id')
+        });
       }
     } catch (error) {
       logger.error('Error switching organization:', error);
