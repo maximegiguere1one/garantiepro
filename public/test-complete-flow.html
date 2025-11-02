@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test 4: Flux Complet Création Franchise</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .test { border: 2px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .pass { border-color: #22c55e; background: #f0fdf4; }
+    .fail { border-color: #ef4444; background: #fef2f2; }
+    .warning { border-color: #f59e0b; background: #fffbeb; }
+    .pending { border-color: #3b82f6; background: #eff6ff; }
+    h1 { color: #1e293b; }
+    h2 { color: #475569; font-size: 18px; margin-bottom: 5px; }
+    pre { background: #f8fafc; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 11px; max-height: 300px; overflow-y: auto; }
+    .status { font-weight: bold; margin-bottom: 10px; font-size: 16px; }
+    button { background: #3b82f6; color: white; padding: 16px 32px; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; margin: 20px 0; }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .summary { background: #1e293b; color: white; padding: 20px; border-radius: 12px; margin: 20px 0; }
+    .summary h2 { color: white; }
+    .stat { display: inline-block; margin: 10px 20px 10px 0; font-size: 18px; }
+    .stat-value { font-size: 32px; font-weight: bold; display: block; }
+  </style>
+</head>
+<body>
+  <h1>🧪 TEST 4: Flux Complet de Création de Franchise</h1>
+  <p style="color: #64748b; font-size: 16px;">
+    Ce test simule le processus complet de création d'une nouvelle franchise, 
+    de A à Z, comme un utilisateur le ferait dans l'interface.
+  </p>
+  
+  <button id="runTest">🚀 LANCER LE TEST COMPLET</button>
+  
+  <div id="summary"></div>
+  <div id="results"></div>
+  
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+    
+    const supabase = createClient(
+      'https://wppvbdbpfnkbrlpxkcgb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwcHZiZGJwZm5rYnJscHhrY2diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5ODI3OTcsImV4cCI6MjA0MzU1ODc5N30.DlII4cM7ahrUXwlj-n1QRWQrwB-J63mcFmJJAyK6MMc'
+    );
+    
+    const results = document.getElementById('results');
+    const summary = document.getElementById('summary');
+    
+    let stats = {
+      total: 0,
+      pass: 0,
+      fail: 0,
+      warning: 0,
+      duration: 0
+    };
+    
+    function addTest(title, status, details) {
+      stats.total++;
+      if (status === 'pass') stats.pass++;
+      else if (status === 'fail') stats.fail++;
+      else if (status === 'warning') stats.warning++;
+      
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `
+        <h2>${title}</h2>
+        <div class="status">${
+          status === 'pass' ? '✅ PASS' : 
+          status === 'fail' ? '❌ FAIL' : 
+          status === 'warning' ? '⚠️ WARNING' : 
+          '⏳ EN COURS...'
+        }</div>
+        <pre>${details}</pre>
+      `;
+      results.appendChild(div);
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+    
+    function updateSummary() {
+      const successRate = stats.total > 0 ? Math.round((stats.pass / stats.total) * 100) : 0;
+      summary.innerHTML = `
+        <div class="summary">
+          <h2>📊 Résumé des Tests</h2>
+          <div class="stat">
+            <span class="stat-value" style="color: #22c55e;">${stats.pass}</span>
+            Réussis
+          </div>
+          <div class="stat">
+            <span class="stat-value" style="color: #ef4444;">${stats.fail}</span>
+            Échoués
+          </div>
+          <div class="stat">
+            <span class="stat-value" style="color: #f59e0b;">${stats.warning}</span>
+            Avertissements
+          </div>
+          <div class="stat">
+            <span class="stat-value">${stats.total}</span>
+            Total
+          </div>
+          <div class="stat">
+            <span class="stat-value" style="color: ${successRate >= 80 ? '#22c55e' : successRate >= 60 ? '#f59e0b' : '#ef4444'};">${successRate}%</span>
+            Taux de réussite
+          </div>
+          <div class="stat">
+            <span class="stat-value">${(stats.duration / 1000).toFixed(2)}s</span>
+            Durée
+          </div>
+        </div>
+      `;
+    }
+    
+    document.getElementById('runTest').addEventListener('click', async () => {
+      results.innerHTML = '';
+      summary.innerHTML = '';
+      stats = { total: 0, pass: 0, fail: 0, warning: 0, duration: 0 };
+      document.getElementById('runTest').disabled = true;
+      
+      const startTime = Date.now();
+      let createdOrgId = null;
+      let createdUserId = null;
+      
+      try {
+        // ÉTAPE 1: Vérifier l'authentification
+        addTest('1. Vérification authentification utilisateur', 'pending', 'Vérification en cours...');
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+          results.innerHTML = '';
+          addTest('1. Vérification authentification utilisateur', 'fail', 
+            'Utilisateur non connecté. Connectez-vous d\'abord.'
+          );
+          document.getElementById('runTest').disabled = false;
+          return;
+        }
+        
+        results.innerHTML = '';
+        addTest('1. Vérification authentification utilisateur', 'pass', 
+          `Email: ${user.email}\nUser ID: ${user.id}`
+        );
+        
+        // ÉTAPE 2: Vérifier le profil et les permissions
+        addTest('2. Vérification profil et permissions', 'pending', 'Chargement du profil...');
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('id, email, role, organization_id, organizations(id, name, type)')
+          .eq('id', user.id)
+          .single();
+        
+        if (profileError || !profile) {
+          results.innerHTML = results.innerHTML.replace(/2\..*?<\/div><\/div>/, '');
+          addTest('2. Vérification profil et permissions', 'fail', 
+            `Erreur: ${profileError?.message || 'Profil non trouvé'}`
+          );
+          document.getElementById('runTest').disabled = false;
+          return;
+        }
+        
+        const canCreate = ['master', 'admin'].includes(profile.role);
+        results.innerHTML = results.innerHTML.replace(/2\..*?<\/div><\/div>/, '');
+        addTest('2. Vérification profil et permissions', canCreate ? 'pass' : 'fail', 
+          `Rôle: ${profile.role}\n` +
+          `Organisation: ${profile.organizations?.name}\n` +
+          `Type: ${profile.organizations?.type}\n` +
+          `Peut créer franchises: ${canCreate ? 'OUI' : 'NON'}`
+        );
+        
+        if (!canCreate) {
+          document.getElementById('runTest').disabled = false;
+          return;
+        }
+        
+        // ÉTAPE 3: Créer l'organisation
+        const timestamp = Date.now();
+        const orgData = {
+          name: `Test Franchise ${timestamp}`,
+          type: 'franchisee',
+          owner_organization_id: profile.organization_id,
+          billing_email: `test${timestamp}@testfranchise.com`,
+          billing_phone: '5145551234',
+          address: '123 rue Test',
+          city: 'Montréal',
+          province: 'QC',
+          postal_code: 'H1A 1A1',
+          status: 'active',
+        };
+        
+        addTest('3. Création de l\'organisation', 'pending', 
+          `Nom: ${orgData.name}\nEmail: ${orgData.billing_email}`
+        );
+        
+        const { data: newOrg, error: orgError } = await supabase
+          .from('organizations')
+          .insert(orgData)
+          .select()
+          .single();
+        
+        if (orgError) {
+          results.innerHTML = results.innerHTML.replace(/3\..*?<\/div><\/div>/, '');
+          addTest('3. Création de l\'organisation', 'fail', 
+            `Erreur: ${orgError.message}\nCode: ${orgError.code}\nDétails: ${orgError.details || 'N/A'}`
+          );
+          document.getElementById('runTest').disabled = false;
+          return;
+        }
+        
+        createdOrgId = newOrg.id;
+        results.innerHTML = results.innerHTML.replace(/3\..*?<\/div><\/div>/, '');
+        addTest('3. Création de l\'organisation', 'pass', 
+          `ID: ${newOrg.id}\n` +
+          `Nom: ${newOrg.name}\n` +
+          `Type: ${newOrg.type}\n` +
+          `Status: ${newOrg.status}`
+        );
+        
+        // ÉTAPE 4: Créer la config de facturation
+        addTest('4. Configuration de la facturation', 'pending', 'Création...');
+        const { data: billing, error: billingError } = await supabase
+          .from('organization_billing_config')
+          .insert({
+            organization_id: newOrg.id,
+            billing_type: 'percentage_of_warranty',
+            percentage_rate: 50,
+            is_active: true,
+          })
+          .select()
+          .single();
+        
+        if (billingError) {
+          results.innerHTML = results.innerHTML.replace(/4\..*?<\/div><\/div>/, '');
+          addTest('4. Configuration de la facturation', 'fail', 
+            `Erreur: ${billingError.message}`
+          );
+        } else {
+          results.innerHTML = results.innerHTML.replace(/4\..*?<\/div><\/div>/, '');
+          addTest('4. Configuration de la facturation', 'pass', 
+            `Taux: ${billing.percentage_rate}%\n` +
+            `Type: ${billing.billing_type}\n` +
+            `Actif: ${billing.is_active ? 'OUI' : 'NON'}`
+          );
+        }
+        
+        // ÉTAPE 5: Appeler l'edge function onboard-franchisee
+        const adminData = {
+          email: `admin${timestamp}@testfranchise.com`,
+          name: `Admin Test ${timestamp}`,
+        };
+        
+        addTest('5. Onboarding du franchisé (edge function)', 'pending', 
+          `Email: ${adminData.email}\nNom: ${adminData.name}\nAppel de la fonction...`
+        );
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        const apiUrl = `https://wppvbdbpfnkbrlpxkcgb.supabase.co/functions/v1/onboard-franchisee`;
+        
+        const onboardStart = Date.now();
+        const onboardRes = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            franchiseeId: newOrg.id,
+            email: adminData.email,
+            name: adminData.name,
+            organizationName: orgData.name,
+            phone: orgData.billing_phone,
+          }),
+        });
+        
+        const onboardDuration = Date.now() - onboardStart;
+        const onboardData = await onboardRes.json();
+        
+        if (!onboardRes.ok) {
+          results.innerHTML = results.innerHTML.replace(/5\..*?<\/div><\/div>/, '');
+          addTest('5. Onboarding du franchisé (edge function)', 'fail', 
+            `Status: ${onboardRes.status}\n` +
+            `Code erreur: ${onboardData.errorCode}\n` +
+            `Message: ${onboardData.error || onboardData.userMessage}\n` +
+            `Durée: ${onboardDuration}ms\n` +
+            `Détails: ${JSON.stringify(onboardData.technicalDetails || {}, null, 2)}`
+          );
+        } else {
+          createdUserId = onboardData.userId;
+          const status = onboardData.emailSent ? 'pass' : 'warning';
+          results.innerHTML = results.innerHTML.replace(/5\..*?<\/div><\/div>/, '');
+          addTest('5. Onboarding du franchisé (edge function)', status, 
+            `User ID: ${onboardData.userId}\n` +
+            `Mot de passe: ${onboardData.temporaryPassword}\n` +
+            `Email envoyé: ${onboardData.emailSent ? 'OUI ✓' : 'NON ✗'}\n` +
+            `${onboardData.emailError ? 'Raison: ' + onboardData.emailError : ''}\n` +
+            `Invitation ID: ${onboardData.invitationId || 'N/A'}\n` +
+            `Setup link: ${onboardData.setupLink}\n` +
+            `Durée: ${onboardDuration}ms\n` +
+            `${onboardData.warning ? '⚠️ ' + onboardData.warning : ''}`
+          );
+          
+          // ÉTAPE 6: Vérifier le profil créé
+          addTest('6. Vérification du profil admin créé', 'pending', 'Vérification...');
+          await new Promise(r => setTimeout(r, 1000)); // Attendre 1s
+          
+          const { data: adminProfile, error: adminProfileError } = await supabase
+            .from('profiles')
+            .select('id, email, role, organization_id, full_name')
+            .eq('id', onboardData.userId)
+            .single();
+          
+          if (adminProfileError) {
+            results.innerHTML = results.innerHTML.replace(/6\..*?<\/div><\/div>/, '');
+            addTest('6. Vérification du profil admin créé', 'fail', 
+              `Erreur: ${adminProfileError.message}`
+            );
+          } else {
+            results.innerHTML = results.innerHTML.replace(/6\..*?<\/div><\/div>/, '');
+            addTest('6. Vérification du profil admin créé', 'pass', 
+              `Profil trouvé!\n` +
+              `Email: ${adminProfile.email}\n` +
+              `Nom: ${adminProfile.full_name}\n` +
+              `Rôle: ${adminProfile.role}\n` +
+              `Organisation: ${adminProfile.organization_id === newOrg.id ? 'CORRECT ✓' : 'INCORRECT ✗'}`
+            );
+          }
+          
+          // ÉTAPE 7: Vérifier l'invitation
+          if (onboardData.invitationId) {
+            addTest('7. Vérification de l\'invitation', 'pending', 'Chargement...');
+            const { data: invitation, error: invError } = await supabase
+              .from('franchisee_invitations')
+              .select('*')
+              .eq('id', onboardData.invitationId)
+              .single();
+            
+            if (invError) {
+              results.innerHTML = results.innerHTML.replace(/7\..*?<\/div><\/div>/, '');
+              addTest('7. Vérification de l\'invitation', 'fail', 
+                `Erreur: ${invError.message}`
+              );
+            } else {
+              results.innerHTML = results.innerHTML.replace(/7\..*?<\/div><\/div>/, '');
+              addTest('7. Vérification de l\'invitation', 'pass', 
+                `Status: ${invitation.status}\n` +
+                `Email: ${invitation.email}\n` +
+                `Organisation: ${invitation.organization_id}\n` +
+                `Tentatives: ${invitation.attempts}\n` +
+                `Envoyé le: ${invitation.sent_at || 'Non envoyé'}\n` +
+                `Dernière erreur: ${invitation.last_error || 'Aucune'}`
+              );
+            }
+          }
+        }
+        
+        // ÉTAPE 8: Vérifier que l'org apparaît dans la liste
+        addTest('8. Vérification dans la liste des organisations', 'pending', 'Recherche...');
+        const { data: orgsList, error: listError } = await supabase
+          .from('organizations')
+          .select('id, name, type')
+          .eq('id', newOrg.id);
+        
+        if (listError) {
+          results.innerHTML = results.innerHTML.replace(/8\..*?<\/div><\/div>/, '');
+          addTest('8. Vérification dans la liste des organisations', 'fail', 
+            `Erreur: ${listError.message}`
+          );
+        } else {
+          const found = orgsList && orgsList.length > 0;
+          results.innerHTML = results.innerHTML.replace(/8\..*?<\/div><\/div>/, '');
+          addTest('8. Vérification dans la liste des organisations', found ? 'pass' : 'fail', 
+            found 
+              ? `Organisation trouvée dans la liste!\n${JSON.stringify(orgsList[0], null, 2)}`
+              : 'Organisation non trouvée dans la liste'
+          );
+        }
+        
+      } catch (error) {
+        addTest('❌ ERREUR FATALE', 'fail', 
+          `Message: ${error.message}\n` +
+          `Stack: ${error.stack}`
+        );
+      } finally {
+        // ÉTAPE 9: Cleanup
+        addTest('9. Nettoyage des données de test', 'pending', 'Suppression...');
+        
+        try {
+          if (createdUserId) {
+            await supabase.from('profiles').delete().eq('id', createdUserId);
+          }
+          if (createdOrgId) {
+            await supabase.from('franchisee_invitations').delete().eq('organization_id', createdOrgId);
+            await supabase.from('organization_billing_config').delete().eq('organization_id', createdOrgId);
+            await supabase.from('organizations').delete().eq('id', createdOrgId);
+          }
+          
+          results.innerHTML = results.innerHTML.replace(/9\..*?<\/div><\/div>/, '');
+          addTest('9. Nettoyage des données de test', 'pass', 
+            `Données supprimées:\n` +
+            `- Organisation ID: ${createdOrgId || 'N/A'}\n` +
+            `- User ID: ${createdUserId || 'N/A'}\n` +
+            `- Config facturation\n` +
+            `- Invitations`
+          );
+        } catch (cleanupError) {
+          results.innerHTML = results.innerHTML.replace(/9\..*?<\/div><\/div>/, '');
+          addTest('9. Nettoyage des données de test', 'warning', 
+            `Erreur de nettoyage (non critique): ${cleanupError.message}`
+          );
+        }
+        
+        stats.duration = Date.now() - startTime;
+        updateSummary();
+        document.getElementById('runTest').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

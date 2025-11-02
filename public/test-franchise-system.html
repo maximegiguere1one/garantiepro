@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tests Système de Gestion des Franchises</title>
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    h1 {
+      color: white;
+      text-align: center;
+      margin-bottom: 16px;
+      font-size: 42px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .subtitle {
+      color: rgba(255,255,255,0.9);
+      text-align: center;
+      margin-bottom: 40px;
+      font-size: 20px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+    .test-card {
+      background: white;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .test-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+    }
+    .test-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      display: block;
+    }
+    .test-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: #1e293b;
+      margin-bottom: 12px;
+    }
+    .test-description {
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+    .test-duration {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #475569;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .info-box {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .info-box h2 {
+      color: #1e293b;
+      margin-bottom: 12px;
+      font-size: 20px;
+    }
+    .info-box p {
+      color: #64748b;
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    .info-box ul {
+      color: #64748b;
+      margin-left: 24px;
+      line-height: 1.8;
+    }
+    .info-box strong {
+      color: #1e293b;
+    }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      margin-top: 16px;
+      border-radius: 8px;
+    }
+    .warning-title {
+      color: #92400e;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .warning-text {
+      color: #78350f;
+    }
+    .run-all {
+      background: white;
+      color: #667eea;
+      border: 3px solid white;
+      padding: 20px 48px;
+      border-radius: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      display: block;
+      margin: 0 auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      transition: all 0.2s;
+    }
+    .run-all:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Tests Système de Gestion des Franchises</h1>
+    <p class="subtitle">Suite de tests complète pour valider le système d'invitation de nouveaux franchisés</p>
+    
+    <div class="info-box">
+      <h2>📋 À propos de ces tests</h2>
+      <p>
+        Cette suite de tests vérifie l'intégralité du processus de création et d'onboarding 
+        d'un nouveau franchisé, de la validation des permissions jusqu'à l'envoi de l'email d'invitation.
+      </p>
+      <div class="warning">
+        <div class="warning-title">⚠️ Important</div>
+        <div class="warning-text">
+          Vous devez être connecté en tant que <strong>master</strong> ou <strong>admin</strong> 
+          pour exécuter ces tests. Les tests créeront des données temporaires qui seront automatiquement 
+          nettoyées.
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <h2>🎯 Ce qui est testé</h2>
+      <ul>
+        <li><strong>Authentification et permissions</strong> - Vérification des droits d'accès</li>
+        <li><strong>Création d'organisation</strong> - INSERT dans la table organizations</li>
+        <li><strong>Configuration de facturation</strong> - Setup du billing</li>
+        <li><strong>Edge function onboard-franchisee</strong> - Création utilisateur et invitation</li>
+        <li><strong>Envoi d'emails</strong> - Validation du système d'email via Resend</li>
+        <li><strong>Permissions RLS</strong> - Vérification des politiques de sécurité</li>
+        <li><strong>Flux complet end-to-end</strong> - Simulation utilisateur complète</li>
+      </ul>
+    </div>
+    
+    <div class="grid">
+      <a href="test-organizations-access.html" class="test-card">
+        <span class="test-icon">🔐</span>
+        <div class="test-title">Test 1: Accès & Permissions</div>
+        <div class="test-description">
+          Vérifie que l'utilisateur a les permissions nécessaires pour accéder 
+          à la page "Gérer les franchisés" et créer de nouvelles organisations.
+        </div>
+        <span class="test-duration">⏱️ ~5 secondes</span>
+      </a>
+      
+      <a href="test-onboard-function.html" class="test-card">
+        <span class="test-icon">⚡</span>
+        <div class="test-title">Test 2: Edge Function</div>
+        <div class="test-description">
+          Teste la fonction onboard-franchisee qui crée l'utilisateur admin, 
+          génère le mot de passe temporaire et envoie l'email d'invitation.
+        </div>
+        <span class="test-duration">⏱️ ~10-15 secondes</span>
+      </a>
+      
+      <a href="test-rls-permissions.html" class="test-card">
+        <span class="test-icon">🛡️</span>
+        <div class="test-title">Test 3: Sécurité RLS</div>
+        <div class="test-description">
+          Valide les politiques de Row Level Security sur les tables organizations, 
+          billing_config et franchisee_invitations.
+        </div>
+        <span class="test-duration">⏱️ ~8 secondes</span>
+      </a>
+      
+      <a href="test-complete-flow.html" class="test-card">
+        <span class="test-icon">🚀</span>
+        <div class="test-title">Test 4: Flux Complet</div>
+        <div class="test-description">
+          Simule le processus complet de A à Z : création organisation, config billing, 
+          onboarding admin, envoi email, vérifications, cleanup.
+        </div>
+        <span class="test-duration">⏱️ ~20-30 secondes</span>
+      </a>
+    </div>
+    
+    <div class="info-box">
+      <h2>💡 Conseils d'utilisation</h2>
+      <ul>
+        <li><strong>Commencez par le Test 1</strong> pour vérifier vos permissions</li>
+        <li><strong>Le Test 4 est le plus complet</strong> et teste tout le système</li>
+        <li><strong>Les tests créent des données temporaires</strong> qui sont automatiquement supprimées</li>
+        <li><strong>Consultez la console du navigateur</strong> pour des logs détaillés</li>
+        <li><strong>Les tests sont indépendants</strong> - vous pouvez les exécuter dans n'importe quel ordre</li>
+      </ul>
+    </div>
+    
+    <div style="text-align: center; margin-top: 40px;">
+      <button class="run-all" onclick="runAllTests()">
+        🎯 Recommandé: Lancer le Test Complet (Test 4)
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    function runAllTests() {
+      window.location.href = 'test-complete-flow.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test 2: Edge Function onboard-franchisee</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 1000px; margin: 0 auto; }
+    .test { border: 2px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .pass { border-color: #22c55e; background: #f0fdf4; }
+    .fail { border-color: #ef4444; background: #fef2f2; }
+    .warning { border-color: #f59e0b; background: #fffbeb; }
+    h1 { color: #1e293b; }
+    h2 { color: #475569; font-size: 18px; }
+    pre { background: #f8fafc; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    .status { font-weight: bold; margin-bottom: 10px; }
+    button { background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #94a3b8; cursor: not-allowed; }
+    .form-group { margin: 15px 0; }
+    label { display: block; margin-bottom: 5px; font-weight: 500; }
+    input { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>🧪 TEST 2: Edge Function onboard-franchisee</h1>
+  
+  <div class="test">
+    <h2>Paramètres de Test</h2>
+    <div class="form-group">
+      <label>Nom du franchisé *</label>
+      <input type="text" id="name" value="Test Franchise Inc." />
+    </div>
+    <div class="form-group">
+      <label>Email Admin *</label>
+      <input type="email" id="email" value="test@testfranchise.com" />
+    </div>
+    <div class="form-group">
+      <label>Nom Complet Admin *</label>
+      <input type="text" id="adminName" value="Jean Test" />
+    </div>
+    <div class="form-group">
+      <label>Téléphone</label>
+      <input type="tel" id="phone" value="5145551234" />
+    </div>
+    <button id="runTest">🚀 Lancer le Test Complet</button>
+  </div>
+  
+  <div id="results"></div>
+  
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+    
+    const supabase = createClient(
+      'https://wppvbdbpfnkbrlpxkcgb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwcHZiZGJwZm5rYnJscHhrY2diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5ODI3OTcsImV4cCI6MjA0MzU1ODc5N30.DlII4cM7ahrUXwlj-n1QRWQrwB-J63mcFmJJAyK6MMc'
+    );
+    
+    const results = document.getElementById('results');
+    
+    function addTest(title, status, details) {
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `
+        <h2>${title}</h2>
+        <div class="status">${status === 'pass' ? '✅ PASS' : status === 'fail' ? '❌ FAIL' : '⚠️ WARNING'}</div>
+        <pre>${details}</pre>
+      `;
+      results.appendChild(div);
+    }
+    
+    document.getElementById('runTest').addEventListener('click', async () => {
+      results.innerHTML = '';
+      document.getElementById('runTest').disabled = true;
+      
+      try {
+        const name = document.getElementById('name').value;
+        const email = document.getElementById('email').value;
+        const adminName = document.getElementById('adminName').value;
+        const phone = document.getElementById('phone').value;
+        
+        // Test 2.1: Créer une organisation test
+        addTest('2.1: Création organisation test', 'pending', 'En cours...');
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          addTest('2.1: Création organisation test', 'fail', 'Non connecté');
+          return;
+        }
+        
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('organization_id')
+          .eq('id', user.id)
+          .single();
+        
+        const { data: newOrg, error: orgError } = await supabase
+          .from('organizations')
+          .insert({
+            name,
+            type: 'franchisee',
+            owner_organization_id: profile.organization_id,
+            billing_email: email,
+            billing_phone: phone,
+            status: 'active',
+          })
+          .select()
+          .single();
+        
+        if (orgError) {
+          addTest('2.1: Création organisation test', 'fail', `Erreur: ${orgError.message}`);
+          document.getElementById('runTest').disabled = false;
+          return;
+        }
+        
+        results.innerHTML = '';
+        addTest('2.1: Création organisation test', 'pass', 
+          `Organisation créée!\nID: ${newOrg.id}\nNom: ${newOrg.name}`
+        );
+        
+        // Test 2.2: Créer config facturation
+        const { data: billing, error: billingError } = await supabase
+          .from('organization_billing_config')
+          .insert({
+            organization_id: newOrg.id,
+            billing_type: 'percentage_of_warranty',
+            percentage_rate: 50,
+            is_active: true,
+          })
+          .select()
+          .single();
+        
+        if (billingError) {
+          addTest('2.2: Config facturation', 'fail', `Erreur: ${billingError.message}`);
+        } else {
+          addTest('2.2: Config facturation', 'pass', 
+            `Config créée!\nTaux: ${billing.percentage_rate}%`
+          );
+        }
+        
+        // Test 2.3: Appeler l'edge function
+        addTest('2.3: Appel edge function onboard-franchisee', 'pending', 'Appel en cours...');
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        const apiUrl = `https://wppvbdbpfnkbrlpxkcgb.supabase.co/functions/v1/onboard-franchisee`;
+        
+        const startTime = Date.now();
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session?.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            franchiseeId: newOrg.id,
+            email: email,
+            name: adminName,
+            organizationName: name,
+            phone: phone,
+          }),
+        });
+        
+        const duration = Date.now() - startTime;
+        const data = await response.json();
+        
+        if (!response.ok) {
+          addTest('2.3: Appel edge function', 'fail', 
+            `Status: ${response.status}\n` +
+            `Erreur: ${data.error || data.userMessage}\n` +
+            `Code: ${data.errorCode || 'N/A'}\n` +
+            `Durée: ${duration}ms\n` +
+            `Détails: ${JSON.stringify(data.technicalDetails || {}, null, 2)}`
+          );
+        } else {
+          const status = data.emailSent ? 'pass' : 'warning';
+          results.innerHTML = results.innerHTML.replace(/2.3:.*?<\/div>/, '');
+          addTest('2.3: Appel edge function', status, 
+            `User ID: ${data.userId}\n` +
+            `Email envoyé: ${data.emailSent ? 'OUI' : 'NON'}\n` +
+            `Mot de passe: ${data.temporaryPassword}\n` +
+            `Invitation ID: ${data.invitationId || 'N/A'}\n` +
+            `Setup link: ${data.setupLink}\n` +
+            `Durée: ${duration}ms\n` +
+            `Warning: ${data.warning || 'Aucun'}\n` +
+            `${data.emailError ? 'Erreur email: ' + data.emailError : ''}`
+          );
+          
+          // Test 2.4: Vérifier que le profil a été créé
+          const { data: newProfile, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, email, role, organization_id')
+            .eq('id', data.userId)
+            .single();
+          
+          if (profileError) {
+            addTest('2.4: Vérification profil créé', 'fail', `Erreur: ${profileError.message}`);
+          } else {
+            addTest('2.4: Vérification profil créé', 'pass', 
+              `Profil trouvé!\n` +
+              `Email: ${newProfile.email}\n` +
+              `Rôle: ${newProfile.role}\n` +
+              `Organisation: ${newProfile.organization_id}`
+            );
+          }
+          
+          // Test 2.5: Vérifier l'invitation
+          if (data.invitationId) {
+            const { data: invitation, error: invError } = await supabase
+              .from('franchisee_invitations')
+              .select('*')
+              .eq('id', data.invitationId)
+              .single();
+            
+            if (invError) {
+              addTest('2.5: Vérification invitation', 'fail', `Erreur: ${invError.message}`);
+            } else {
+              addTest('2.5: Vérification invitation', 'pass', 
+                `Invitation créée!\n` +
+                `Status: ${invitation.status}\n` +
+                `Tentatives: ${invitation.attempts}\n` +
+                `Envoyé: ${invitation.sent_at || 'Non'}`
+              );
+            }
+          }
+        }
+        
+        // Test 2.6: Cleanup - Supprimer les données de test
+        addTest('2.6: Nettoyage données test', 'pending', 'Suppression...');
+        
+        await supabase.from('franchisee_invitations').delete().eq('organization_id', newOrg.id);
+        await supabase.from('profiles').delete().eq('organization_id', newOrg.id);
+        await supabase.from('organization_billing_config').delete().eq('organization_id', newOrg.id);
+        await supabase.from('organizations').delete().eq('id', newOrg.id);
+        
+        results.innerHTML = results.innerHTML.replace(/2.6:.*?<\/div>/, '');
+        addTest('2.6: Nettoyage données test', 'pass', 'Données de test supprimées');
+        
+      } catch (error) {
+        addTest('Erreur générale', 'fail', error.message + '\n' + error.stack);
+      } finally {
+        document.getElementById('runTest').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

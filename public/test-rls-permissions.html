@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test 3: Permissions RLS</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 800px; margin: 0 auto; }
+    .test { border: 2px solid #ddd; padding: 15px; margin: 10px 0; border-radius: 8px; }
+    .pass { border-color: #22c55e; background: #f0fdf4; }
+    .fail { border-color: #ef4444; background: #fef2f2; }
+    h1 { color: #1e293b; }
+    h2 { color: #475569; font-size: 18px; }
+    pre { background: #f8fafc; padding: 10px; border-radius: 4px; overflow-x: auto; font-size: 12px; }
+    .status { font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>🧪 TEST 3: Permissions RLS pour Gestion Franchises</h1>
+  <div id="results"></div>
+  
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+    
+    const supabase = createClient(
+      'https://wppvbdbpfnkbrlpxkcgb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwcHZiZGJwZm5rYnJscHhrY2diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5ODI3OTcsImV4cCI6MjA0MzU1ODc5N30.DlII4cM7ahrUXwlj-n1QRWQrwB-J63mcFmJJAyK6MMc'
+    );
+    
+    const results = document.getElementById('results');
+    
+    function addTest(title, status, details) {
+      const div = document.createElement('div');
+      div.className = `test ${status}`;
+      div.innerHTML = `
+        <h2>${title}</h2>
+        <div class="status">${status === 'pass' ? '✅ PASS' : '❌ FAIL'}</div>
+        <pre>${details}</pre>
+      `;
+      results.appendChild(div);
+    }
+    
+    async function runTests() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        addTest('Authentification', 'fail', 'Non connecté');
+        return;
+      }
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role, organization_id')
+        .eq('id', user.id)
+        .single();
+      
+      // Test 3.1: Lecture organisations (SELECT)
+      const { data: orgsRead, error: readError } = await supabase
+        .from('organizations')
+        .select('id, name, type, status');
+      
+      addTest('3.1: SELECT organizations', readError ? 'fail' : 'pass',
+        readError 
+          ? `Erreur: ${readError.message}\nCode: ${readError.code}`
+          : `Peut lire ${orgsRead.length} organisations\nRôle: ${profile.role}`
+      );
+      
+      // Test 3.2: Création organisation (INSERT)
+      const testOrgName = `Test RLS ${Date.now()}`;
+      const { data: orgInsert, error: insertError } = await supabase
+        .from('organizations')
+        .insert({
+          name: testOrgName,
+          type: 'franchisee',
+          owner_organization_id: profile.organization_id,
+          status: 'active',
+        })
+        .select()
+        .single();
+      
+      addTest('3.2: INSERT organization', insertError ? 'fail' : 'pass',
+        insertError
+          ? `Erreur: ${insertError.message}\nCode: ${insertError.code}`
+          : `Organisation créée!\nID: ${orgInsert.id}\nNom: ${orgInsert.name}`
+      );
+      
+      // Test 3.3: Modification organisation (UPDATE)
+      if (orgInsert) {
+        const { error: updateError } = await supabase
+          .from('organizations')
+          .update({ billing_email: 'test@example.com' })
+          .eq('id', orgInsert.id);
+        
+        addTest('3.3: UPDATE organization', updateError ? 'fail' : 'pass',
+          updateError
+            ? `Erreur: ${updateError.message}\nCode: ${updateError.code}`
+            : `Modification réussie pour org ${orgInsert.id}`
+        );
+      }
+      
+      // Test 3.4: Lecture billing config
+      const { data: billingRead, error: billingReadError } = await supabase
+        .from('organization_billing_config')
+        .select('*')
+        .limit(5);
+      
+      addTest('3.4: SELECT billing_config', billingReadError ? 'fail' : 'pass',
+        billingReadError
+          ? `Erreur: ${billingReadError.message}`
+          : `Peut lire ${billingRead.length} configs de facturation`
+      );
+      
+      // Test 3.5: Création billing config
+      if (orgInsert) {
+        const { error: billingInsertError } = await supabase
+          .from('organization_billing_config')
+          .insert({
+            organization_id: orgInsert.id,
+            billing_type: 'percentage_of_warranty',
+            percentage_rate: 50,
+            is_active: true,
+          });
+        
+        addTest('3.5: INSERT billing_config', billingInsertError ? 'fail' : 'pass',
+          billingInsertError
+            ? `Erreur: ${billingInsertError.message}`
+            : `Config de facturation créée pour org ${orgInsert.id}`
+        );
+      }
+      
+      // Test 3.6: Lecture invitations
+      const { data: invitations, error: invError } = await supabase
+        .from('franchisee_invitations')
+        .select('*')
+        .limit(5);
+      
+      addTest('3.6: SELECT franchisee_invitations', invError ? 'fail' : 'pass',
+        invError
+          ? `Erreur: ${invError.message}`
+          : `Peut lire ${invitations.length} invitations`
+      );
+      
+      // Test 3.7: Cleanup
+      if (orgInsert) {
+        await supabase.from('organization_billing_config').delete().eq('organization_id', orgInsert.id);
+        await supabase.from('organizations').delete().eq('id', orgInsert.id);
+        addTest('3.7: Cleanup données test', 'pass', 'Données de test supprimées');
+      }
+    }
+    
+    runTests();
+  </script>
+</body>
+</html>
