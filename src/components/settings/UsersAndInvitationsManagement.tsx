@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, Shield, Key, Trash2, Edit3, RefreshCw, Mail, Send, CheckCircle, XCircle, Clock, AlertCircle, Copy, Filter, X, Building2, Eye, EyeOff } from 'lucide-react';
+import { Users, UserPlus, Shield, Key, Trash2, Edit3, RefreshCw, Mail, Send, CheckCircle, XCircle, Clock, AlertCircle, Copy, Filter, X, Building2, Eye, EyeOff, Phone } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
@@ -784,96 +784,107 @@ export function UsersAndInvitationsManagement() {
                 <p className="text-slate-600 mt-3">Chargement des utilisateurs...</p>
               </div>
             ) : (
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Utilisateur</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Téléphone</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rôle</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Organisation</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Dernière connexion</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
+              <div className="space-y-3 p-4">
                   {users.map((user) => (
-                    <tr key={user.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">{user.full_name || 'Sans nom'}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{user.email}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{user.phone || '—'}</div>
-                      </td>
-                      <td className="px-6 py-4">{getRoleBadge(user.role)}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{user.organization?.name || '—'}</div>
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {user.last_sign_in_at
-                          ? formatDistanceToNow(new Date(user.last_sign_in_at), { addSuffix: true, locale: fr })
-                          : 'Jamais'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          {canManageUser(user.role) && (
-                            <>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEditModal(user)}
-                                title="Modifier l'utilisateur"
-                              >
-                                <Edit3 className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openPasswordModal(user)}
-                                title="Changer le mot de passe"
-                              >
-                                <Key className="w-3.5 h-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleSendResetLink(user.email)}
-                                loading={actionLoading === user.email}
-                                title="Envoyer lien de réinitialisation"
-                              >
-                                <Mail className="w-3.5 h-3.5" />
-                              </Button>
-                              <button
-                                onClick={() => setDeleteUserConfirm(user)}
-                                disabled={actionLoading === user.id}
-                                title="Supprimer l'utilisateur"
-                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[48px] min-w-[48px] flex items-center justify-center"
-                                aria-label="Supprimer l'utilisateur"
-                              >
-                                <Trash2 className="w-4 h-4" aria-hidden="true" />
-                              </button>
-                            </>
-                          )}
-                          {!canManageUser(user.role) && (
-                            <span className="text-xs text-slate-400 px-2">Accès restreint</span>
-                          )}
+                    <div key={user.id} className="bg-white border-2 border-slate-200 rounded-xl p-6 hover:border-brand-red hover:shadow-lg transition-all">
+                      {/* User Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4 flex-1">
+                          {/* Avatar */}
+                          <div className="w-14 h-14 bg-gradient-to-br from-brand-red to-red-700 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md">
+                            {(user.full_name || user.email).charAt(0).toUpperCase()}
+                          </div>
+
+                          {/* User Info */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-lg font-bold text-slate-900 mb-1">{user.full_name || 'Sans nom'}</h4>
+                            <p className="text-sm text-slate-600 mb-2 truncate">{user.email}</p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              {getRoleBadge(user.role)}
+                              {user.organization?.name && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded">
+                                  <Building2 className="w-3 h-3" />
+                                  {user.organization.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
+
+                        {/* Last Login Badge */}
+                        <div className="text-right">
+                          <div className="text-xs text-slate-500 mb-1">Dernière connexion</div>
+                          <div className="text-sm font-medium text-slate-900">
+                            {user.last_sign_in_at
+                              ? formatDistanceToNow(new Date(user.last_sign_in_at), { addSuffix: true, locale: fr })
+                              : 'Jamais'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Additional Info */}
+                      <div className="flex items-center gap-4 text-sm text-slate-600 mb-4 pb-4 border-b border-slate-100">
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-4 h-4 text-slate-400" />
+                          <span>{user.phone || 'Non renseigné'}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      {canManageUser(user.role) ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                          <button
+                            onClick={() => openEditModal(user)}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium transition-all hover:shadow-md group"
+                          >
+                            <Edit3 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm">Modifier</span>
+                          </button>
+
+                          <button
+                            onClick={() => openPasswordModal(user)}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-amber-50 text-amber-700 hover:bg-amber-100 rounded-lg font-medium transition-all hover:shadow-md group"
+                          >
+                            <Key className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm">Mot de passe</span>
+                          </button>
+
+                          <button
+                            onClick={() => handleSendResetLink(user.email)}
+                            disabled={actionLoading === user.email}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-lg font-medium transition-all hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {actionLoading === user.email ? (
+                              <div className="w-4 h-4 border-2 border-purple-700 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Mail className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            )}
+                            <span className="text-sm">Email reset</span>
+                          </button>
+
+                          <button
+                            onClick={() => setDeleteUserConfirm(user)}
+                            disabled={actionLoading === user.id}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium transition-all hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            <span className="text-sm">Supprimer</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-center py-3 bg-slate-50 rounded-lg">
+                          <span className="text-sm text-slate-500 font-medium">Accès restreint - Permissions insuffisantes</span>
+                        </div>
+                      )}
+                    </div>
                   ))}
                   {users.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="text-center py-12">
                         <Users className="w-12 h-12 text-slate-400 mx-auto mb-3" />
                         <p className="text-slate-600">Aucun utilisateur trouvé</p>
-                      </td>
-                    </tr>
+                    </div>
                   )}
-                </tbody>
-              </table>
+              </div>
             )}
           </div>
         )}
@@ -887,72 +898,98 @@ export function UsersAndInvitationsManagement() {
                 <p className="text-slate-600 mt-3">Chargement des invitations...</p>
               </div>
             ) : (
-              <table className="w-full">
-                <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Rôle</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Organisation</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Statut</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Créé</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase">Expire dans</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-200">
+              <div className="space-y-3 p-4">
                   {invitations.map((invitation) => (
-                    <tr key={invitation.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-slate-900">{invitation.email}</div>
-                      </td>
-                      <td className="px-6 py-4">{getRoleBadge(invitation.role)}</td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-slate-600">{invitation.organization?.name || '—'}</div>
-                      </td>
-                      <td className="px-6 py-4">{getStatusBadge(invitation.status)}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true, locale: fr })}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-slate-600">
-                        {invitation.hours_until_expiry > 0
-                          ? `${invitation.hours_until_expiry}h`
-                          : 'Expiré'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex justify-end gap-2">
-                          {invitation.can_resend && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleResendInvitation(invitation.id)}
-                              loading={resendingId === invitation.id}
-                              title="Renvoyer l'invitation"
-                            >
-                              <Send className="w-3.5 h-3.5" />
-                            </Button>
-                          )}
-                          <button
-                            onClick={() => setDeleteInvitationConfirm(invitation.id)}
-                            title="Supprimer l'invitation"
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors min-h-[48px] min-w-[48px] flex items-center justify-center"
-                            aria-label="Supprimer l'invitation"
-                          >
-                            <Trash2 className="w-4 h-4" aria-hidden="true" />
-                          </button>
+                    <div key={invitation.id} className="bg-white border-2 border-slate-200 rounded-xl p-6 hover:border-brand-red hover:shadow-lg transition-all">
+                      {/* Invitation Header */}
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-4 flex-1">
+                          {/* Icon */}
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-md">
+                            <Mail className="w-7 h-7 text-white" />
+                          </div>
+
+                          {/* Invitation Info */}
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-lg font-bold text-slate-900 mb-1 truncate">{invitation.email}</h4>
+                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                              {getRoleBadge(invitation.role)}
+                              {getStatusBadge(invitation.status)}
+                              {invitation.organization?.name && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-slate-100 text-slate-700 rounded">
+                                  <Building2 className="w-3 h-3" />
+                                  {invitation.organization.name}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500">
+                              Créée {formatDistanceToNow(new Date(invitation.created_at), { addSuffix: true, locale: fr })}
+                            </p>
+                          </div>
                         </div>
-                      </td>
-                    </tr>
+
+                        {/* Expiry Badge */}
+                        <div className="text-right">
+                          <div className="text-xs text-slate-500 mb-1">Expiration</div>
+                          <div className={`text-sm font-bold ${
+                            invitation.hours_until_expiry > 24
+                              ? 'text-green-600'
+                              : invitation.hours_until_expiry > 0
+                              ? 'text-amber-600'
+                              : 'text-red-600'
+                          }`}>
+                            {invitation.hours_until_expiry > 0 ? `${invitation.hours_until_expiry}h` : 'Expiré'}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Error Message if any */}
+                      {invitation.last_error && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                          <div className="flex items-start gap-2">
+                            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs font-medium text-red-900">Erreur d'envoi</p>
+                              <p className="text-xs text-red-700">{invitation.last_error}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Action Buttons */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {invitation.can_resend && (
+                          <button
+                            onClick={() => handleResendInvitation(invitation.id)}
+                            disabled={resendingId === invitation.id}
+                            className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg font-medium transition-all hover:shadow-md group disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {resendingId === invitation.id ? (
+                              <div className="w-4 h-4 border-2 border-blue-700 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                            )}
+                            <span className="text-sm">Renvoyer</span>
+                          </button>
+                        )}
+
+                        <button
+                          onClick={() => setDeleteInvitationConfirm(invitation.id)}
+                          className="flex items-center justify-center gap-2 px-4 py-3 bg-red-50 text-red-700 hover:bg-red-100 rounded-lg font-medium transition-all hover:shadow-md group"
+                        >
+                          <Trash2 className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                          <span className="text-sm">Supprimer</span>
+                        </button>
+                      </div>
+                    </div>
                   ))}
                   {invitations.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="text-center py-12">
                         <Mail className="w-12 h-12 text-slate-400 mx-auto mb-3" />
                         <p className="text-slate-600">Aucune invitation trouvée</p>
-                      </td>
-                    </tr>
+                    </div>
                   )}
-                </tbody>
-              </table>
+              </div>
             )}
           </div>
         )}
