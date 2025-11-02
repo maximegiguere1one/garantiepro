@@ -23,7 +23,7 @@ interface WarrantyPlan {
 }
 
 export function WarrantyPlansManagement() {
-  const { organization, user } = useAuth();
+  const { organization, profile } = useAuth();
   const { showToast } = useToast();
   const [plans, setPlans] = useState<WarrantyPlan[]>([]);
   const [loading, setLoading] = useState(false);
@@ -45,10 +45,10 @@ export function WarrantyPlansManagement() {
   });
 
   useEffect(() => {
-    if (organization && user) {
+    if (organization && profile) {
       loadPlans();
     }
-  }, [organization, user]);
+  }, [organization, profile]);
 
   const loadPlans = async () => {
     if (!organization?.id) return;
@@ -59,7 +59,7 @@ export function WarrantyPlansManagement() {
         .select('*, organizations(name)');
 
       // Si l'utilisateur est MASTER, charger TOUS les plans de TOUTES les organizations
-      if (user?.role !== 'master') {
+      if (profile?.role !== 'master') {
         query = query.eq('organization_id', organization.id);
       }
 
@@ -69,7 +69,7 @@ export function WarrantyPlansManagement() {
 
       if (error) throw error;
 
-      console.log('[WarrantyPlans] User role:', user?.role);
+      console.log('[WarrantyPlans] Profile role:', profile?.role);
       console.log('[WarrantyPlans] Loaded plans:', data?.length);
       console.log('[WarrantyPlans] Organizations:', [...new Set(data?.map(p => p.organizations?.name))]);
 
