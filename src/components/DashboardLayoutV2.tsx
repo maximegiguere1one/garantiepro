@@ -9,6 +9,7 @@ import { MobileNav } from './navigation/MobileNav';
 import { QuickActionsMenu } from './navigation/QuickActionsMenu';
 import { PageBreadcrumbs } from './navigation/PageBreadcrumbs';
 import { DeveloperModeToggle } from './navigation/DeveloperModeToggle';
+import { FranchiseSwitcher } from './navigation/FranchiseSwitcher';
 import {
   buildNavigation,
   getQuickActions,
@@ -118,6 +119,11 @@ export function DashboardLayoutV2({
             {(profile.role === 'admin' || profile.role === 'master') && (
               <DeveloperModeToggle onChange={setShowDevTools} />
             )}
+          </div>
+
+          {/* Franchise Switcher */}
+          <div className="px-4 mb-4">
+            <FranchiseSwitcher />
           </div>
 
           {/* Navigation */}

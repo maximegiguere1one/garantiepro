@@ -14,6 +14,7 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   organization: Organization | null;
+  activeOrganization: Organization | null;
   session: Session | null;
   loading: boolean;
   isOwner: boolean;
@@ -23,6 +24,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName: string, role: Profile['role']) => Promise<void>;
   signOut: () => Promise<void>;
   refreshOrganization: () => Promise<void>;
+  switchOrganization: (organizationId: string) => Promise<void>;
+  canSwitchOrganization: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,10 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
+  const [activeOrganization, setActiveOrganization] = useState<Organization | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
+  const [canSwitchOrganization, setCanSwitchOrganization] = useState(false);
 
   const loadingRef = useRef<boolean>(false);
   const lastLoadTimeRef = useRef<number>(0);
@@ -159,6 +164,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsOwner(ownerStatus);
       setProfileError(null);
 
+      // Check if user can switch organizations (master or admin only)
+      setCanSwitchOrganization(
+        profileData.role === 'master' || profileData.role === 'admin'
+      );
+
+      // Load active organization from sessionStorage or default to user's org
+      const storedActiveOrgId = sessionStorage.getItem('active_organization_id');
+      if (storedActiveOrgId && (profileData.role === 'master' || profileData.role === 'admin')) {
+        // Load the stored active organization
+        supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', storedActiveOrgId)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data) {
+              setActiveOrganization(data);
+            } else {
+              setActiveOrganization(orgData);
+            }
+          });
+      } else {
+        setActiveOrganization(orgData);
+      }
+
       // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)
       if (retryCount === 0) {
         supabase.rpc('update_my_last_sign_in').catch(err => {
@@ -253,6 +283,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data) {
       setOrganization(data);
       setIsOwner(data.type === 'owner' && profile.role === 'admin');
+
+      // Initialize active organization to user's organization
+      if (!activeOrganization) {
+        setActiveOrganization(data);
+      }
+    }
+  };
+
+  const switchOrganization = async (organizationId: string) => {
+    if (!profile) return;
+
+    // Only master and admin can switch
+    if (profile.role !== 'master' && profile.role !== 'admin') {
+      logger.warn('User does not have permission to switch organizations');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .eq('id', organizationId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setActiveOrganization(data);
+        logger.info(`Switched to organization: ${data.name}`);
+
+        // Store in sessionStorage for persistence
+        sessionStorage.setItem('active_organization_id', organizationId);
+      }
+    } catch (error) {
+      logger.error('Error switching organization:', error);
+      throw error;
     }
   };
 
@@ -324,6 +390,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         profile,
         organization,
+        activeOrganization,
         session,
         loading,
         isOwner,
@@ -333,6 +400,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         refreshOrganization,
+        switchOrganization,
+        canSwitchOrganization,
       }}
     >
       {children}
