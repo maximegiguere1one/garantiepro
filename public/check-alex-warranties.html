@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Vérifier Garanties Alex The Goat</title>
+  <style>
+    body { font-family: system-ui; padding: 20px; max-width: 1000px; margin: 0 auto; }
+    .result { background: #f8fafc; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #3b82f6; }
+    .error { border-left-color: #ef4444; background: #fef2f2; }
+    .success { border-left-color: #22c55e; background: #f0fdf4; }
+    pre { overflow-x: auto; font-size: 12px; }
+    button { background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
+    button:hover { background: #2563eb; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Vérifier Garanties - Alex The Goat</h1>
+  <button onclick="checkWarranties()">Vérifier</button>
+  <div id="results"></div>
+
+  <script type="module">
+    import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
+
+    const supabase = createClient(
+      'https://wppvbdbpfnkbrlpxkcgb.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndwcHZiZGJwZm5rYnJscHhrY2diIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5ODI3OTcsImV4cCI6MjA0MzU1ODc5N30.DlII4cM7ahrUXwlj-n1QRWQrwB-J63mcFmJJAyK6MMc'
+    );
+
+    const results = document.getElementById('results');
+
+    function addResult(title, data, isError = false) {
+      const div = document.createElement('div');
+      div.className = `result ${isError ? 'error' : 'success'}`;
+      div.innerHTML = `<strong>${title}</strong><pre>${JSON.stringify(data, null, 2)}</pre>`;
+      results.appendChild(div);
+    }
+
+    window.checkWarranties = async function() {
+      results.innerHTML = '';
+
+      try {
+        // 1. Trouver l'org "alex the goat"
+        const { data: orgs, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .ilike('name', '%alex%goat%');
+
+        if (orgError) {
+          addResult('❌ Erreur organizations', orgError, true);
+          return;
+        }
+
+        if (!orgs || orgs.length === 0) {
+          addResult('❌ Organisation non trouvée', { message: 'Aucune org avec "alex the goat"' }, true);
+          return;
+        }
+
+        addResult('✅ Organisation trouvée', orgs[0]);
+        const orgId = orgs[0].id;
+
+        // 2. Compter TOUTES les garanties (sans filtre org)
+        const { count: totalCount, error: totalError } = await supabase
+          .from('warranties')
+          .select('*', { count: 'exact', head: true });
+
+        addResult(totalError ? '❌ Erreur total' : '✅ Total garanties DB', {
+          total: totalCount,
+          error: totalError
+        }, !!totalError);
+
+        // 3. Compter garanties pour cette org (sera bloqué si RLS pas fix)
+        const { count: orgCount, error: orgCountError } = await supabase
+          .from('warranties')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', orgId);
+
+        addResult(orgCountError ? '❌ Erreur comptage org (RLS?)' : '✅ Garanties pour Alex The Goat', {
+          organization_id: orgId,
+          count: orgCount,
+          error: orgCountError
+        }, !!orgCountError);
+
+        // 4. Essayer de lire les garanties (détails)
+        const { data: warranties, error: warrantyError } = await supabase
+          .from('warranties')
+          .select('id, contract_number, organization_id, created_at')
+          .eq('organization_id', orgId)
+          .limit(5);
+
+        if (warrantyError) {
+          addResult('❌ Erreur lecture garanties', {
+            message: warrantyError.message,
+            code: warrantyError.code,
+            details: warrantyError.details
+          }, true);
+        } else {
+          addResult('✅ Garanties trouvées', {
+            count: warranties?.length || 0,
+            warranties: warranties || []
+          });
+        }
+
+        // 5. Vérifier le rôle de l'utilisateur
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role, organization_id')
+            .eq('id', user.id)
+            .single();
+
+          addResult('👤 Utilisateur connecté', {
+            email: user.email,
+            role: profile?.role,
+            organization_id: profile?.organization_id
+          });
+        }
+
+      } catch (error) {
+        addResult('❌ Erreur générale', error, true);
+      }
+    };
+  </script>
+</body>
+</html>
