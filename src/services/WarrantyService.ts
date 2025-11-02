@@ -83,8 +83,8 @@ class CacheManager {
     this.ttl = ttl;
   }
 
-  getCacheKey(page: number, pageSize: number, statusFilter: string, searchQuery: string): string {
-    return `warranties:${page}:${pageSize}:${statusFilter}:${searchQuery}`;
+  getCacheKey(page: number, pageSize: number, statusFilter: string, searchQuery: string, organizationId?: string): string {
+    return `warranties:${organizationId || 'default'}:${page}:${pageSize}:${statusFilter}:${searchQuery}`;
   }
 
   get(key: string): WarrantyListResponse | null {
@@ -211,7 +211,7 @@ export class WarrantyService {
     organizationId?: string
   ): Promise<WarrantyListResponse> {
     const startTime = performance.now();
-    const cacheKey = this.cacheManager.getCacheKey(page, pageSize, statusFilter, searchQuery);
+    const cacheKey = this.cacheManager.getCacheKey(page, pageSize, statusFilter, searchQuery, organizationId);
 
     // Try cache first
     const cachedResult = this.cacheManager.get(cacheKey);
