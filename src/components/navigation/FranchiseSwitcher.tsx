@@ -21,24 +21,33 @@ export function FranchiseSwitcher() {
       canSwitchOrganization,
       activeOrganization,
       profileRole: profile?.role,
+      organizationsCount: organizations.length,
     });
-  }, [canSwitchOrganization, activeOrganization, profile]);
+  }, [canSwitchOrganization, activeOrganization, profile, organizations]);
 
+  // Load organizations whenever component mounts or profile changes
   useEffect(() => {
-    if (canSwitchOrganization) {
+    if (profile && (profile.role === 'master' || profile.role === 'admin')) {
+      console.log('FranchiseSwitcher: Profile detected as master/admin, loading orgs');
       loadOrganizations();
     }
-  }, [canSwitchOrganization]);
+  }, [profile]);
 
   const loadOrganizations = async () => {
     try {
+      console.log('FranchiseSwitcher: Loading organizations...');
       const { data, error } = await supabase
         .from('organizations')
         .select('id, name, type')
         .order('type', { ascending: false })
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('FranchiseSwitcher: Error loading organizations:', error);
+        throw error;
+      }
+
+      console.log('FranchiseSwitcher: Loaded organizations:', data?.length || 0);
       setOrganizations(data || []);
     } catch (error) {
       console.error('Error loading organizations:', error);
@@ -46,30 +55,51 @@ export function FranchiseSwitcher() {
   };
 
   const handleSwitch = async (orgId: string) => {
+    if (orgId === activeOrganization?.id) {
+      setIsOpen(false);
+      return;
+    }
+
     setLoading(true);
     try {
+      console.log('FranchiseSwitcher: Switching to organization:', orgId);
       await switchOrganization(orgId);
       setIsOpen(false);
-      // Refresh the page to reload data with new organization context
-      window.location.reload();
+
+      // Force a small delay then reload to ensure sessionStorage is written
+      setTimeout(() => {
+        console.log('FranchiseSwitcher: Reloading page...');
+        window.location.reload();
+      }, 100);
     } catch (error) {
       console.error('Error switching organization:', error);
-    } finally {
       setLoading(false);
     }
   };
 
-  // Show debug info if not available
-  if (!canSwitchOrganization) {
-    console.log('FranchiseSwitcher: Cannot switch - permission denied or not loaded yet');
+  // Check if user is master/admin directly from profile
+  const isMasterOrAdmin = profile?.role === 'master' || profile?.role === 'admin';
+
+  // Hide if user definitely cannot switch
+  if (profile && !isMasterOrAdmin) {
     return null;
   }
 
+  // Show loading if no active organization yet
   if (!activeOrganization) {
     console.log('FranchiseSwitcher: No active organization yet');
-    return (
+    return isMasterOrAdmin ? (
       <div className="px-3 py-2 text-xs text-slate-500">
         Chargement de la franchise...
+      </div>
+    ) : null;
+  }
+
+  // Hide if no organizations loaded yet and still loading profile
+  if (!profile || organizations.length === 0) {
+    return (
+      <div className="px-3 py-2 text-xs text-slate-500">
+        Chargement des franchises...
       </div>
     );
   }
