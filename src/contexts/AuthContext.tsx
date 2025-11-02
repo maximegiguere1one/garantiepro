@@ -158,7 +158,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           logger.error('Organization query error:', orgError);
         } else {
           orgData = specificOrg;
-          ownerStatus = specificOrg?.type === 'owner' && profileData.role === 'admin';
+          // Master users are ALWAYS considered owners, admins need to be in 'owner' org
+          ownerStatus = profileData.role === 'master' || (specificOrg?.type === 'owner' && profileData.role === 'admin');
           logger.debug('Organization loaded:', specificOrg?.name);
         }
       }
@@ -337,7 +338,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (data) {
       setOrganization(data);
-      setIsOwner(data.type === 'owner' && profile.role === 'admin');
+      // Master users are ALWAYS considered owners, admins need to be in 'owner' org
+      setIsOwner(profile.role === 'master' || (data.type === 'owner' && profile.role === 'admin'));
 
       // Initialize active organization to user's organization
       if (!activeOrganization) {
