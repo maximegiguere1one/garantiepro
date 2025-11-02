@@ -469,24 +469,31 @@ class WarrantyService {
     return;
   }
 
+  clearCache(): void {
+    // Clear supabase cache completely
+    supabaseCache.clear();
+    console.log('[WarrantyService] Cache cleared');
+  }
+
   async prefetchNextPage(
     currentPage: number,
     pageSize: number,
     statusFilter: string,
-    searchQuery: string
+    searchQuery: string,
+    organizationId?: string
   ): Promise<void> {
     const nextPage = currentPage + 1;
 
     // Prefetch immediately in the background
     setTimeout(() => {
-      this.getWarrantiesOptimized(nextPage, pageSize, statusFilter, searchQuery).catch(() => {});
+      this.getWarrantiesOptimized(nextPage, pageSize, statusFilter, searchQuery, organizationId).catch(() => {});
     }, 50); // Reduced delay from 100ms to 50ms
 
     // Also prefetch the previous page for smooth back navigation
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
       setTimeout(() => {
-        this.getWarrantiesOptimized(prevPage, pageSize, statusFilter, searchQuery).catch(() => {});
+        this.getWarrantiesOptimized(prevPage, pageSize, statusFilter, searchQuery, organizationId).catch(() => {});
       }, 100);
     }
   }

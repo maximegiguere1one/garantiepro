@@ -73,7 +73,7 @@ export const WarrantiesList = memo(() => {
 
         // Prefetch next page if performance is good
         if (response.executionTime < 500) {
-          warrantyService.prefetchNextPage(currentPage, itemsPerPage, statusFilter, search);
+          warrantyService.prefetchNextPage(currentPage, itemsPerPage, statusFilter, search, activeOrganization?.id);
         }
 
         // Performance feedback only for very slow queries
@@ -111,6 +111,13 @@ export const WarrantiesList = memo(() => {
 
   useEffect(() => {
     if (activeOrganization) {
+      // CRITICAL: Clear ALL state when organization changes
+      console.log('[WarrantiesList] 🔄 Organization changed, clearing all state');
+      setWarranties([]);
+      setTotalCount(0);
+      setCurrentPage(1);
+      setError(null);
+      setSelectedWarranty(null);
       loadWarranties();
     }
   }, [loadWarranties, activeOrganization]);

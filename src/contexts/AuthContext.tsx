@@ -3,6 +3,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { getConnectionErrorMessage } from '../lib/supabase-health-check';
 import { createLogger } from '../lib/logger';
+import { supabaseCache } from '../lib/supabase-cache';
 import type { Database } from '../lib/database.types';
 
 const logger = createLogger('[AuthContext]');
@@ -364,6 +365,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       if (data) {
+        // Clear ALL caches before switching
+        console.log('[AuthContext] 🧹 Clearing all caches before switch');
+        supabaseCache.clear();
+
         // Store in localStorage for persistence FIRST
         localStorage.setItem('active_organization_id', organizationId);
         console.log('[AuthContext] 💾 Saved to localStorage:', organizationId);
