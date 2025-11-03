@@ -61,10 +61,12 @@ export function DashboardLayoutV2({
 
   const logo = (
     <div className="flex items-center gap-3">
-      <div className="w-8 h-8 bg-gradient-to-br from-primary-600 to-primary-700 rounded-lg flex items-center justify-center shadow-sm">
-        <ShieldCheck className="w-5 h-5 text-white" />
-      </div>
-      <span className="font-semibold text-slate-900">Pro-Remorque</span>
+      <img
+        src="/Pro remorque.png"
+        alt="Pro Remorque"
+        className="h-8 w-auto"
+      />
+      <span className="font-semibold text-slate-900">Pro Remorque</span>
     </div>
   );
 

@@ -1,6 +1,6 @@
 {
-  "name": "Warranty Management System",
-  "short_name": "Warranty Pro",
+  "name": "Garantie Prolongée | Pro Remorque",
+  "short_name": "Pro Remorque",
   "description": "Professional warranty and claims management platform with real-time notifications",
   "start_url": "/",
   "display": "standalone",
@@ -9,7 +9,7 @@
   "orientation": "portrait-primary",
   "icons": [
     {
-      "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+      "src": "/Pro remorque.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -26,7 +26,7 @@
       "url": "/?page=new-warranty",
       "icons": [
         {
-          "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+          "src": "/Pro remorque.png",
           "sizes": "512x512",
           "type": "image/png"
         }
@@ -39,7 +39,7 @@
       "url": "/?page=claims",
       "icons": [
         {
-          "src": "/Simple Modern Minimalist Circle Design Studio Logo.png",
+          "src": "/Pro remorque.png",
           "sizes": "512x512",
           "type": "image/png"
         }

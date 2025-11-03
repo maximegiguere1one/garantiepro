@@ -14,7 +14,7 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://www.garantiepr
 export const APP_CONFIG = {
   // Company Information
   company: {
-    name: import.meta.env.VITE_COMPANY_NAME || 'Location Pro-Remorque',
+    name: import.meta.env.VITE_COMPANY_NAME || 'Pro Remorque',
     supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || 'support@locationproremorque.ca',
     defaultLanguage: 'fr' as const,
   },
@@ -23,7 +23,7 @@ export const APP_CONFIG = {
   urls: {
     siteUrl: SITE_URL,
     productionUrl: 'https://www.garantieproremorque.com',
-    appName: 'Location Pro-Remorque',
+    appName: 'Garantie Prolongée | Pro Remorque',
   },
 
   // Performance Settings

@@ -3,7 +3,7 @@ export const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://www.garantiepr
 export const APP_CONFIG = {
   SITE_URL,
   PRODUCTION_URL: 'https://www.garantieproremorque.com',
-  APP_NAME: 'Location Pro-Remorque',
+  APP_NAME: 'Garantie Prolongée | Pro Remorque',
   SUPPORT_EMAIL: 'support@locationproremorque.ca',
 } as const;
 

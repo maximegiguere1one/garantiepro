@@ -58,10 +58,12 @@ export function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-primary-600/30">
-              <ShieldCheck className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Location Pro-Remorque</h1>
+            <img
+              src="/Pro remorque.png"
+              alt="Pro Remorque"
+              className="h-20 w-auto mb-4"
+            />
+            <h1 className="text-2xl font-bold text-slate-900">Garantie Prolongée | Pro Remorque</h1>
             <p className="text-slate-600 text-sm mt-2">
               Connectez-vous pour continuer
             </p>
