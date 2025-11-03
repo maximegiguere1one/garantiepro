@@ -106,7 +106,7 @@ export function WarrantyPlansManagement() {
 
   const openEditModal = (plan: WarrantyPlan) => {
     setEditingPlan(plan);
-    const maxClaimAmount = plan.max_claim_limits?.max_total_amount || '';
+    const maxClaimAmount = plan.max_claim_limits?.max_total_amount;
     setFormData({
       name: plan.name,
       description: plan.description || '',
@@ -114,7 +114,7 @@ export function WarrantyPlansManagement() {
       direct_price: plan.base_price.toString(),
       duration_months: plan.duration_months.toString(),
       coverage_details: plan.coverage_details || '',
-      max_claim_amount: maxClaimAmount.toString(),
+      max_claim_amount: maxClaimAmount !== undefined && maxClaimAmount !== null ? maxClaimAmount.toString() : '',
       is_active: plan.is_active,
       status: plan.status as 'draft' | 'published',
     });
@@ -138,11 +138,21 @@ export function WarrantyPlansManagement() {
 
     setSaving(true);
     try {
-      const maxClaimLimits = formData.max_claim_amount ? {
-        max_total_amount: parseFloat(formData.max_claim_amount),
-        max_per_claim: parseFloat(formData.max_claim_amount),
-        max_claims_count: null
-      } : null;
+      // Validation du montant max de réclamation
+      let maxClaimLimits = null;
+      if (formData.max_claim_amount && formData.max_claim_amount.trim() !== '') {
+        const maxAmount = parseFloat(formData.max_claim_amount);
+        if (isNaN(maxAmount) || maxAmount < 0) {
+          showToast('Le montant maximum de réclamation doit être un nombre positif', 'error');
+          setSaving(false);
+          return;
+        }
+        maxClaimLimits = {
+          max_total_amount: maxAmount,
+          max_per_claim: maxAmount,
+          max_claims_count: null
+        };
+      }
 
       const planData = {
         organization_id: organization.id,
@@ -501,11 +511,11 @@ export function WarrantyPlansManagement() {
                         {plan.duration_months} mois
                       </span>
                     </div>
-                    {plan.max_claim_limits?.max_total_amount && (
+                    {plan.max_claim_limits?.max_total_amount != null && plan.max_claim_limits.max_total_amount > 0 && (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
                         <Shield className="w-4 h-4 text-amber-600" />
                         <span className="text-sm font-semibold text-amber-700">
-                          Max: {plan.max_claim_limits.max_total_amount.toFixed(2)} $
+                          Max: {Number(plan.max_claim_limits.max_total_amount).toFixed(2)} $
                         </span>
                       </div>
                     )}

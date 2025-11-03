@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Plan de garantie avec montant max</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #b91c1c;
+        }
+        button.secondary {
+            background: #64748b;
+        }
+        button.secondary:hover {
+            background: #475569;
+        }
+        .log {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .success { color: #059669; font-weight: 600; }
+        .error { color: #dc2626; font-weight: 600; }
+        .info { color: #0284c7; }
+        .result {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Test Plan de Garantie - Montant Maximum</h1>
+        <p class="subtitle">Test de création et modification de plans avec montant maximum de réclamation</p>
+
+        <div>
+            <button onclick="testCreatePlanWithMaxClaim()">1. Créer plan avec max ($5000)</button>
+            <button onclick="testCreatePlanNoMax()">2. Créer plan sans max (illimité)</button>
+            <button onclick="testUpdatePlanMaxClaim()">3. Modifier max claim d'un plan</button>
+            <button onclick="testLoadAndDisplay()">4. Charger et afficher tous les plans</button>
+            <button class="secondary" onclick="clearLog()">Effacer log</button>
+        </div>
+
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gxnbdkmiayeygqxaztis.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4bmJka21pYXlleWdxeGF6dGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5OTMwNTEsImV4cCI6MjA0MzU2OTA1MX0.6OEquQro85fVLLHY91hMk3KX6mc5G5-hM6xZOvs4t-U';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let testPlanId = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function testCreatePlanWithMaxClaim() {
+            log('=== Test 1: Création plan avec montant max ===');
+
+            try {
+                // Login d'abord
+                const { data: session } = await supabase.auth.getSession();
+                if (!session.session) {
+                    log('Veuillez vous connecter d\'abord!', 'error');
+                    return;
+                }
+
+                // Récupérer l'organization_id de l'utilisateur
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('organization_id')
+                    .eq('id', session.session.user.id)
+                    .single();
+
+                if (!profile?.organization_id) {
+                    log('Erreur: organization_id non trouvé', 'error');
+                    return;
+                }
+
+                log(`Organization ID: ${profile.organization_id}`);
+
+                // Créer le plan avec max claim
+                const planData = {
+                    organization_id: profile.organization_id,
+                    name: 'Test Plan Max $5000',
+                    name_fr: 'Test Plan Max $5000',
+                    name_en: 'Test Plan Max $5000',
+                    description: 'Plan de test avec montant maximum de réclamation',
+                    base_price: 499.99,
+                    duration_months: 24,
+                    coverage_details: 'Couverture complète avec limite de $5000',
+                    coverage_matrix: { included: [], excluded: [], limits: {} },
+                    max_claim_limits: {
+                        max_total_amount: 5000.00,
+                        max_per_claim: 5000.00,
+                        max_claims_count: null
+                    },
+                    is_active: true,
+                    status: 'published'
+                };
+
+                log('Création du plan...');
+                const { data, error } = await supabase
+                    .from('warranty_plans')
+                    .insert(planData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                testPlanId = data.id;
+                log(`✓ Plan créé avec succès! ID: ${data.id}`, 'success');
+                log(`✓ Montant max: ${data.max_claim_limits?.max_total_amount} $`, 'success');
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `<strong>Plan créé:</strong><br>
+                    ID: ${data.id}<br>
+                    Nom: ${data.name}<br>
+                    Prix: ${data.base_price} $<br>
+                    Durée: ${data.duration_months} mois<br>
+                    <strong>Max réclamation: ${data.max_claim_limits?.max_total_amount} $</strong>`;
+                document.getElementById('log').appendChild(resultDiv);
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testCreatePlanNoMax() {
+            log('=== Test 2: Création plan SANS montant max (illimité) ===');
+
+            try {
+                const { data: session } = await supabase.auth.getSession();
+                if (!session.session) {
+                    log('Veuillez vous connecter d\'abord!', 'error');
+                    return;
+                }
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('organization_id')
+                    .eq('id', session.session.user.id)
+                    .single();
+
+                const planData = {
+                    organization_id: profile.organization_id,
+                    name: 'Test Plan Illimité',
+                    name_fr: 'Test Plan Illimité',
+                    name_en: 'Test Plan Illimité',
+                    description: 'Plan de test SANS limite',
+                    base_price: 999.99,
+                    duration_months: 36,
+                    coverage_details: 'Couverture illimitée',
+                    coverage_matrix: { included: [], excluded: [], limits: {} },
+                    max_claim_limits: null, // PAS DE LIMITE
+                    is_active: true,
+                    status: 'published'
+                };
+
+                log('Création du plan illimité...');
+                const { data, error } = await supabase
+                    .from('warranty_plans')
+                    .insert(planData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                log(`✓ Plan illimité créé! ID: ${data.id}`, 'success');
+                log(`✓ max_claim_limits: ${data.max_claim_limits === null ? 'NULL (illimité)' : 'ERREUR'}`,
+                    data.max_claim_limits === null ? 'success' : 'error');
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testUpdatePlanMaxClaim() {
+            log('=== Test 3: Modification montant max ===');
+
+            if (!testPlanId) {
+                log('Veuillez d\'abord créer un plan (Test 1)', 'error');
+                return;
+            }
+
+            try {
+                log(`Modification du plan ${testPlanId}...`);
+
+                const { data, error } = await supabase
+                    .from('warranty_plans')
+                    .update({
+                        max_claim_limits: {
+                            max_total_amount: 7500.00,
+                            max_per_claim: 7500.00,
+                            max_claims_count: null
+                        }
+                    })
+                    .eq('id', testPlanId)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                log(`✓ Montant max modifié de $5000 à $7500`, 'success');
+                log(`✓ Nouveau max: ${data.max_claim_limits?.max_total_amount} $`, 'success');
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        async function testLoadAndDisplay() {
+            log('=== Test 4: Chargement de tous les plans ===');
+
+            try {
+                const { data: session } = await supabase.auth.getSession();
+                if (!session.session) {
+                    log('Veuillez vous connecter d\'abord!', 'error');
+                    return;
+                }
+
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('organization_id, role')
+                    .eq('id', session.session.user.id)
+                    .single();
+
+                log(`Chargement des plans pour organization ${profile.organization_id}...`);
+
+                let query = supabase
+                    .from('warranty_plans')
+                    .select('*');
+
+                if (profile.role !== 'master') {
+                    query = query.eq('organization_id', profile.organization_id);
+                }
+
+                const { data: plans, error } = await query.order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                log(`✓ ${plans.length} plan(s) trouvé(s)`, 'success');
+
+                plans.forEach(plan => {
+                    const maxClaim = plan.max_claim_limits?.max_total_amount;
+                    const maxDisplay = maxClaim ? `$${maxClaim.toFixed(2)}` : 'Illimité';
+
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'result';
+                    resultDiv.innerHTML = `<strong>${plan.name}</strong><br>
+                        Prix: ${plan.base_price} $ | Durée: ${plan.duration_months} mois<br>
+                        <strong>Max réclamation: ${maxDisplay}</strong><br>
+                        Actif: ${plan.is_active ? 'Oui' : 'Non'}`;
+                    document.getElementById('log').appendChild(resultDiv);
+                });
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+            }
+        }
+
+        // Auto-log au chargement
+        window.onload = () => {
+            log('Page de test chargée. Connectez-vous d\'abord sur l\'application principale.', 'info');
+        };
+    </script>
+</body>
+</html>
