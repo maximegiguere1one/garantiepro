@@ -189,16 +189,29 @@ export function WarrantyPlansManagement() {
 
   const toggleActive = async (plan: WarrantyPlan) => {
     try {
-      const { error } = await supabase
+      console.log('[WarrantyPlans] Toggling plan:', plan.id);
+      console.log('[WarrantyPlans] Current is_active:', plan.is_active);
+      console.log('[WarrantyPlans] New is_active:', !plan.is_active);
+      console.log('[WarrantyPlans] Plan organization:', plan.organizations?.name);
+      console.log('[WarrantyPlans] Current user role:', profile?.role);
+
+      const { data, error } = await supabase
         .from('warranty_plans')
         .update({ is_active: !plan.is_active })
-        .eq('id', plan.id);
+        .eq('id', plan.id)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[WarrantyPlans] Toggle error:', error);
+        throw error;
+      }
+
+      console.log('[WarrantyPlans] ✅ Toggle successful, updated data:', data);
 
       showToast(`Plan ${!plan.is_active ? 'activé' : 'désactivé'}`, 'success');
       await loadPlans();
     } catch (error: any) {
+      console.error('[WarrantyPlans] Toggle failed:', error);
       showToast('Erreur lors de la modification', 'error');
     }
   };
