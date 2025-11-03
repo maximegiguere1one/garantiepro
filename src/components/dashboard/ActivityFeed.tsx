@@ -1,82 +1,125 @@
-import { AlertCircle, Clock, CheckCircle, Bell, X } from 'lucide-react';
+import { ReactNode } from 'react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
-export interface Notification {
+interface ActivityItem {
   id: string;
-  type: 'urgent' | 'warning' | 'info' | 'success';
+  icon: ReactNode;
   title: string;
-  message: string;
-  action?: string;
-  actionPage?: string;
-  timestamp: Date;
+  description: string;
+  timestamp: Date | string;
+  color?: 'slate' | 'emerald' | 'blue' | 'amber' | 'red';
+  onClick?: () => void;
 }
 
 interface ActivityFeedProps {
-  notifications: Notification[];
-  onDismiss: (id: string) => void;
-  onNavigate?: (page: string) => void;
+  activities: ActivityItem[];
+  maxItems?: number;
+  showViewAll?: boolean;
+  onViewAll?: () => void;
+  loading?: boolean;
 }
 
-export function ActivityFeed({ notifications, onDismiss, onNavigate }: ActivityFeedProps) {
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'urgent':
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case 'warning':
-        return <Clock className="w-5 h-5 text-amber-600" />;
-      case 'success':
-        return <CheckCircle className="w-5 h-5 text-emerald-600" />;
-      default:
-        return <Bell className="w-5 h-5 text-primary-600" />;
-    }
-  };
+const colorClasses = {
+  slate: 'bg-slate-100 text-slate-600',
+  emerald: 'bg-emerald-100 text-emerald-600',
+  blue: 'bg-primary-100 text-primary-600',
+  amber: 'bg-amber-100 text-amber-600',
+  red: 'bg-red-100 text-red-600',
+};
 
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'urgent':
-        return 'bg-red-50 border-red-200';
-      case 'warning':
-        return 'bg-amber-50 border-amber-200';
-      case 'success':
-        return 'bg-emerald-50 border-emerald-200';
-      default:
-        return 'bg-primary-50 border-primary-200';
-    }
-  };
+export function ActivityFeed({
+  activities,
+  maxItems = 5,
+  showViewAll = true,
+  onViewAll,
+  loading = false,
+}: ActivityFeedProps) {
+  const displayedActivities = activities.slice(0, maxItems);
 
-  if (notifications.length === 0) {
-    return null;
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-slate-200 p-6">
+        <div className="h-6 bg-slate-200 rounded w-32 mb-4 animate-pulse" />
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex gap-3 animate-pulse">
+              <div className="w-10 h-10 bg-slate-200 rounded-lg" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-slate-200 rounded w-3/4" />
+                <div className="h-3 bg-slate-200 rounded w-1/2" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="grid gap-3">
-      {notifications.map((notif) => (
-        <div
-          key={notif.id}
-          className={`flex items-start gap-4 p-4 rounded-xl border ${getNotificationColor(notif.type)} transition-all hover:shadow-md`}
-        >
-          <div className="flex-shrink-0">{getNotificationIcon(notif.type)}</div>
-          <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-slate-900">{notif.title}</h4>
-            <p className="text-sm text-slate-600 mt-0.5">{notif.message}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            {notif.action && notif.actionPage && (
-              <button
-                onClick={() => onNavigate?.(notif.actionPage!)}
-                className="flex-shrink-0 px-4 py-2 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-              >
-                {notif.action}
-              </button>
-            )}
-            <button
-              onClick={() => onDismiss(notif.id)}
-              className="p-1 hover:bg-white/50 rounded transition-colors"
+    <div className="bg-white rounded-xl border border-slate-200 p-6">
+      <h3 className="text-lg font-semibold text-slate-900 mb-4">
+        Activité récente
+      </h3>
+
+      <div className="space-y-3">
+        {displayedActivities.map((activity, index) => {
+          const ActivityComponent = activity.onClick ? 'button' : 'div';
+          const timestamp = typeof activity.timestamp === 'string'
+            ? new Date(activity.timestamp)
+            : activity.timestamp;
+
+          return (
+            <ActivityComponent
+              key={activity.id}
+              type={activity.onClick ? 'button' : undefined}
+              onClick={activity.onClick}
+              className={`
+                w-full flex gap-3 p-3 rounded-lg transition-colors
+                ${activity.onClick ? 'hover:bg-slate-50 cursor-pointer text-left' : ''}
+                ${index !== displayedActivities.length - 1 ? 'border-b border-slate-100' : ''}
+              `}
             >
-              <X className="w-4 h-4 text-slate-500" />
-            </button>
-          </div>
+              <div className={`
+                w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0
+                ${colorClasses[activity.color || 'slate']}
+              `}>
+                {activity.icon}
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-900 mb-0.5">
+                  {activity.title}
+                </p>
+                <p className="text-xs text-slate-600 mb-1">
+                  {activity.description}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {formatDistanceToNow(timestamp, {
+                    addSuffix: true,
+                    locale: fr,
+                  })}
+                </p>
+              </div>
+            </ActivityComponent>
+          );
+        })}
+      </div>
+
+      {showViewAll && activities.length > maxItems && (
+        <button
+          onClick={onViewAll}
+          className="w-full mt-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+        >
+          Voir toutes les activités ({activities.length})
+        </button>
+      )}
+
+      {activities.length === 0 && (
+        <div className="text-center py-8">
+          <p className="text-sm text-slate-500">Aucune activité récente</p>
         </div>
-      ))}
+      )}
     </div>
   );
 }
