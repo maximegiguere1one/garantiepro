@@ -51,6 +51,7 @@ const SupabaseHealthCheck = lazy(() => import('./components/SupabaseHealthCheck'
 const DemoNewFeatures = lazy(() => import('./components/DemoNewFeatures').then(m => ({ default: m.DemoNewFeatures })));
 const WarrantyDownloadPage = lazy(() => import('./components/WarrantyDownloadPage').then(m => ({ default: m.WarrantyDownloadPage })));
 const HelpCenter = lazy(() => import('./components/HelpCenter').then(m => ({ default: m.default })));
+const HelpCenterPage = lazy(() => import('./components/HelpCenterPage').then(m => ({ default: m.HelpCenterPage })));
 const UIV2Demo = lazy(() => import('./components/UIV2Demo').then(m => ({ default: m.UIV2Demo })));
 const PromoteMasterPage = lazy(() => import('./components/PromoteMasterPage'));
 const AutomationDashboard = lazy(() => import('./components/AutomationDashboard').then(m => ({ default: m.AutomationDashboard })));
@@ -146,7 +147,7 @@ function AppContent() {
       case 'demo-features':
         return <DemoNewFeatures />;
       case 'help':
-        return <HelpCenter />;
+        return <HelpCenterPage />;
       case 'settings':
         return <SettingsPage />;
       case 'ui-v2-demo':

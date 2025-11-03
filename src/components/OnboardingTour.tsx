@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, ChevronLeft, ChevronRight, CheckCircle } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, CheckCircle, Sparkles } from 'lucide-react';
 import { AnimatedButton } from './common/AnimatedButton';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 interface TourStep {
   title: string;
@@ -52,18 +55,29 @@ const tourSteps: TourStep[] = [
 
 interface OnboardingTourProps {
   onComplete: () => void;
+  autoStart?: boolean;
 }
 
-export function OnboardingTour({ onComplete }: OnboardingTourProps) {
+export function OnboardingTour({ onComplete, autoStart = true }: OnboardingTourProps) {
+  const { user } = useAuth();
+  const { showToast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
-    const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour');
-    if (hasSeenTour) {
-      setShow(false);
+    const checkTourStatus = async () => {
+      const hasSeenTour = localStorage.getItem('hasSeenOnboardingTour');
+
+      if (!hasSeenTour && autoStart) {
+        setTimeout(() => setShow(true), 1000);
+      }
+    };
+
+    if (user?.id) {
+      checkTourStatus();
     }
-  }, []);
+  }, [user?.id, autoStart]);
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -83,10 +97,27 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
     handleComplete();
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     localStorage.setItem('hasSeenOnboardingTour', 'true');
-    setShow(false);
-    onComplete();
+
+    if (user?.id) {
+      try {
+        await supabase
+          .from('user_onboarding_progress')
+          .update({ has_completed_tour: true })
+          .eq('user_id', user.id);
+      } catch (error) {
+        console.error('Error updating tour completion:', error);
+      }
+    }
+
+    setShowConfetti(true);
+    showToast('Tour complété! Vous êtes prêt à commencer', 'success');
+
+    setTimeout(() => {
+      setShow(false);
+      onComplete();
+    }, 2000);
   };
 
   if (!show) return null;
@@ -97,14 +128,37 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
 
   return (
     <>
+      {/* Confetti effect */}
+      {showConfetti && (
+        <div className="fixed inset-0 z-50 pointer-events-none">
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 bg-primary-500 animate-ping"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+                animationDuration: `${1 + Math.random()}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       <div className="fixed inset-0 bg-black/50 z-40 animate-fadeIn" />
 
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div className="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 pointer-events-auto animate-scaleIn">
-          <div className="flex items-start justify-between mb-4">
+        <div className="bg-gradient-to-br from-white to-primary-50 rounded-2xl shadow-2xl max-w-lg w-full p-8 pointer-events-auto animate-scaleIn border-2 border-primary-200">
+          <div className="flex items-start justify-between mb-6">
             <div className="flex-1">
-              <h3 className="text-xl font-bold text-slate-900 mb-2">{step.title}</h3>
-              <p className="text-slate-600 text-sm leading-relaxed">{step.description}</p>
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-2xl font-bold text-slate-900">{step.title}</h3>
+              </div>
+              <p className="text-slate-700 leading-relaxed">{step.description}</p>
             </div>
             <button
               onClick={handleSkip}
@@ -142,8 +196,13 @@ export function OnboardingTour({ onComplete }: OnboardingTourProps) {
               )}
 
               {isLastStep ? (
-                <AnimatedButton variant="primary" onClick={handleComplete} icon={<CheckCircle className="w-4 h-4" />}>
-                  Terminer
+                <AnimatedButton
+                  variant="primary"
+                  onClick={handleComplete}
+                  icon={<CheckCircle className="w-4 h-4" />}
+                  className="bg-gradient-to-r from-success-500 to-success-600 hover:from-success-600 hover:to-success-700"
+                >
+                  Terminer le tour
                 </AnimatedButton>
               ) : (
                 <AnimatedButton variant="primary" onClick={handleNext} icon={<ChevronRight className="w-4 h-4" />}>
