@@ -38,6 +38,7 @@ export function WarrantyPlansManagement() {
     name: '',
     description: '',
     base_price: '',
+    direct_price: '',
     duration_months: '12',
     coverage_details: '',
     is_active: true,
@@ -91,6 +92,7 @@ export function WarrantyPlansManagement() {
       name: '',
       description: '',
       base_price: '',
+      direct_price: '',
       duration_months: '12',
       coverage_details: '',
       is_active: true,
@@ -105,6 +107,7 @@ export function WarrantyPlansManagement() {
       name: plan.name,
       description: plan.description || '',
       base_price: plan.base_price.toString(),
+      direct_price: plan.base_price.toString(),
       duration_months: plan.duration_months.toString(),
       coverage_details: plan.coverage_details || '',
       is_active: plan.is_active,
@@ -121,7 +124,9 @@ export function WarrantyPlansManagement() {
       return;
     }
 
-    if (!formData.name.trim() || !formData.base_price) {
+    const priceToUse = formData.direct_price || formData.base_price;
+
+    if (!formData.name.trim() || !priceToUse) {
       showToast('Veuillez remplir tous les champs requis', 'error');
       return;
     }
@@ -134,7 +139,7 @@ export function WarrantyPlansManagement() {
         name_fr: formData.name.trim(),
         name_en: formData.name.trim(),
         description: formData.description.trim() || null,
-        base_price: parseFloat(formData.base_price),
+        base_price: parseFloat(priceToUse),
         duration_months: parseInt(formData.duration_months),
         coverage_details: formData.coverage_details.trim() || null,
         coverage_matrix: { included: [], excluded: [], limits: {} },
@@ -291,18 +296,21 @@ export function WarrantyPlansManagement() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     <DollarSign className="w-4 h-4 inline mr-1" />
-                    Prix de base <span className="text-red-500">*</span>
+                    Prix direct personnalisé <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="number"
                     step="0.01"
                     min="0"
-                    value={formData.base_price}
-                    onChange={(e) => setFormData({ ...formData, base_price: e.target.value })}
+                    value={formData.direct_price}
+                    onChange={(e) => setFormData({ ...formData, direct_price: e.target.value, base_price: e.target.value })}
                     placeholder="0.00"
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                   />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Le prix que vous voulez afficher pour ce plan
+                  </p>
                 </div>
 
                 <div>
