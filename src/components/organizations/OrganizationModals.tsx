@@ -383,6 +383,9 @@ export function EditOrganizationModal({ organization, onClose, onSuccess }: Edit
     setSubmitting(true);
 
     try {
+      console.log('[EditOrganization] Updating organization:', organization.id);
+      console.log('[EditOrganization] New name:', formData.name);
+
       const { error: orgError } = await supabase
         .from('organizations')
         .update({
@@ -396,7 +399,12 @@ export function EditOrganizationModal({ organization, onClose, onSuccess }: Edit
         })
         .eq('id', organization.id);
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('[EditOrganization] Error updating organization:', orgError);
+        throw orgError;
+      }
+
+      console.log('[EditOrganization] ✅ Organization updated successfully');
 
       if (organization.billingConfig) {
         const { error: billingError } = await supabase
