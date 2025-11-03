@@ -51,7 +51,9 @@ export function WarrantyPlansManagement() {
   }, [organization, profile]);
 
   const loadPlans = async () => {
-    if (!organization?.id) return;
+    // Pour les non-masters, on a besoin de l'organization
+    if (profile?.role !== 'master' && !organization?.id) return;
+
     setLoading(true);
     try {
       let query = supabase
@@ -70,8 +72,9 @@ export function WarrantyPlansManagement() {
       if (error) throw error;
 
       console.log('[WarrantyPlans] Profile role:', profile?.role);
+      console.log('[WarrantyPlans] Current active org:', organization?.name);
       console.log('[WarrantyPlans] Loaded plans:', data?.length);
-      console.log('[WarrantyPlans] Organizations:', [...new Set(data?.map(p => p.organizations?.name))]);
+      console.log('[WarrantyPlans] Organizations in plans:', [...new Set(data?.map(p => p.organizations?.name))]);
 
       setPlans(data || []);
     } catch (error) {
