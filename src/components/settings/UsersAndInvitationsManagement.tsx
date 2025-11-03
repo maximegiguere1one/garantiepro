@@ -481,7 +481,7 @@ export function UsersAndInvitationsManagement() {
           'Authorization': `Bearer ${session.access_token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ userId: user.id }),
+        body: JSON.stringify({ userId: deleteUserConfirm.id }),
       });
 
       const result = await response.json();
