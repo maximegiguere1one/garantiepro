@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test - Accès Public Réclamation</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #b91c1c;
+        }
+        button.secondary {
+            background: #64748b;
+        }
+        button.secondary:hover {
+            background: #475569;
+        }
+        button.success {
+            background: #059669;
+        }
+        button.success:hover {
+            background: #047857;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .log {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .success { color: #059669; font-weight: 600; }
+        .error { color: #dc2626; font-weight: 600; }
+        .info { color: #0284c7; }
+        .warning { color: #f59e0b; }
+        .result {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 4px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-anonymous {
+            background: #fef3c7;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔓 Test Accès Public Réclamation</h1>
+        <p class="subtitle">Test de l'accès sans connexion via token de réclamation</p>
+
+        <div style="background: #fef3c7; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            <strong>⚠️ Important:</strong> Ce test vérifie que les clients peuvent accéder au formulaire de réclamation
+            <strong>SANS SE CONNECTER</strong>, uniquement avec le token de leur QR code.
+        </div>
+
+        <div style="margin-bottom: 20px;">
+            <label><strong>Token de test:</strong></label>
+            <input type="text" id="testToken" placeholder="Entrez un token valide ou créez-en un nouveau" />
+        </div>
+
+        <div>
+            <button onclick="createTestToken()">1. Créer un token de test</button>
+            <button class="success" onclick="testAnonymousAccess()">2. Test accès ANONYME (pas connecté)</button>
+            <button onclick="testTokenValidation()">3. Valider le token</button>
+            <button onclick="testWarrantyAccess()">4. Accéder à la garantie</button>
+            <button onclick="testSubmitClaim()">5. Soumettre réclamation</button>
+            <button class="secondary" onclick="clearLog()">Effacer log</button>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <strong>Statut de connexion:</strong>
+            <span id="authStatus" class="status-badge status-anonymous">Non connecté (anonyme)</span>
+        </div>
+
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gxnbdkmiayeygqxaztis.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4bmJka21pYXlleWdxeGF6dGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5OTMwNTEsImV4cCI6MjA0MzU2OTA1MX0.6OEquQro85fVLLHY91hMk3KX6mc5G5-hM6xZOvs4t-U';
+
+        // Client Supabase en mode ANONYME (pas de session auth)
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let testTokenValue = null;
+        let testWarrantyId = null;
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        async function checkAuthStatus() {
+            const { data: { session } } = await supabase.auth.getSession();
+            const statusEl = document.getElementById('authStatus');
+
+            if (session) {
+                statusEl.textContent = `Connecté: ${session.user.email}`;
+                statusEl.className = 'status-badge status-connected';
+                log('⚠️ ATTENTION: Vous êtes connecté! Pour un test réel, déconnectez-vous.', 'warning');
+            } else {
+                statusEl.textContent = 'Non connecté (anonyme) ✓';
+                statusEl.className = 'status-badge status-anonymous';
+                log('✓ Mode anonyme: parfait pour tester l\'accès client', 'success');
+            }
+        }
+
+        async function createTestToken() {
+            log('=== Test 1: Création token de test ===');
+
+            // Pour créer un token, on doit être connecté
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                log('⚠️ Pour créer un token, vous devez vous connecter temporairement', 'warning');
+                log('Allez sur l\'application, créez une garantie, puis copiez le token ici', 'info');
+                return;
+            }
+
+            try {
+                // Récupérer une garantie existante
+                const { data: warranties, error: wError } = await supabase
+                    .from('warranties')
+                    .select('id, warranty_number, customer_id')
+                    .limit(1)
+                    .single();
+
+                if (wError) throw wError;
+                if (!warranties) {
+                    log('Aucune garantie trouvée. Créez d\'abord une garantie.', 'error');
+                    return;
+                }
+
+                testWarrantyId = warranties.id;
+                log(`Garantie trouvée: ${warranties.warranty_number}`);
+
+                // Créer un token
+                const tokenValue = `claim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                const expiresAt = new Date();
+                expiresAt.setDate(expiresAt.getDate() + 30); // 30 jours
+
+                const { data: tokenData, error: tError } = await supabase
+                    .from('warranty_claim_tokens')
+                    .insert({
+                        warranty_id: warranties.id,
+                        token: tokenValue,
+                        expires_at: expiresAt.toISOString(),
+                        is_used: false
+                    })
+                    .select()
+                    .single();
+
+                if (tError) throw tError;
+
+                testTokenValue = tokenValue;
+                document.getElementById('testToken').value = tokenValue;
+
+                log(`✓ Token créé avec succès!`, 'success');
+                log(`Token: ${tokenValue}`, 'info');
+                log(`Lien: ${window.location.origin}/claim/submit/${tokenValue}`, 'info');
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `<strong>Token créé:</strong><br>
+                    <code>${tokenValue}</code><br><br>
+                    <strong>URL publique:</strong><br>
+                    <a href="/claim/submit/${tokenValue}" target="_blank">/claim/submit/${tokenValue}</a><br><br>
+                    <em>Maintenant DÉCONNECTEZ-VOUS et testez avec ce token!</em>`;
+                document.getElementById('log').appendChild(resultDiv);
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testAnonymousAccess() {
+            log('=== Test 2: Vérification accès ANONYME ===');
+
+            const { data: { session } } = await supabase.auth.getSession();
+
+            if (session) {
+                log('❌ ÉCHEC: Vous êtes encore connecté!', 'error');
+                log('Pour tester l\'accès anonyme, déconnectez-vous d\'abord', 'error');
+                return;
+            }
+
+            log('✓ Confirmé: Mode anonyme activé', 'success');
+            log('Le client Supabase utilise le role "anon"', 'info');
+
+            // Tester l'accès direct aux policies
+            try {
+                const { count, error } = await supabase
+                    .from('warranty_claim_tokens')
+                    .select('*', { count: 'exact', head: true });
+
+                if (error) throw error;
+                log(`✓ Accès à warranty_claim_tokens: ${count} tokens visibles`, 'success');
+            } catch (error) {
+                log(`Info: ${error.message}`, 'info');
+            }
+        }
+
+        async function testTokenValidation() {
+            log('=== Test 3: Validation du token ===');
+
+            const token = document.getElementById('testToken').value.trim();
+            if (!token) {
+                log('Veuillez entrer un token!', 'error');
+                return;
+            }
+
+            try {
+                log(`Validation du token: ${token}`);
+
+                const { data, error } = await supabase
+                    .from('warranty_claim_tokens')
+                    .select('*')
+                    .eq('token', token)
+                    .eq('is_used', false)
+                    .gt('expires_at', new Date().toISOString())
+                    .single();
+
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        log('❌ Token non trouvé ou expiré', 'error');
+                    } else {
+                        throw error;
+                    }
+                    return;
+                }
+
+                log('✓ Token valide!', 'success');
+                log(`Warranty ID: ${data.warranty_id}`, 'info');
+                log(`Expire: ${new Date(data.expires_at).toLocaleDateString()}`, 'info');
+
+                testWarrantyId = data.warranty_id;
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testWarrantyAccess() {
+            log('=== Test 4: Accès à la garantie via token ===');
+
+            const token = document.getElementById('testToken').value.trim();
+            if (!token || !testWarrantyId) {
+                log('Validez d\'abord le token (Test 3)', 'error');
+                return;
+            }
+
+            try {
+                log(`Tentative d'accès à la garantie ${testWarrantyId}...`);
+
+                const { data: warranty, error } = await supabase
+                    .from('warranties')
+                    .select('*, customers(*), warranty_plans(*)')
+                    .eq('id', testWarrantyId)
+                    .single();
+
+                if (error) throw error;
+
+                log('✓ Garantie accessible!', 'success');
+                log(`Numéro: ${warranty.warranty_number}`, 'info');
+                log(`Client: ${warranty.customers?.first_name} ${warranty.customers?.last_name}`, 'info');
+                log(`Plan: ${warranty.warranty_plans?.name}`, 'info');
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `<strong>✓ Accès garantie réussi (mode anonyme):</strong><br>
+                    Garantie: ${warranty.warranty_number}<br>
+                    Client: ${warranty.customers?.first_name} ${warranty.customers?.last_name}<br>
+                    Email: ${warranty.customers?.email}<br>
+                    Plan: ${warranty.warranty_plans?.name}<br>
+                    <em>Le client peut voir ses infos sans se connecter! ✓</em>`;
+                document.getElementById('log').appendChild(resultDiv);
+
+            } catch (error) {
+                log(`✗ Erreur d'accès: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function testSubmitClaim() {
+            log('=== Test 5: Soumission réclamation ===');
+
+            const token = document.getElementById('testToken').value.trim();
+            if (!token || !testWarrantyId) {
+                log('Validez d\'abord le token (Test 3)', 'error');
+                return;
+            }
+
+            try {
+                log('Tentative de création d\'une réclamation...');
+
+                const claimData = {
+                    warranty_id: testWarrantyId,
+                    incident_date: new Date().toISOString().split('T')[0],
+                    incident_description: 'Test de réclamation via accès public anonyme',
+                    status: 'pending',
+                    claim_number: `TEST-${Date.now()}`,
+                    submitted_by: 'client_anonymous'
+                };
+
+                const { data: claim, error } = await supabase
+                    .from('claims')
+                    .insert(claimData)
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                log('✓ Réclamation soumise avec succès!', 'success');
+                log(`Numéro: ${claim.claim_number}`, 'info');
+                log(`Statut: ${claim.status}`, 'info');
+
+                const resultDiv = document.createElement('div');
+                resultDiv.className = 'result';
+                resultDiv.innerHTML = `<strong>✓ Réclamation créée (sans connexion):</strong><br>
+                    Numéro: ${claim.claim_number}<br>
+                    Statut: ${claim.status}<br>
+                    <em>Le système fonctionne parfaitement! 🎉</em>`;
+                document.getElementById('log').appendChild(resultDiv);
+
+            } catch (error) {
+                log(`✗ Erreur de soumission: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Vérifier le statut d'auth au chargement
+        window.onload = async () => {
+            await checkAuthStatus();
+            log('Page de test chargée', 'info');
+            log('Suivez les étapes pour tester l\'accès public', 'info');
+        };
+    </script>
+</body>
+</html>
