@@ -17,6 +17,7 @@ import { syncInvoiceToQuickBooks } from '../lib/quickbooks-utils';
 import { isIntegrationConnected, syncWarrantyToAcomba } from '../lib/integration-utils';
 import { LegalSignatureFlow } from './LegalSignatureFlow';
 import { SignatureMethodSelector, type SignatureMethod } from './SignatureMethodSelector';
+import { WarrantyCreationProgress } from './common/WarrantyCreationProgress';
 import { InPersonSignatureFlow } from './InPersonSignatureFlow';
 import { logSignatureEvent } from '../lib/legal-signature-utils';
 import {
@@ -102,6 +103,8 @@ export function NewWarranty() {
   const [customerProducts, setCustomerProducts] = useState<any[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [dealerInventory, setDealerInventory] = useState<any[]>([]);
+  const [creationStep, setCreationStep] = useState(0);
+  const [showCreationProgress, setShowCreationProgress] = useState(false);
   const [showInventoryPicker, setShowInventoryPicker] = useState(false);
   const [customTemplates, setCustomTemplates] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
@@ -550,6 +553,8 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
   const handleInPersonSignatureComplete = async (physicalSignatureData: PhysicalSignatureData) => {
     try {
       setLoading(true);
+      setShowCreationProgress(true);
+      setCreationStep(1);
       const validation = pendingWarrantyData.validation;
 
       if (!currentOrganization?.id) {
@@ -639,6 +644,8 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
   ) => {
     const validation = pendingWarrantyData.validation;
     setLoading(true);
+    setShowCreationProgress(true);
+    setCreationStep(1);
 
     // CRITICAL: Verify organization context before proceeding
     if (!currentOrganization?.id) {
@@ -683,6 +690,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       const saleDuration = Math.round((Date.now() - startTime) / 1000);
 
       console.log('[NewWarranty] Step 2/6: Checking if customer exists with email:', customer.email);
+      setCreationStep(2);
 
       // Check if customer already exists with this email in this organization
       const { data: existingCustomer } = await supabase
@@ -769,6 +777,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       console.log('[NewWarranty] Step 2/6: Customer ready - ID:', customerData.id);
 
       console.log('[NewWarranty] Step 3/6: Checking if trailer exists with VIN:', trailer.vin);
+      setCreationStep(3);
 
       // Check if trailer already exists with this VIN
       const { data: existingTrailer } = await supabase
@@ -826,6 +835,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
 
       console.log('-'.repeat(80));
       console.log('[NewWarranty] Step 4/6: Creating warranty with organization_id:', currentOrganization.id);
+      setCreationStep(4);
       console.log('[NewWarranty] PPR Data Calculated:', {
         startDate: pprData.pprStartDate.toISOString().split('T')[0],
         endDate: pprData.pprEndDate.toISOString().split('T')[0],
@@ -959,6 +969,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       console.log('[NewWarranty] Contract Number:', warrantyData.contract_number);
       console.log('-'.repeat(80));
       console.log('[NewWarranty] Step 5/6: Creating claim token and generating documents');
+      setCreationStep(5);
 
       // CRITIQUE: Vérifier que le token de réclamation existe avant de générer les documents
       const { data: tokenCheckData } = await supabase
@@ -1204,6 +1215,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       }
 
       console.log('[NewWarranty] Step 6/6: Sending confirmation email and finalizing');
+      setCreationStep(6);
 
       // IMPORTANT: Invalidate cache and refresh materialized view
       // This ensures the new warranty appears immediately in the warranties list
@@ -1271,12 +1283,16 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
         }
       }
 
+      // Show final success message with progress modal
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
       if (docResult.success) {
         alert(successMessage);
       } else {
         alert(`Garantie créée avec succès!\n\nContrat: ${contractNumber}\n\nNote: Erreur lors de la génération des documents: ${docResult.error}`);
       }
 
+      setShowCreationProgress(false);
       setShowSignaturePad(false);
       setPendingWarrantyData(null);
       setStep(1);
@@ -1308,6 +1324,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       });
     } catch (error: any) {
       console.error('[NewWarranty] CRITICAL ERROR during warranty creation:', error);
+      setShowCreationProgress(false);
 
       // Provide detailed error messages with step information
       let errorMessage = 'Erreur lors de la création de la garantie';
@@ -2070,6 +2087,13 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
             setPendingWarrantyData(null);
           }}
           language={customer.languagePreference}
+        />
+      )}
+
+      {showCreationProgress && (
+        <WarrantyCreationProgress
+          currentStep={creationStep}
+          totalSteps={6}
         />
       )}
 
