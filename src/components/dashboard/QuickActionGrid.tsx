@@ -1,109 +1,90 @@
-import { ReactNode } from 'react';
+import { Shield, AlertCircle, Package, Users, ChevronRight, LucideIcon } from 'lucide-react';
 
 interface QuickAction {
   id: string;
+  icon: LucideIcon;
   label: string;
-  description?: string;
-  icon: ReactNode;
-  onClick: () => void;
-  color?: 'slate' | 'emerald' | 'blue' | 'amber' | 'red';
-  badge?: string;
+  description: string;
+  color: string;
+  badge?: number;
+  action: () => void;
 }
 
 interface QuickActionGridProps {
-  actions: QuickAction[];
-  columns?: 2 | 3 | 4;
+  pendingClaims: number;
+  availableInventory: number;
+  onNavigate?: (page: string) => void;
 }
 
-const colorClasses = {
-  slate: {
-    bg: 'bg-slate-50 hover:bg-slate-100',
-    iconBg: 'bg-slate-900',
-    border: 'border-slate-200 hover:border-slate-300',
-  },
-  emerald: {
-    bg: 'bg-emerald-50 hover:bg-emerald-100',
-    iconBg: 'bg-emerald-600',
-    border: 'border-emerald-200 hover:border-emerald-300',
-  },
-  blue: {
-    bg: 'bg-primary-50 hover:bg-primary-100',
-    iconBg: 'bg-primary-600',
-    border: 'border-primary-200 hover:border-primary-300',
-  },
-  amber: {
-    bg: 'bg-amber-50 hover:bg-amber-100',
-    iconBg: 'bg-amber-600',
-    border: 'border-amber-200 hover:border-amber-300',
-  },
-  red: {
-    bg: 'bg-red-50 hover:bg-red-100',
-    iconBg: 'bg-red-600',
-    border: 'border-red-200 hover:border-red-300',
-  },
-};
-
-export function QuickActionGrid({
-  actions,
-  columns = 3,
-}: QuickActionGridProps) {
-  const gridCols = {
-    2: 'grid-cols-1 sm:grid-cols-2',
-    3: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3',
-    4: 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4',
-  };
+export function QuickActionGrid({ pendingClaims, availableInventory, onNavigate }: QuickActionGridProps) {
+  const quickActions: QuickAction[] = [
+    {
+      id: 'optimized-warranty',
+      icon: Shield,
+      label: 'Nouvelle garantie ⚡',
+      description: '60% plus rapide',
+      color: 'bg-gradient-to-r from-primary-600 to-primary-600',
+      action: () => onNavigate?.('optimized-warranty'),
+    },
+    {
+      id: 'new-warranty',
+      icon: Shield,
+      label: 'Formulaire classique',
+      description: 'Version standard',
+      color: 'bg-slate-500',
+      action: () => onNavigate?.('new-warranty'),
+    },
+    {
+      id: 'claims',
+      icon: AlertCircle,
+      label: 'Réclamations',
+      description: `${pendingClaims} en attente`,
+      color: 'bg-amber-500',
+      badge: pendingClaims > 0 ? pendingClaims : undefined,
+      action: () => onNavigate?.('claims'),
+    },
+    {
+      id: 'dealer-inventory',
+      icon: Package,
+      label: 'Inventaire',
+      description: `${availableInventory} dispo`,
+      color: 'bg-emerald-500',
+      action: () => onNavigate?.('dealer-inventory'),
+    },
+    {
+      id: 'customers',
+      icon: Users,
+      label: 'Clients',
+      description: 'Voir tous',
+      color: 'bg-primary-500',
+      action: () => onNavigate?.('customers'),
+    },
+  ];
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <h3 className="text-lg font-semibold text-slate-900 mb-4">
-        Actions rapides
-      </h3>
-
-      <div className={`grid ${gridCols[columns]} gap-4`}>
-        {actions.map((action) => {
-          const colors = colorClasses[action.color || 'slate'];
-
-          return (
-            <button
-              key={action.id}
-              onClick={action.onClick}
-              className={`
-                relative p-4 rounded-lg border transition-all duration-200
-                ${colors.bg} ${colors.border}
-                hover:shadow-md hover:-translate-y-0.5
-                text-left group
-              `}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`
-                  w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0
-                  ${colors.iconBg} text-white
-                `}>
-                  {action.icon}
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-semibold text-slate-900 truncate">
-                      {action.label}
-                    </h4>
-                    {action.badge && (
-                      <span className="px-1.5 py-0.5 text-xs font-semibold bg-white rounded">
-                        {action.badge}
-                      </span>
-                    )}
-                  </div>
-                  {action.description && (
-                    <p className="text-xs text-slate-600 line-clamp-2">
-                      {action.description}
-                    </p>
-                  )}
-                </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {quickActions.map((action) => {
+        const Icon = action.icon;
+        return (
+          <button
+            key={action.id}
+            onClick={action.action}
+            className="relative bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-lg hover:border-slate-300 transition-all duration-300 text-left group"
+          >
+            {action.badge && (
+              <div className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
+                {action.badge}
               </div>
-            </button>
-          );
-        })}
-      </div>
+            )}
+            <div className={`${action.color} w-12 h-12 rounded-xl flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
+              <Icon className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="font-bold text-slate-900 mb-1">{action.label}</h3>
+            <p className="text-sm text-slate-600">{action.description}</p>
+            <ChevronRight className="w-5 h-5 text-slate-400 mt-2 group-hover:translate-x-1 transition-transform" />
+          </button>
+        );
+      })}
     </div>
   );
 }

@@ -1,72 +1,24 @@
-import { useEffect, useState, useCallback, memo } from 'react';
-import { supabase } from '../lib/supabase';
+import { useState, memo } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import {
-  TrendingUp,
   DollarSign,
   Shield,
   AlertCircle,
-  Clock,
-  Package,
-  Users,
-  CheckCircle,
   Target,
   Award,
   BarChart3,
-  Bell,
-  ChevronRight,
-  ArrowUpRight,
-  ArrowDownRight,
+  Package,
   RefreshCw,
-  X,
   Zap,
 } from 'lucide-react';
-import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { useFranchiseeDashboardStats } from '../hooks/useFranchiseeDashboardStats';
+import { QuickActionGrid } from './dashboard/QuickActionGrid';
+import { ActivityFeed, type Notification } from './dashboard/ActivityFeed';
+import { StatCard } from './dashboard/StatCard';
 
-interface DashboardStats {
-  revenue: {
-    current: number;
-    previous: number;
-    trend: number;
-    projected: number;
-  };
-  warranties: {
-    total: number;
-    active: number;
-    thisWeek: number;
-    avgDuration: number;
-  };
-  claims: {
-    open: number;
-    pending: number;
-    avgResolution: number;
-    approvalRate: number;
-  };
-  inventory: {
-    totalValue: number;
-    available: number;
-    lowStock: number;
-    fastMoving: any[];
-  };
-  performance: {
-    conversionRate: number;
-    avgTicket: number;
-    customerSatisfaction: number;
-    networkRank: number;
-  };
-}
-
-interface Notification {
-  id: string;
-  type: 'urgent' | 'warning' | 'info' | 'success';
-  title: string;
-  message: string;
-  action?: string;
-  actionPage?: string;
-  timestamp: Date;
-}
 
 interface DealerDashboardCompleteProps {
   onNavigate?: (page: string) => void;
@@ -118,143 +70,14 @@ const EmptyState = ({ onNavigate }: { onNavigate?: (page: string) => void }) => 
 );
 
 export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardCompleteProps) => {
-  const { profile, organization: currentOrganization } = useAuth();
+  const { organization: currentOrganization } = useAuth();
   const toast = useToast();
 
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'quarter'>('week');
-  const [hasData, setHasData] = useState(true);
+  const { stats, loading, error, hasData, refetch } = useFranchiseeDashboardStats(timeRange);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadDashboardData = useCallback(async () => {
-    if (!profile?.id || !currentOrganization?.id) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setError(null);
-      const now = new Date();
-      const ranges = {
-        week: { start: startOfWeek(now), end: endOfWeek(now) },
-        month: { start: startOfMonth(now), end: endOfMonth(now) },
-        quarter: { start: startOfMonth(subDays(now, 90)), end: endOfMonth(now) },
-      };
-
-      const { start, end } = ranges[timeRange];
-      const previousStart = subDays(start, timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90);
-      const previousEnd = subDays(end, timeRange === 'week' ? 7 : timeRange === 'month' ? 30 : 90);
-
-      const [warrantiesRes, claimsRes] = await Promise.all([
-        supabase
-          .from('warranties')
-          .select('total_price, status, created_at, sale_duration_seconds')
-          .eq('organization_id', currentOrganization.id)
-          .gte('created_at', previousStart.toISOString())
-          .lte('created_at', end.toISOString()),
-        supabase
-          .from('claims')
-          .select('status, created_at, updated_at')
-          .eq('organization_id', currentOrganization.id)
-          .limit(50),
-      ]);
-
-      if (warrantiesRes.error) throw warrantiesRes.error;
-      if (claimsRes.error) throw claimsRes.error;
-
-      const allWarranties = warrantiesRes.data || [];
-      const allClaims = claimsRes.data || [];
-
-      setHasData(allWarranties.length > 0);
-
-      const currentWarranties = allWarranties.filter(
-        (w) => new Date(w.created_at) >= start && new Date(w.created_at) <= end
-      );
-      const previousWarranties = allWarranties.filter(
-        (w) => new Date(w.created_at) >= previousStart && new Date(w.created_at) < start
-      );
-
-      const currentRevenue = currentWarranties.reduce((sum, w) => sum + (w.total_price || 0), 0);
-      const previousRevenue = previousWarranties.reduce((sum, w) => sum + (w.total_price || 0), 0);
-      const revenueTrend = previousRevenue > 0 ? ((currentRevenue - previousRevenue) / previousRevenue) * 100 : 0;
-
-      const avgDaily = currentRevenue / Math.max(1, Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)));
-      const projectedRevenue = avgDaily * 30;
-
-      const activeWarranties = allWarranties.filter((w) => w.status === 'active').length;
-      const avgDuration =
-        currentWarranties
-          .filter((w) => w.sale_duration_seconds)
-          .reduce((sum, w) => sum + (w.sale_duration_seconds || 0), 0) /
-        Math.max(1, currentWarranties.filter((w) => w.sale_duration_seconds).length);
-
-      const openClaims = allClaims.filter((c) => ['submitted', 'under_review'].includes(c.status)).length;
-      const pendingClaims = allClaims.filter((c) => c.status === 'submitted').length;
-      const approvedClaims = allClaims.filter((c) => ['approved', 'partially_approved', 'completed'].includes(c.status));
-      const approvalRate = allClaims.length > 0 ? (approvedClaims.length / allClaims.length) * 100 : 0;
-
-      const completedClaims = allClaims.filter((c) => c.status === 'completed');
-      const avgResolutionTime = completedClaims.length > 0
-        ? completedClaims.reduce((sum, c) => {
-            const start = new Date(c.created_at);
-            const end = new Date(c.updated_at || c.created_at);
-            return sum + (end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24);
-          }, 0) / completedClaims.length
-        : 0;
-
-      const inventoryStats = {
-        totalValue: 0,
-        available: 0,
-        lowStock: 0,
-        fastMoving: [] as any[],
-      };
-
-      setStats({
-        revenue: {
-          current: currentRevenue,
-          previous: previousRevenue,
-          trend: revenueTrend,
-          projected: projectedRevenue,
-        },
-        warranties: {
-          total: allWarranties.length,
-          active: activeWarranties,
-          thisWeek: currentWarranties.length,
-          avgDuration: Math.round(avgDuration),
-        },
-        claims: {
-          open: openClaims,
-          pending: pendingClaims,
-          avgResolution: avgResolutionTime,
-          approvalRate,
-        },
-        inventory: inventoryStats,
-        performance: {
-          conversionRate: 85.5,
-          avgTicket: currentWarranties.length > 0 ? currentRevenue / currentWarranties.length : 0,
-          customerSatisfaction: 4.7,
-          networkRank: 12,
-        },
-      });
-
-      generateNotifications(0, pendingClaims, currentWarranties.length);
-
-    } catch (error: any) {
-      console.error('Error loading dashboard data:', error);
-      setError(error.message || 'Erreur lors du chargement des données');
-      toast.error('Erreur', 'Impossible de charger les données du tableau de bord');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [profile?.id, currentOrganization?.id, timeRange, toast]);
-
-  useEffect(() => {
-    loadDashboardData();
-  }, [loadDashboardData]);
 
 
   const generateNotifications = (lowStock: number, pendingClaims: number, newWarranties: number) => {
@@ -299,38 +122,13 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await loadDashboardData();
+    await refetch();
+    setRefreshing(false);
     toast.success('Actualisation', 'Données mises à jour avec succès');
   };
 
   const handleDismissNotification = (id: string) => {
     setNotifications(notifications.filter(n => n.id !== id));
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'urgent':
-        return <AlertCircle className="w-5 h-5 text-red-600" />;
-      case 'warning':
-        return <Clock className="w-5 h-5 text-amber-600" />;
-      case 'success':
-        return <CheckCircle className="w-5 h-5 text-emerald-600" />;
-      default:
-        return <Bell className="w-5 h-5 text-primary-600" />;
-    }
-  };
-
-  const getNotificationColor = (type: string) => {
-    switch (type) {
-      case 'urgent':
-        return 'bg-red-50 border-red-200';
-      case 'warning':
-        return 'bg-amber-50 border-amber-200';
-      case 'success':
-        return 'bg-emerald-50 border-emerald-200';
-      default:
-        return 'bg-primary-50 border-primary-200';
-    }
   };
 
   if (loading) {
@@ -342,7 +140,7 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
       <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-8 text-center">
         <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-red-900 mb-2">Erreur de chargement</h3>
-        <p className="text-red-700 mb-6">{error}</p>
+        <p className="text-red-700 mb-6">{error.message}</p>
         <button
           onClick={handleRefresh}
           className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition-colors"
@@ -359,50 +157,6 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
   }
 
   if (!stats) return null;
-
-  const quickActions = [
-    {
-      id: 'optimized-warranty',
-      icon: Shield,
-      label: 'Nouvelle garantie ⚡',
-      description: '60% plus rapide',
-      color: 'bg-gradient-to-r from-primary-600 to-primary-600',
-      action: () => onNavigate?.('optimized-warranty'),
-    },
-    {
-      id: 'new-warranty',
-      icon: Shield,
-      label: 'Formulaire classique',
-      description: 'Version standard',
-      color: 'bg-slate-500',
-      action: () => onNavigate?.('new-warranty'),
-    },
-    {
-      id: 'claims',
-      icon: AlertCircle,
-      label: 'Réclamations',
-      description: `${stats.claims.pending} en attente`,
-      color: 'bg-amber-500',
-      badge: stats.claims.pending > 0 ? stats.claims.pending : undefined,
-      action: () => onNavigate?.('claims'),
-    },
-    {
-      id: 'dealer-inventory',
-      icon: Package,
-      label: 'Inventaire',
-      description: `${stats.inventory.available} dispo`,
-      color: 'bg-emerald-500',
-      action: () => onNavigate?.('dealer-inventory'),
-    },
-    {
-      id: 'customers',
-      icon: Users,
-      label: 'Clients',
-      description: 'Voir tous',
-      color: 'bg-primary-500',
-      action: () => onNavigate?.('customers'),
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -446,104 +200,42 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
         </div>
       </div>
 
-      {notifications.length > 0 && (
-        <div className="grid gap-3">
-          {notifications.map((notif) => (
-            <div
-              key={notif.id}
-              className={`flex items-start gap-4 p-4 rounded-xl border ${getNotificationColor(notif.type)} transition-all hover:shadow-md`}
-            >
-              <div className="flex-shrink-0">{getNotificationIcon(notif.type)}</div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-slate-900">{notif.title}</h4>
-                <p className="text-sm text-slate-600 mt-0.5">{notif.message}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                {notif.action && notif.actionPage && (
-                  <button
-                    onClick={() => onNavigate?.(notif.actionPage!)}
-                    className="flex-shrink-0 px-4 py-2 bg-white text-slate-900 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors"
-                  >
-                    {notif.action}
-                  </button>
-                )}
-                <button
-                  onClick={() => handleDismissNotification(notif.id)}
-                  className="p-1 hover:bg-white/50 rounded transition-colors"
-                >
-                  <X className="w-4 h-4 text-slate-500" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <ActivityFeed
+        notifications={notifications}
+        onDismiss={handleDismissNotification}
+        onNavigate={onNavigate}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {quickActions.map((action) => {
-          const Icon = action.icon;
-          return (
-            <button
-              key={action.id}
-              onClick={action.action}
-              className="relative bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6 hover:shadow-lg hover:border-slate-300 transition-all duration-300 text-left group"
-            >
-              {action.badge && (
-                <div className="absolute -top-2 -right-2 w-7 h-7 bg-red-500 text-white rounded-full flex items-center justify-center text-xs font-bold shadow-lg">
-                  {action.badge}
-                </div>
-              )}
-              <div className={`${action.color} w-12 h-12 rounded-xl flex items-center justify-center shadow-lg mb-4 group-hover:scale-110 transition-transform`}>
-                <Icon className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-bold text-slate-900 mb-1">{action.label}</h3>
-              <p className="text-sm text-slate-600">{action.description}</p>
-              <ChevronRight className="w-5 h-5 text-slate-400 mt-2 group-hover:translate-x-1 transition-transform" />
-            </button>
-          );
-        })}
-      </div>
+      <QuickActionGrid
+        pendingClaims={stats.claims.pending}
+        availableInventory={stats.inventory.available}
+        onNavigate={onNavigate}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-gradient-to-br from-primary-500 to-primary-600 rounded-2xl shadow-xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-primary-100 text-sm font-medium">
-                Revenu {timeRange === 'week' ? 'hebdomadaire' : timeRange === 'month' ? 'mensuel' : 'trimestriel'}
-              </p>
-              <h2 className="text-4xl font-black mt-1">
-                {stats.revenue.current.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 })}
-              </h2>
-            </div>
-            <DollarSign className="w-12 h-12 text-primary-200" />
-          </div>
-          <div className="flex items-center gap-2 mb-3">
-            {stats.revenue.trend >= 0 ? (
-              <ArrowUpRight className="w-5 h-5 text-emerald-300" />
-            ) : (
-              <ArrowDownRight className="w-5 h-5 text-red-300" />
-            )}
-            <span className="font-bold text-lg">
-              {Math.abs(stats.revenue.trend).toFixed(1)}%
-            </span>
-            <span className="text-primary-100 text-sm">vs période précédente</span>
-          </div>
+        <StatCard
+          title={`Revenu ${timeRange === 'week' ? 'hebdomadaire' : timeRange === 'month' ? 'mensuel' : 'trimestriel'}`}
+          value={stats.revenue.current.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 })}
+          icon={DollarSign}
+          variant="primary"
+          trend={{
+            value: stats.revenue.trend,
+            label: 'vs période précédente'
+          }}
+        >
           <div className="bg-white/10 rounded-lg p-3 backdrop-blur-sm">
             <p className="text-primary-100 text-xs mb-1">Projection 30 jours</p>
             <p className="text-xl font-bold">
               {stats.revenue.projected.toLocaleString('fr-CA', { style: 'currency', currency: 'CAD', minimumFractionDigits: 0 })}
             </p>
           </div>
-        </div>
+        </StatCard>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-slate-600 text-sm font-medium">Garanties Actives</p>
-              <h2 className="text-4xl font-black text-slate-900 mt-1">{stats.warranties.active}</h2>
-            </div>
-            <Shield className="w-12 h-12 text-primary-500" />
-          </div>
+        <StatCard
+          title="Garanties Actives"
+          value={stats.warranties.active}
+          icon={Shield}
+        >
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-600">Cette période</span>
@@ -562,16 +254,13 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
               <span className="text-emerald-600 font-semibold">Objectif: &lt; 5 minutes</span>
             </div>
           </div>
-        </div>
+        </StatCard>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-slate-600 text-sm font-medium">Réclamations</p>
-              <h2 className="text-4xl font-black text-slate-900 mt-1">{stats.claims.open}</h2>
-            </div>
-            <AlertCircle className="w-12 h-12 text-amber-500" />
-          </div>
+        <StatCard
+          title="Réclamations"
+          value={stats.claims.open}
+          icon={AlertCircle}
+        >
           <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-600">En attente</span>
@@ -586,7 +275,7 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
               <span className="font-semibold text-slate-900">{stats.claims.avgResolution.toFixed(1)} jours</span>
             </div>
           </div>
-        </div>
+        </StatCard>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
