@@ -83,8 +83,7 @@ const PPR_DURATION_MONTHS = 72; // 6 ans de garantie
 const PPR_DEDUCTIBLE = 100; // Franchise de 100$ par réclamation
 
 export function NewWarranty() {
-  const { profile } = useAuth();
-  const { organization: currentOrganization } = useAuth();
+  const { profile, organization: currentOrganization, activeOrganization } = useAuth();
   const [step, setStep] = useState(1);
   const [plans, setPlans] = useState<WarrantyPlan[]>([]);
   const [options, setOptions] = useState<WarrantyOption[]>([]);
@@ -143,7 +142,7 @@ export function NewWarranty() {
     loadCustomerProducts();
     loadDealerInventory();
     loadCustomTemplates();
-  }, [customer.email, profile?.id, currentOrganization?.id]);
+  }, [customer.email, profile?.id, currentOrganization?.id, activeOrganization?.id]);
 
   const loadCustomTemplates = async () => {
     if (!profile?.id) return;
@@ -167,22 +166,28 @@ export function NewWarranty() {
   // REMOVED: La franchise est toujours 100$ pour PPR (pas configurable)
 
   const loadPlansAndOptions = async () => {
-    if (!profile?.id || !currentOrganization?.id) return;
+    if (!profile?.id) return;
+
+    // Use activeOrganization if available (Master viewing franchise), otherwise currentOrganization
+    const orgIdToUse = activeOrganization?.id || currentOrganization?.id;
+    if (!orgIdToUse) return;
 
     try {
-      console.log('[NewWarranty] Loading plans for organization:', currentOrganization.id);
+      console.log('[NewWarranty] Loading plans for organization:', orgIdToUse);
+      console.log('[NewWarranty] activeOrganization:', activeOrganization?.name);
+      console.log('[NewWarranty] currentOrganization:', currentOrganization?.name);
 
       const [plansRes, optionsRes] = await Promise.all([
         supabase
           .from('warranty_plans')
           .select('*')
-          .eq('organization_id', currentOrganization.id)
+          .eq('organization_id', orgIdToUse)
           .eq('is_active', true)
           .order('name'),
         supabase
           .from('warranty_options')
           .select('*')
-          .eq('organization_id', currentOrganization.id)
+          .eq('organization_id', orgIdToUse)
           .eq('is_active', true),
       ]);
 
