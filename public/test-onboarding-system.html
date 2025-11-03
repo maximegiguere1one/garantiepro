@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Système Onboarding - Pro-Remorque</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      color: #1a202c;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      color: #718096;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-left: 10px;
+    }
+
+    .status.success {
+      background: #48bb78;
+      color: white;
+    }
+
+    .status.error {
+      background: #f56565;
+      color: white;
+    }
+
+    .status.pending {
+      background: #ecc94b;
+      color: #744210;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card h2 {
+      color: #2d3748;
+      margin-bottom: 15px;
+      font-size: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card h3 {
+      color: #4a5568;
+      margin: 20px 0 10px 0;
+      font-size: 16px;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 15px 0;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #48bb78, #38a169);
+      transition: width 0.3s ease;
+    }
+
+    .checklist {
+      list-style: none;
+      margin-top: 15px;
+    }
+
+    .checklist li {
+      padding: 12px;
+      margin-bottom: 8px;
+      background: #f7fafc;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .checklist li.completed {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+
+    .check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .check.done {
+      background: #48bb78;
+      color: white;
+    }
+
+    .check.pending {
+      background: #e2e8f0;
+      color: #a0aec0;
+    }
+
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 5px;
+    }
+
+    button:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    button:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .log {
+      background: #1a202c;
+      color: #e2e8f0;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      margin-bottom: 5px;
+      padding: 4px 0;
+    }
+
+    .log-success { color: #48bb78; }
+    .log-error { color: #f56565; }
+    .log-info { color: #4299e1; }
+    .log-warning { color: #ecc94b; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .metric {
+      text-align: center;
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 8px;
+    }
+
+    .metric-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: #718096;
+      margin-top: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .help-articles {
+      margin-top: 20px;
+    }
+
+    .article-card {
+      padding: 15px;
+      background: #f7fafc;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      border-left: 4px solid #667eea;
+    }
+
+    .article-card h4 {
+      color: #2d3748;
+      margin-bottom: 5px;
+    }
+
+    .article-card p {
+      color: #718096;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .article-meta {
+      display: flex;
+      gap: 15px;
+      font-size: 12px;
+      color: #a0aec0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Test du Système d'Onboarding et Feedback
+        <span id="connection-status" class="status pending">Connexion...</span>
+      </h1>
+      <p>Validation complète des nouvelles fonctionnalités d'onboarding et de support</p>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <h2>📊 Progression Onboarding</h2>
+        <div id="onboarding-info">
+          <p style="color: #718096;">Chargement des données...</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>💬 Feedback Utilisateur</h2>
+        <button onclick="testFeedbackSubmission()">📝 Tester Soumission Feedback</button>
+        <button onclick="loadUserFeedback()">🔄 Charger Mes Feedbacks</button>
+        <div id="feedback-list" style="margin-top: 15px;"></div>
+      </div>
+
+      <div class="card">
+        <h2>📚 Articles d'Aide</h2>
+        <button onclick="loadHelpArticles()">📖 Charger Articles</button>
+        <button onclick="testArticleView()">👁️ Tester Vue Article</button>
+        <div id="help-articles" class="help-articles"></div>
+      </div>
+
+      <div class="card">
+        <h2>✨ Feature Requests</h2>
+        <button onclick="createFeatureRequest()">💡 Créer Demande</button>
+        <button onclick="loadFeatureRequests()">📋 Voir Demandes</button>
+        <div id="feature-requests" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🧪 Actions de Test</h2>
+      <button onclick="initializeOnboarding()">🚀 Initialiser Onboarding</button>
+      <button onclick="completeStep('has_completed_profile')">✅ Compléter Profil</button>
+      <button onclick="completeStep('has_created_first_warranty')">✅ Créer Garantie</button>
+      <button onclick="completeStep('has_viewed_dashboard')">✅ Voir Dashboard</button>
+      <button onclick="completeStep('has_completed_tour')">✅ Compléter Tour</button>
+      <button onclick="resetOnboarding()">🔄 Réinitialiser</button>
+    </div>
+
+    <div class="card">
+      <h2>📈 Métriques</h2>
+      <div class="metrics" id="metrics">
+        <div class="metric">
+          <div class="metric-value" id="metric-completion">0%</div>
+          <div class="metric-label">Completion</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="metric-steps">0/8</div>
+          <div class="metric-label">Étapes</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="metric-feedbacks">0</div>
+          <div class="metric-label">Feedbacks</div>
+        </div>
+        <div class="metric">
+          <div class="metric-value" id="metric-articles">0</div>
+          <div class="metric-label">Articles</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>📝 Console de Logs</h2>
+      <div class="log" id="log-console"></div>
+    </div>
+  </div>
+
+  <script>
+    const { createClient } = supabase;
+
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzE4NDUsImV4cCI6MjA3NTEwNzg0NX0.cfWvm-NeUcVONV1VWd6U65lwg-2JdEBMWhSFWUJZdxg';
+
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+    let onboardingProgress = null;
+
+    function log(message, type = 'info') {
+      const logConsole = document.getElementById('log-console');
+      const timestamp = new Date().toLocaleTimeString();
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logConsole.insertBefore(entry, logConsole.firstChild);
+    }
+
+    function updateStatus(status, isSuccess) {
+      const statusEl = document.getElementById('connection-status');
+      statusEl.textContent = status;
+      statusEl.className = `status ${isSuccess ? 'success' : 'error'}`;
+    }
+
+    async function initialize() {
+      try {
+        log('Initialisation du client Supabase...', 'info');
+
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+
+        if (sessionError) throw sessionError;
+
+        if (!session) {
+          log('Aucune session active. Veuillez vous connecter à l\'application principale.', 'warning');
+          updateStatus('Non connecté', false);
+          return;
+        }
+
+        currentUser = session.user;
+        log(`Utilisateur connecté: ${currentUser.email}`, 'success');
+        updateStatus('Connecté', true);
+
+        await loadOnboardingProgress();
+        await loadMetrics();
+
+      } catch (error) {
+        log(`Erreur d'initialisation: ${error.message}`, 'error');
+        updateStatus('Erreur', false);
+      }
+    }
+
+    async function loadOnboardingProgress() {
+      try {
+        log('Chargement de la progression onboarding...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('user_onboarding_progress')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        onboardingProgress = data;
+
+        if (!data) {
+          log('Aucune progression trouvée. Cliquez sur "Initialiser Onboarding"', 'warning');
+          document.getElementById('onboarding-info').innerHTML = `
+            <p style="color: #718096;">Aucune progression d'onboarding trouvée.</p>
+            <p style="color: #718096; font-size: 14px; margin-top: 10px;">
+              Cliquez sur "Initialiser Onboarding" pour commencer.
+            </p>
+          `;
+          return;
+        }
+
+        displayOnboardingProgress(data);
+        log(`Progression chargée: ${data.completion_percentage}% complété`, 'success');
+
+      } catch (error) {
+        log(`Erreur chargement progression: ${error.message}`, 'error');
+      }
+    }
+
+    function displayOnboardingProgress(progress) {
+      const steps = [
+        { key: 'has_completed_profile', label: 'Profil complété' },
+        { key: 'has_created_first_warranty', label: 'Première garantie créée' },
+        { key: 'has_viewed_dashboard', label: 'Dashboard visité' },
+        { key: 'has_explored_settings', label: 'Paramètres explorés' },
+        { key: 'has_created_customer', label: 'Client créé' },
+        { key: 'has_used_search', label: 'Recherche utilisée' },
+        { key: 'has_viewed_analytics', label: 'Analytics consulté' },
+        { key: 'has_completed_tour', label: 'Tour guidé complété' }
+      ];
+
+      const checklistHTML = steps.map(step => {
+        const completed = progress[step.key];
+        return `
+          <li class="${completed ? 'completed' : ''}">
+            <div class="check ${completed ? 'done' : 'pending'}">${completed ? '✓' : '○'}</div>
+            <span>${step.label}</span>
+          </li>
+        `;
+      }).join('');
+
+      document.getElementById('onboarding-info').innerHTML = `
+        <div style="margin-bottom: 10px;">
+          <strong style="font-size: 24px; color: #667eea;">${progress.completion_percentage}%</strong>
+          <span style="color: #718096; margin-left: 10px;">complété</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width: ${progress.completion_percentage}%"></div>
+        </div>
+        <ul class="checklist">${checklistHTML}</ul>
+        ${progress.completed_at ? `
+          <p style="color: #48bb78; margin-top: 15px; font-weight: 600;">
+            🎉 Onboarding complété le ${new Date(progress.completed_at).toLocaleDateString()}!
+          </p>
+        ` : ''}
+      `;
+    }
+
+    async function initializeOnboarding() {
+      try {
+        log('Initialisation de l\'onboarding...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('user_onboarding_progress')
+          .insert([{ user_id: currentUser.id }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        onboardingProgress = data;
+        displayOnboardingProgress(data);
+        log('Onboarding initialisé avec succès!', 'success');
+        await loadMetrics();
+
+      } catch (error) {
+        log(`Erreur initialisation: ${error.message}`, 'error');
+      }
+    }
+
+    async function completeStep(stepKey) {
+      if (!onboardingProgress) {
+        log('Initialisez d\'abord l\'onboarding', 'warning');
+        return;
+      }
+
+      try {
+        log(`Completion de l'étape: ${stepKey}...`, 'info');
+
+        const { data, error } = await supabaseClient
+          .from('user_onboarding_progress')
+          .update({ [stepKey]: true })
+          .eq('user_id', currentUser.id)
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        onboardingProgress = data;
+        displayOnboardingProgress(data);
+        log(`Étape complétée! Progression: ${data.completion_percentage}%`, 'success');
+        await loadMetrics();
+
+      } catch (error) {
+        log(`Erreur completion étape: ${error.message}`, 'error');
+      }
+    }
+
+    async function resetOnboarding() {
+      if (!onboardingProgress) {
+        log('Aucune progression à réinitialiser', 'warning');
+        return;
+      }
+
+      try {
+        log('Réinitialisation de l\'onboarding...', 'info');
+
+        const { error } = await supabaseClient
+          .from('user_onboarding_progress')
+          .delete()
+          .eq('user_id', currentUser.id);
+
+        if (error) throw error;
+
+        onboardingProgress = null;
+        document.getElementById('onboarding-info').innerHTML = `
+          <p style="color: #718096;">Progression réinitialisée.</p>
+        `;
+        log('Onboarding réinitialisé avec succès!', 'success');
+        await loadMetrics();
+
+      } catch (error) {
+        log(`Erreur réinitialisation: ${error.message}`, 'error');
+      }
+    }
+
+    async function testFeedbackSubmission() {
+      try {
+        log('Soumission d\'un feedback de test...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('user_feedback')
+          .insert([{
+            user_id: currentUser.id,
+            feedback_type: 'praise',
+            sentiment: 'positive',
+            category: 'onboarding',
+            subject: 'Excellent système d\'onboarding',
+            message: 'Le nouveau système d\'onboarding est très intuitif et aide vraiment les nouveaux utilisateurs!',
+            page_url: '/test-onboarding',
+            page_title: 'Test Onboarding System'
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        log('Feedback soumis avec succès!', 'success');
+        await loadMetrics();
+        await loadUserFeedback();
+
+      } catch (error) {
+        log(`Erreur soumission feedback: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadUserFeedback() {
+      try {
+        log('Chargement des feedbacks...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('user_feedback')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        const feedbackHTML = data.length > 0 ? data.map(feedback => `
+          <div class="article-card">
+            <h4>${feedback.subject}</h4>
+            <p>${feedback.message.substring(0, 100)}${feedback.message.length > 100 ? '...' : ''}</p>
+            <div class="article-meta">
+              <span>Type: ${feedback.feedback_type}</span>
+              <span>Sentiment: ${feedback.sentiment || 'N/A'}</span>
+              <span>Statut: ${feedback.status}</span>
+            </div>
+          </div>
+        `).join('') : '<p style="color: #718096;">Aucun feedback trouvé.</p>';
+
+        document.getElementById('feedback-list').innerHTML = feedbackHTML;
+        log(`${data.length} feedback(s) chargé(s)`, 'success');
+
+      } catch (error) {
+        log(`Erreur chargement feedbacks: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadHelpArticles() {
+      try {
+        log('Chargement des articles d\'aide...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('help_articles')
+          .select('*')
+          .eq('is_published', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const articlesHTML = data.length > 0 ? data.map(article => `
+          <div class="article-card">
+            <h4>${article.title}</h4>
+            <p>${article.excerpt}</p>
+            <div class="article-meta">
+              <span>Catégorie: ${article.category}</span>
+              <span>Vues: ${article.view_count}</span>
+              <span>👍 ${article.helpful_count} 👎 ${article.not_helpful_count}</span>
+            </div>
+          </div>
+        `).join('') : '<p style="color: #718096;">Aucun article trouvé.</p>';
+
+        document.getElementById('help-articles').innerHTML = articlesHTML;
+        log(`${data.length} article(s) chargé(s)`, 'success');
+
+      } catch (error) {
+        log(`Erreur chargement articles: ${error.message}`, 'error');
+      }
+    }
+
+    async function testArticleView() {
+      try {
+        log('Test de vue d\'article...', 'info');
+
+        const { data: articles } = await supabaseClient
+          .from('help_articles')
+          .select('id')
+          .limit(1)
+          .single();
+
+        if (!articles) {
+          log('Aucun article disponible pour tester', 'warning');
+          return;
+        }
+
+        const { error } = await supabaseClient
+          .from('help_article_views')
+          .insert([{
+            article_id: articles.id,
+            user_id: currentUser.id
+          }]);
+
+        if (error) throw error;
+
+        log('Vue d\'article enregistrée!', 'success');
+
+      } catch (error) {
+        log(`Erreur enregistrement vue: ${error.message}`, 'error');
+      }
+    }
+
+    async function createFeatureRequest() {
+      try {
+        log('Création d\'une demande de fonctionnalité...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('feature_requests')
+          .insert([{
+            user_id: currentUser.id,
+            title: 'Export Excel des garanties',
+            description: 'Ajouter la possibilité d\'exporter la liste des garanties en format Excel pour faciliter les rapports.',
+            category: 'warranties',
+            priority: 'medium'
+          }])
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        log('Demande créée avec succès!', 'success');
+        await loadFeatureRequests();
+
+      } catch (error) {
+        log(`Erreur création demande: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadFeatureRequests() {
+      try {
+        log('Chargement des demandes de fonctionnalités...', 'info');
+
+        const { data, error } = await supabaseClient
+          .from('feature_requests')
+          .select('*')
+          .order('vote_count', { ascending: false })
+          .limit(5);
+
+        if (error) throw error;
+
+        const requestsHTML = data.length > 0 ? data.map(request => `
+          <div class="article-card">
+            <h4>${request.title}</h4>
+            <p>${request.description.substring(0, 100)}${request.description.length > 100 ? '...' : ''}</p>
+            <div class="article-meta">
+              <span>Statut: ${request.status}</span>
+              <span>Priorité: ${request.priority}</span>
+              <span>Votes: ${request.vote_count}</span>
+            </div>
+          </div>
+        `).join('') : '<p style="color: #718096;">Aucune demande trouvée.</p>';
+
+        document.getElementById('feature-requests').innerHTML = requestsHTML;
+        log(`${data.length} demande(s) chargée(s)`, 'success');
+
+      } catch (error) {
+        log(`Erreur chargement demandes: ${error.message}`, 'error');
+      }
+    }
+
+    async function loadMetrics() {
+      try {
+        const { data: progress } = await supabaseClient
+          .from('user_onboarding_progress')
+          .select('*')
+          .eq('user_id', currentUser.id)
+          .maybeSingle();
+
+        const { data: feedbacks, count: feedbackCount } = await supabaseClient
+          .from('user_feedback')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', currentUser.id);
+
+        const { data: articles, count: articleCount } = await supabaseClient
+          .from('help_articles')
+          .select('*', { count: 'exact', head: true });
+
+        document.getElementById('metric-completion').textContent =
+          progress ? `${progress.completion_percentage}%` : '0%';
+        document.getElementById('metric-steps').textContent =
+          progress ? `${progress.completed_steps}/8` : '0/8';
+        document.getElementById('metric-feedbacks').textContent = feedbackCount || 0;
+        document.getElementById('metric-articles').textContent = articleCount || 0;
+
+      } catch (error) {
+        log(`Erreur chargement métriques: ${error.message}`, 'error');
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', initialize);
+  </script>
+</body>
+</html>

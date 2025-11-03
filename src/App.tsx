@@ -56,6 +56,8 @@ const UIV2Demo = lazy(() => import('./components/UIV2Demo').then(m => ({ default
 const PromoteMasterPage = lazy(() => import('./components/PromoteMasterPage'));
 const AutomationDashboard = lazy(() => import('./components/AutomationDashboard').then(m => ({ default: m.AutomationDashboard })));
 const NotificationPreferences = lazy(() => import('./components/NotificationPreferences').then(m => ({ default: m.NotificationPreferences })));
+const FeedbackAnalyticsDashboard = lazy(() => import('./components/admin/FeedbackAnalyticsDashboard').then(m => ({ default: m.FeedbackAnalyticsDashboard })));
+const UserEngagementMetrics = lazy(() => import('./components/admin/UserEngagementMetrics').then(m => ({ default: m.UserEngagementMetrics })));
 
 function AppContent() {
   const { user, loading, profileError, retryLoadProfile, signOut } = useAuth();
@@ -156,6 +158,10 @@ function AppContent() {
         return <AutomationDashboard />;
       case 'notification-preferences':
         return <NotificationPreferences />;
+      case 'feedback-analytics':
+        return <FeedbackAnalyticsDashboard />;
+      case 'user-engagement':
+        return <UserEngagementMetrics />;
       default:
         return <Dashboard />;
     }
