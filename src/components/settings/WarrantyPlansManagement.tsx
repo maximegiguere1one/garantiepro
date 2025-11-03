@@ -15,6 +15,7 @@ interface WarrantyPlan {
   coverage_details: string | null;
   is_active: boolean;
   status: string;
+  max_claim_limits: any;
   created_at: string;
   updated_at: string;
   organizations?: {
@@ -41,6 +42,7 @@ export function WarrantyPlansManagement() {
     direct_price: '',
     duration_months: '12',
     coverage_details: '',
+    max_claim_amount: '',
     is_active: true,
     status: 'published' as 'draft' | 'published',
   });
@@ -95,6 +97,7 @@ export function WarrantyPlansManagement() {
       direct_price: '',
       duration_months: '12',
       coverage_details: '',
+      max_claim_amount: '',
       is_active: true,
       status: 'published',
     });
@@ -103,6 +106,7 @@ export function WarrantyPlansManagement() {
 
   const openEditModal = (plan: WarrantyPlan) => {
     setEditingPlan(plan);
+    const maxClaimAmount = plan.max_claim_limits?.max_total_amount || '';
     setFormData({
       name: plan.name,
       description: plan.description || '',
@@ -110,6 +114,7 @@ export function WarrantyPlansManagement() {
       direct_price: plan.base_price.toString(),
       duration_months: plan.duration_months.toString(),
       coverage_details: plan.coverage_details || '',
+      max_claim_amount: maxClaimAmount.toString(),
       is_active: plan.is_active,
       status: plan.status as 'draft' | 'published',
     });
@@ -133,6 +138,12 @@ export function WarrantyPlansManagement() {
 
     setSaving(true);
     try {
+      const maxClaimLimits = formData.max_claim_amount ? {
+        max_total_amount: parseFloat(formData.max_claim_amount),
+        max_per_claim: parseFloat(formData.max_claim_amount),
+        max_claims_count: null
+      } : null;
+
       const planData = {
         organization_id: organization.id,
         name: formData.name.trim(),
@@ -143,6 +154,7 @@ export function WarrantyPlansManagement() {
         duration_months: parseInt(formData.duration_months),
         coverage_details: formData.coverage_details.trim() || null,
         coverage_matrix: { included: [], excluded: [], limits: {} },
+        max_claim_limits: maxClaimLimits,
         is_active: formData.is_active,
         status: formData.status,
       };
@@ -336,6 +348,25 @@ export function WarrantyPlansManagement() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
+                  <DollarSign className="w-4 h-4 inline mr-1" />
+                  Montant maximum de réclamation
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.max_claim_amount}
+                  onChange={(e) => setFormData({ ...formData, max_claim_amount: e.target.value })}
+                  placeholder="Ex: 5000.00"
+                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Montant maximum total qu'un client peut réclamer avec ce plan (laissez vide pour illimité)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
                   Détails de couverture
                 </label>
                 <textarea
@@ -457,7 +488,7 @@ export function WarrantyPlansManagement() {
                     <p className="text-slate-600 text-sm mb-3">{plan.description}</p>
                   )}
 
-                  <div className="flex gap-3 mb-3">
+                  <div className="flex gap-3 mb-3 flex-wrap">
                     <div className="flex items-center gap-2 px-3 py-1.5 bg-primary-50 rounded-lg">
                       <DollarSign className="w-4 h-4 text-primary-600" />
                       <span className="text-sm font-semibold text-primary-700">
@@ -470,6 +501,14 @@ export function WarrantyPlansManagement() {
                         {plan.duration_months} mois
                       </span>
                     </div>
+                    {plan.max_claim_limits?.max_total_amount && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
+                        <Shield className="w-4 h-4 text-amber-600" />
+                        <span className="text-sm font-semibold text-amber-700">
+                          Max: {plan.max_claim_limits.max_total_amount.toFixed(2)} $
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {plan.coverage_details && (
