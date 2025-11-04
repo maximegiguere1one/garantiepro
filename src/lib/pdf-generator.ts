@@ -172,6 +172,15 @@ export function generateInvoicePDF(data: InvoiceData): any {
   doc.text(`Date de fin: ${new Date(normalizedWarranty.end_date).toLocaleDateString('fr-CA')}`, 20, coverageY);
   coverageY += 5;
   doc.text(`Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`, 20, coverageY);
+  coverageY += 5;
+
+  // Display max claim limit
+  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
+    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
+    doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, coverageY);
+  } else {
+    doc.text(`Limite de réclamation: Illimitée`, 20, coverageY);
+  }
 
   const footerY = doc.internal.pageSize.height - 20;
   doc.setFontSize(8);
@@ -280,6 +289,16 @@ export function generateContractPDF(
     doc.text(`Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`, 20, yPos);
     yPos += 5;
     doc.text(`Province: ${normalizedWarranty.province}`, 20, yPos);
+    yPos += 5;
+
+    // Display max claim limit
+    if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
+      const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
+      doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, yPos);
+    } else {
+      doc.text(`Limite de réclamation: Illimitée`, 20, yPos);
+    }
+
     yPos += 10;
 
     doc.setFontSize(12);
@@ -615,6 +634,15 @@ export function generateMerchantInvoicePDF(data: InvoiceData): any {
   doc.text(`Province: ${normalizedWarranty.province}`, 20, yPos);
   yPos += 5;
   doc.text(`Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`, 20, yPos);
+  yPos += 5;
+
+  // Display max claim limit if available
+  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
+    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
+    doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, yPos);
+  } else {
+    doc.text(`Limite de réclamation: Illimitée`, 20, yPos);
+  }
 
   yPos += 15;
 

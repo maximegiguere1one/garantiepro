@@ -543,6 +543,7 @@ export function generateProfessionalContractPDF(
   yPos += 10;
   yPos = addSection(doc, '3. COUVERTURE ET DURÉE', yPos);
 
+  // Prepare coverage lines
   const coverageLines = [
     `Plan souscrit: ${plan.name_fr || plan.name}`,
     `Durée de la garantie: ${safeNumber(normalizedWarranty.duration_months, 0)} mois (${Math.floor(safeNumber(normalizedWarranty.duration_months, 0) / 12)} ans)`,
@@ -551,6 +552,15 @@ export function generateProfessionalContractPDF(
     `Franchise par réclamation: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $ CAD`,
     `Province de couverture: ${normalizedWarranty.province}`,
   ];
+
+  // Add max claim limit line
+  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
+    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
+    coverageLines.push(`Limite maximale de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $ CAD`);
+  } else {
+    coverageLines.push(`Limite maximale de réclamation: Illimitée`);
+  }
+
   yPos = addInfoBox(doc, 20, yPos, pageWidth - 40, coverageLines);
 
   // SECTION 3.1: DÉTAILS COMPLETS DE COUVERTURE DU PLAN

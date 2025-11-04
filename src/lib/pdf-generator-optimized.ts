@@ -322,6 +322,17 @@ export function generateOptimizedContractPDF(
   doc.text(`Franchise par réclamation: ${formatCurrency(normalizedWarranty.deductible)} $ CAD`, 25, yPos);
   yPos += 5;
   doc.text(`Province de couverture: ${province}`, 25, yPos);
+  yPos += 5;
+
+  // Display max claim limit
+  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
+    const maxClaimAmount = typeof plan.max_claim_limits.max_total_amount === 'number'
+      ? plan.max_claim_limits.max_total_amount
+      : parseFloat(plan.max_claim_limits.max_total_amount);
+    doc.text(`Limite maximale de réclamation: ${formatCurrency(maxClaimAmount)} $ CAD`, 25, yPos);
+  } else {
+    doc.text(`Limite maximale de réclamation: Illimitée`, 25, yPos);
+  }
 
   yPos += 15;
 
