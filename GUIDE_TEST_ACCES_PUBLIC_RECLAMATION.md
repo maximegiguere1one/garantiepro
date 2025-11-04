@@ -133,8 +133,64 @@ Le système enregistre automatiquement:
 - ✅ Logs d'accès pour audit
 - ✅ Expiration automatique des tokens
 
+## 🔄 Anciennes Garanties
+
+### ✅ Oui, c'est applicable aux anciennes garanties aussi!
+
+Les politiques RLS fonctionnent pour **toutes** les garanties, anciennes et nouvelles.
+
+### Génération de tokens pour anciennes garanties
+
+Si des garanties ont été créées avant la mise en place du système de tokens, vous devez générer les tokens rétroactivement.
+
+#### Option 1: Script HTML (Recommandé - Interface conviviale)
+
+1. Ouvrez `generate-tokens-old-warranties.html`
+2. Cliquez sur "1. Analyser les garanties"
+3. Vérifiez combien de garanties n'ont pas de tokens
+4. Cliquez sur "2. Générer les tokens manquants"
+5. Attendez la fin du traitement
+6. Vérifiez avec "3. Vérifier les tokens"
+
+**Avantages**:
+- Interface graphique simple
+- Barre de progression
+- Statistiques en temps réel
+- Validation immédiate
+
+#### Option 2: Script SQL (Plus rapide pour gros volumes)
+
+1. Ouvrez Supabase SQL Editor
+2. Copiez le contenu de `generate-missing-tokens.sql`
+3. Exécutez le script
+4. Vérifiez les statistiques dans les logs
+
+**Avantages**:
+- Très rapide pour des milliers de garanties
+- Exécution directe côté serveur
+- Transactions atomiques
+
+### Après génération
+
+Une fois les tokens générés:
+- ✅ Les anciennes garanties ont maintenant un QR code accessible
+- ✅ Vous pouvez régénérer les PDFs avec les nouveaux QR codes
+- ✅ Les clients peuvent scanner et soumettre des réclamations
+- ✅ L'accès public fonctionne immédiatement
+
+### Automatique pour les nouvelles
+
+Les nouvelles garanties reçoivent automatiquement un token lors de leur création grâce au trigger `trigger_create_claim_token`.
+
+**Important**: Aucune action manuelle n'est requise pour les nouvelles garanties!
+
 ---
 
 **Date de correction**: 3 novembre 2025
 **Migration appliquée**: `fix_public_claim_access_anonymous_v3`
-**Status**: ✅ 100% Fonctionnel
+**Outils créés**:
+- `generate-tokens-old-warranties.html` (Interface graphique)
+- `generate-missing-tokens.sql` (Script SQL batch)
+- `test-public-claim-access.html` (Tests automatisés)
+
+**Status**: ✅ 100% Fonctionnel pour anciennes ET nouvelles garanties

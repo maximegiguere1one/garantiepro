@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générer Tokens pour Anciennes Garanties</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background: #b91c1c;
+        }
+        button:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+        }
+        button.secondary {
+            background: #64748b;
+        }
+        button.secondary:hover {
+            background: #475569;
+        }
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .success-box {
+            background: #d1fae5;
+            border-left: 4px solid #059669;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .log {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            padding: 4px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .success { color: #059669; font-weight: 600; }
+        .error { color: #dc2626; font-weight: 600; }
+        .info { color: #0284c7; }
+        .warning { color: #f59e0b; }
+        .progress {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, #dc2626, #b91c1c);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .stat-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Générer Tokens pour Anciennes Garanties</h1>
+        <p class="subtitle">Crée automatiquement des tokens de réclamation pour toutes les garanties existantes</p>
+
+        <div class="warning-box">
+            <strong>⚠️ Important:</strong> Ce script génère des tokens de réclamation pour toutes les garanties
+            qui n'en ont pas encore. Cela permet aux clients d'accéder au formulaire de réclamation via QR code
+            pour les anciennes garanties également.
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalWarranties">-</div>
+                <div class="stat-label">Total garanties</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="withTokens">-</div>
+                <div class="stat-label">Avec tokens</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="withoutTokens">-</div>
+                <div class="stat-label">Sans tokens</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tokensGenerated">0</div>
+                <div class="stat-label">Tokens générés</div>
+            </div>
+        </div>
+
+        <div>
+            <button onclick="analyzeWarranties()" id="analyzeBtn">1. Analyser les garanties</button>
+            <button onclick="generateTokens()" id="generateBtn" disabled>2. Générer les tokens manquants</button>
+            <button onclick="verifyTokens()" id="verifyBtn" class="secondary">3. Vérifier les tokens</button>
+            <button onclick="clearLog()" class="secondary">Effacer log</button>
+        </div>
+
+        <div class="progress" style="display: none;" id="progressBar">
+            <div class="progress-bar" id="progressBarInner" style="width: 0%">0%</div>
+        </div>
+
+        <div id="log" class="log"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://gxnbdkmiayeygqxaztis.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imd4bmJka21pYXlleWdxeGF6dGlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc5OTMwNTEsImV4cCI6MjA0MzU2OTA1MX0.6OEquQro85fVLLHY91hMk3KX6mc5G5-hM6xZOvs4t-U';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let warrantiesWithoutTokens = [];
+
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('log').innerHTML = '';
+        }
+
+        function updateProgress(current, total) {
+            const progressBar = document.getElementById('progressBar');
+            const progressBarInner = document.getElementById('progressBarInner');
+            const percent = Math.round((current / total) * 100);
+
+            progressBar.style.display = 'block';
+            progressBarInner.style.width = percent + '%';
+            progressBarInner.textContent = percent + '%';
+        }
+
+        function hideProgress() {
+            document.getElementById('progressBar').style.display = 'none';
+        }
+
+        async function checkAuth() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                log('❌ Vous devez être connecté pour utiliser ce script', 'error');
+                log('Connectez-vous sur l\'application principale d\'abord', 'info');
+                return false;
+            }
+            log(`✓ Connecté en tant que ${session.user.email}`, 'success');
+            return true;
+        }
+
+        async function analyzeWarranties() {
+            log('=== Analyse des garanties ===');
+
+            if (!await checkAuth()) return;
+
+            try {
+                document.getElementById('analyzeBtn').disabled = true;
+
+                // Compter toutes les garanties
+                const { count: totalCount, error: countError } = await supabase
+                    .from('warranties')
+                    .select('*', { count: 'exact', head: true });
+
+                if (countError) throw countError;
+
+                document.getElementById('totalWarranties').textContent = totalCount || 0;
+                log(`Total garanties: ${totalCount}`, 'info');
+
+                if (totalCount === 0) {
+                    log('Aucune garantie trouvée', 'warning');
+                    return;
+                }
+
+                // Récupérer toutes les garanties
+                const { data: warranties, error: wError } = await supabase
+                    .from('warranties')
+                    .select('id, warranty_number');
+
+                if (wError) throw wError;
+
+                // Récupérer tous les tokens existants
+                const { data: tokens, error: tError } = await supabase
+                    .from('warranty_claim_tokens')
+                    .select('warranty_id');
+
+                if (tError) throw tError;
+
+                const tokenWarrantyIds = new Set(tokens.map(t => t.warranty_id));
+
+                // Trouver les garanties sans tokens
+                warrantiesWithoutTokens = warranties.filter(w => !tokenWarrantyIds.has(w.id));
+
+                document.getElementById('withTokens').textContent = tokens.length;
+                document.getElementById('withoutTokens').textContent = warrantiesWithoutTokens.length;
+
+                log(`✓ Garanties avec tokens: ${tokens.length}`, 'success');
+                log(`⚠️ Garanties SANS tokens: ${warrantiesWithoutTokens.length}`, 'warning');
+
+                if (warrantiesWithoutTokens.length > 0) {
+                    log(`Ces ${warrantiesWithoutTokens.length} garanties n'ont pas de QR code!`, 'warning');
+                    document.getElementById('generateBtn').disabled = false;
+                } else {
+                    log('✓ Toutes les garanties ont déjà des tokens!', 'success');
+                }
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            } finally {
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        async function generateTokens() {
+            if (warrantiesWithoutTokens.length === 0) {
+                log('Aucun token à générer. Lancez d\'abord l\'analyse.', 'warning');
+                return;
+            }
+
+            if (!confirm(`Générer ${warrantiesWithoutTokens.length} tokens de réclamation?`)) {
+                return;
+            }
+
+            log(`=== Génération de ${warrantiesWithoutTokens.length} tokens ===`);
+
+            if (!await checkAuth()) return;
+
+            try {
+                document.getElementById('generateBtn').disabled = true;
+                let generated = 0;
+
+                for (let i = 0; i < warrantiesWithoutTokens.length; i++) {
+                    const warranty = warrantiesWithoutTokens[i];
+
+                    updateProgress(i, warrantiesWithoutTokens.length);
+
+                    // Générer un token unique
+                    const tokenValue = `claim_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+                    // Expiration dans 1 an
+                    const expiresAt = new Date();
+                    expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+                    const { error } = await supabase
+                        .from('warranty_claim_tokens')
+                        .insert({
+                            warranty_id: warranty.id,
+                            token: tokenValue,
+                            expires_at: expiresAt.toISOString(),
+                            is_used: false
+                        });
+
+                    if (error) {
+                        log(`✗ Erreur garantie ${warranty.warranty_number}: ${error.message}`, 'error');
+                    } else {
+                        generated++;
+                        if (generated % 10 === 0) {
+                            log(`Progress: ${generated}/${warrantiesWithoutTokens.length}`, 'info');
+                        }
+                    }
+
+                    // Petit délai pour ne pas surcharger l'API
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                updateProgress(warrantiesWithoutTokens.length, warrantiesWithoutTokens.length);
+
+                log(`✓ ${generated} tokens générés avec succès!`, 'success');
+                document.getElementById('tokensGenerated').textContent = generated;
+
+                setTimeout(() => {
+                    hideProgress();
+                    document.getElementById('generateBtn').textContent = '✓ Tokens générés';
+                }, 1000);
+
+                // Re-analyser
+                setTimeout(() => analyzeWarranties(), 2000);
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            } finally {
+                document.getElementById('generateBtn').disabled = false;
+            }
+        }
+
+        async function verifyTokens() {
+            log('=== Vérification des tokens ===');
+
+            if (!await checkAuth()) return;
+
+            try {
+                // Compter les tokens valides
+                const { data: validTokens, error: vError } = await supabase
+                    .from('warranty_claim_tokens')
+                    .select('warranty_id, token, expires_at, is_used')
+                    .eq('is_used', false)
+                    .gt('expires_at', new Date().toISOString());
+
+                if (vError) throw vError;
+
+                log(`✓ ${validTokens.length} tokens valides trouvés`, 'success');
+
+                // Vérifier quelques tokens au hasard
+                const samplesToTest = Math.min(3, validTokens.length);
+                log(`Test de ${samplesToTest} tokens au hasard...`, 'info');
+
+                for (let i = 0; i < samplesToTest; i++) {
+                    const token = validTokens[Math.floor(Math.random() * validTokens.length)];
+
+                    // Tester l'accès à la garantie
+                    const { data: warranty, error: wError } = await supabase
+                        .from('warranties')
+                        .select('warranty_number')
+                        .eq('id', token.warranty_id)
+                        .single();
+
+                    if (wError) {
+                        log(`✗ Token ${token.token.substr(0, 20)}... : Erreur accès`, 'error');
+                    } else {
+                        log(`✓ Token pour ${warranty.warranty_number} : Accès OK`, 'success');
+                    }
+                }
+
+                // Compter les tokens expirés
+                const { count: expiredCount } = await supabase
+                    .from('warranty_claim_tokens')
+                    .select('*', { count: 'exact', head: true })
+                    .lt('expires_at', new Date().toISOString());
+
+                if (expiredCount > 0) {
+                    log(`⚠️ ${expiredCount} tokens expirés (normal)`, 'warning');
+                }
+
+            } catch (error) {
+                log(`✗ Erreur: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Auto-analyse au chargement
+        window.onload = async () => {
+            log('Script de génération de tokens chargé', 'info');
+            log('Ce script ajoute des tokens de réclamation aux anciennes garanties', 'info');
+
+            const isAuth = await checkAuth();
+            if (isAuth) {
+                setTimeout(() => analyzeWarranties(), 1000);
+            }
+        };
+    </script>
+</body>
+</html>
