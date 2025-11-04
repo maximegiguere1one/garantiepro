@@ -174,10 +174,9 @@ export function generateInvoicePDF(data: InvoiceData): any {
   doc.text(`Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`, 20, coverageY);
   coverageY += 5;
 
-  // Display max claim limit
-  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
-    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
-    doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, coverageY);
+  // Display max claim limit from warranty (calculated based on purchase price and plan barème)
+  if (normalizedWarranty.annual_claim_limit && normalizedWarranty.annual_claim_limit > 0) {
+    doc.text(`Limite de réclamation: ${safeLocaleString(normalizedWarranty.annual_claim_limit, 'fr-CA')} $`, 20, coverageY);
   } else {
     doc.text(`Limite de réclamation: Illimitée`, 20, coverageY);
   }
@@ -291,10 +290,9 @@ export function generateContractPDF(
     doc.text(`Province: ${normalizedWarranty.province}`, 20, yPos);
     yPos += 5;
 
-    // Display max claim limit
-    if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
-      const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
-      doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, yPos);
+    // Display max claim limit from warranty (calculated based on purchase price and plan barème)
+    if (normalizedWarranty.annual_claim_limit && normalizedWarranty.annual_claim_limit > 0) {
+      doc.text(`Limite de réclamation: ${safeLocaleString(normalizedWarranty.annual_claim_limit, 'fr-CA')} $`, 20, yPos);
     } else {
       doc.text(`Limite de réclamation: Illimitée`, 20, yPos);
     }
@@ -636,10 +634,9 @@ export function generateMerchantInvoicePDF(data: InvoiceData): any {
   doc.text(`Franchise: ${safeLocaleString(normalizedWarranty.deductible, 'fr-CA')} $`, 20, yPos);
   yPos += 5;
 
-  // Display max claim limit if available
-  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
-    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
-    doc.text(`Limite de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $`, 20, yPos);
+  // Display max claim limit from warranty (calculated based on purchase price and plan barème)
+  if (normalizedWarranty.annual_claim_limit && normalizedWarranty.annual_claim_limit > 0) {
+    doc.text(`Limite de réclamation: ${safeLocaleString(normalizedWarranty.annual_claim_limit, 'fr-CA')} $`, 20, yPos);
   } else {
     doc.text(`Limite de réclamation: Illimitée`, 20, yPos);
   }

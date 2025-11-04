@@ -34,6 +34,7 @@ import {
   validateWarrantyNumericFields,
 } from '../lib/numeric-utils';
 import { warrantyService } from '../lib/warranty-service';
+import { calculateMaxClaimAmount } from '../lib/price-range-utils';
 
 type WarrantyPlan = Database['public']['Tables']['warranty_plans']['Row'];
 type WarrantyOption = Database['public']['Tables']['warranty_options']['Row'];
@@ -847,6 +848,22 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
       const normalizedDeductible = safeNumber(selectedPlan?.deductible || 0, 0);
       const normalizedDuration = safeNumber(selectedPlan?.duration_months || 0, 0);
 
+      // Calculate max claim amount based on purchase price and plan's max_claim_limits barème
+      const calculatedMaxClaimAmount = calculateMaxClaimAmount(
+        trailer.purchasePrice,
+        selectedPlan?.max_claim_limits || null
+      );
+      const annualClaimLimit = calculatedMaxClaimAmount !== null
+        ? calculatedMaxClaimAmount
+        : trailer.purchasePrice * 0.10; // Fallback: 10% of purchase price if no barème defined
+
+      console.log('[NewWarranty] Max claim calculation:', {
+        purchasePrice: trailer.purchasePrice,
+        planMaxClaimLimits: selectedPlan?.max_claim_limits,
+        calculatedMaxClaimAmount: calculatedMaxClaimAmount,
+        finalAnnualClaimLimit: annualClaimLimit
+      });
+
       // Log détaillé des valeurs avant insertion
       console.log('[NewWarranty] CRITICAL - Numeric values before DB insert:', {
         base_price: { value: basePrice, type: typeof basePrice, isValid: !isNaN(basePrice) },
@@ -905,7 +922,7 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
           selected_options: selectedOptions,
           status: 'active',
           franchise_amount: normalizedDeductible,
-          annual_claim_limit: trailer.purchasePrice * 0.10, // 10% of purchase price as annual limit
+          annual_claim_limit: annualClaimLimit, // Calculated from barème or fallback to 10% of purchase price
           total_claimed_current_year: 0,
           warranty_year: 1,
           is_promotional_purchase: trailer.isPromotional,

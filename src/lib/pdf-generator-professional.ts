@@ -553,10 +553,9 @@ export function generateProfessionalContractPDF(
     `Province de couverture: ${normalizedWarranty.province}`,
   ];
 
-  // Add max claim limit line
-  if (plan.max_claim_limits && plan.max_claim_limits.max_total_amount) {
-    const maxClaimAmount = safeNumber(plan.max_claim_limits.max_total_amount, 0);
-    coverageLines.push(`Limite maximale de réclamation: ${safeLocaleString(maxClaimAmount, 'fr-CA')} $ CAD`);
+  // Add max claim limit line from warranty (calculated based on purchase price and plan barème)
+  if (normalizedWarranty.annual_claim_limit && normalizedWarranty.annual_claim_limit > 0) {
+    coverageLines.push(`Limite maximale de réclamation: ${safeLocaleString(normalizedWarranty.annual_claim_limit, 'fr-CA')} $ CAD`);
   } else {
     coverageLines.push(`Limite maximale de réclamation: Illimitée`);
   }

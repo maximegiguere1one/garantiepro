@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
-import { FileText, Plus, Edit, Trash2, X, Save, Eye, EyeOff, DollarSign, Calendar, Shield } from 'lucide-react';
+import { FileText, Plus, Edit, Trash2, X, Save, Eye, EyeOff, DollarSign, Calendar, Shield, TrendingUp } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../common/Button';
+
+interface PriceRange {
+  min_price: number;
+  max_price: number;
+  max_claim_amount: number;
+}
 
 interface WarrantyPlan {
   id: string;
@@ -46,6 +52,10 @@ export function WarrantyPlansManagement() {
     is_active: true,
     status: 'published' as 'draft' | 'published',
   });
+
+  // Price ranges for barème
+  const [priceRanges, setPriceRanges] = useState<PriceRange[]>([]);
+  const [useBareme, setUseBareme] = useState(false);
 
   useEffect(() => {
     if (organization && profile) {
@@ -101,12 +111,18 @@ export function WarrantyPlansManagement() {
       is_active: true,
       status: 'published',
     });
+    setPriceRanges([]);
+    setUseBareme(false);
     setShowModal(true);
   };
 
   const openEditModal = (plan: WarrantyPlan) => {
     setEditingPlan(plan);
-    const maxClaimAmount = plan.max_claim_limits?.max_total_amount;
+
+    // Check if using barème (price ranges)
+    const hasBareme = plan.max_claim_limits?.type === 'price_range' && Array.isArray(plan.max_claim_limits?.ranges);
+    const maxClaimAmount = !hasBareme ? plan.max_claim_limits?.max_total_amount : null;
+
     setFormData({
       name: plan.name,
       description: plan.description || '',
@@ -118,6 +134,16 @@ export function WarrantyPlansManagement() {
       is_active: plan.is_active,
       status: plan.status as 'draft' | 'published',
     });
+
+    // Load barème if exists
+    if (hasBareme) {
+      setPriceRanges(plan.max_claim_limits.ranges);
+      setUseBareme(true);
+    } else {
+      setPriceRanges([]);
+      setUseBareme(false);
+    }
+
     setShowModal(true);
   };
 
@@ -138,9 +164,37 @@ export function WarrantyPlansManagement() {
 
     setSaving(true);
     try {
-      // Validation du montant max de réclamation
+      // Validation du montant max de réclamation ou barème
       let maxClaimLimits = null;
-      if (formData.max_claim_amount && formData.max_claim_amount.trim() !== '') {
+
+      if (useBareme) {
+        // Utiliser le barème par tranches de prix
+        if (priceRanges.length === 0) {
+          showToast('Veuillez ajouter au moins une tranche de prix pour le barème', 'error');
+          setSaving(false);
+          return;
+        }
+
+        // Valider les tranches
+        for (const range of priceRanges) {
+          if (range.min_price >= range.max_price) {
+            showToast('Le prix minimum doit être inférieur au prix maximum', 'error');
+            setSaving(false);
+            return;
+          }
+          if (range.max_claim_amount <= 0) {
+            showToast('Le montant de réclamation doit être positif', 'error');
+            setSaving(false);
+            return;
+          }
+        }
+
+        maxClaimLimits = {
+          type: 'price_range',
+          ranges: priceRanges
+        };
+      } else if (formData.max_claim_amount && formData.max_claim_amount.trim() !== '') {
+        // Utiliser un montant fixe
         const maxAmount = parseFloat(formData.max_claim_amount);
         if (isNaN(maxAmount) || maxAmount < 0) {
           showToast('Le montant maximum de réclamation doit être un nombre positif', 'error');
@@ -356,23 +410,136 @@ export function WarrantyPlansManagement() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  <DollarSign className="w-4 h-4 inline mr-1" />
-                  Montant maximum de réclamation
+              {/* Type de limite de réclamation */}
+              <div className="border border-slate-200 rounded-lg p-4 bg-slate-50">
+                <label className="block text-sm font-medium text-slate-700 mb-3">
+                  <Shield className="w-4 h-4 inline mr-1" />
+                  Limite de réclamation
                 </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.max_claim_amount}
-                  onChange={(e) => setFormData({ ...formData, max_claim_amount: e.target.value })}
-                  placeholder="Ex: 5000.00"
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                  Montant maximum total qu'un client peut réclamer avec ce plan (laissez vide pour illimité)
-                </p>
+
+                <div className="space-y-3">
+                  {/* Toggle between fixed amount and barème */}
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={!useBareme}
+                        onChange={() => setUseBareme(false)}
+                        className="w-4 h-4 text-primary-600"
+                      />
+                      <span className="text-sm text-slate-700">Montant fixe</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        checked={useBareme}
+                        onChange={() => setUseBareme(true)}
+                        className="w-4 h-4 text-primary-600"
+                      />
+                      <span className="text-sm text-slate-700">Barème selon valeur remorque</span>
+                    </label>
+                  </div>
+
+                  {/* Fixed amount input */}
+                  {!useBareme && (
+                    <div>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.max_claim_amount}
+                        onChange={(e) => setFormData({ ...formData, max_claim_amount: e.target.value })}
+                        placeholder="Ex: 5000.00"
+                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      />
+                      <p className="text-xs text-slate-500 mt-1">
+                        Montant maximum total (laissez vide pour illimité)
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Barème interface */}
+                  {useBareme && (
+                    <div className="space-y-3">
+                      <p className="text-xs text-slate-600">
+                        Définissez des limites de réclamation selon la valeur d'achat de la remorque
+                      </p>
+
+                      {priceRanges.map((range, index) => (
+                        <div key={index} className="flex gap-2 items-start bg-white p-3 rounded border border-slate-200">
+                          <div className="flex-1 grid grid-cols-3 gap-2">
+                            <div>
+                              <label className="text-xs text-slate-600">De</label>
+                              <input
+                                type="number"
+                                value={range.min_price}
+                                onChange={(e) => {
+                                  const newRanges = [...priceRanges];
+                                  newRanges[index].min_price = parseFloat(e.target.value) || 0;
+                                  setPriceRanges(newRanges);
+                                }}
+                                placeholder="0"
+                                className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-slate-600">À</label>
+                              <input
+                                type="number"
+                                value={range.max_price}
+                                onChange={(e) => {
+                                  const newRanges = [...priceRanges];
+                                  newRanges[index].max_price = parseFloat(e.target.value) || 0;
+                                  setPriceRanges(newRanges);
+                                }}
+                                placeholder="10000"
+                                className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                              />
+                            </div>
+                            <div>
+                              <label className="text-xs text-slate-600">Limite max</label>
+                              <input
+                                type="number"
+                                value={range.max_claim_amount}
+                                onChange={(e) => {
+                                  const newRanges = [...priceRanges];
+                                  newRanges[index].max_claim_amount = parseFloat(e.target.value) || 0;
+                                  setPriceRanges(newRanges);
+                                }}
+                                placeholder="1500"
+                                className="w-full px-2 py-1 text-sm border border-slate-300 rounded"
+                              />
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newRanges = priceRanges.filter((_, i) => i !== index);
+                              setPriceRanges(newRanges);
+                            }}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPriceRanges([
+                            ...priceRanges,
+                            { min_price: 0, max_price: 10000, max_claim_amount: 1500 }
+                          ]);
+                        }}
+                        className="w-full px-3 py-2 text-sm border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-primary-500 hover:text-primary-600 transition-colors"
+                      >
+                        <Plus className="w-4 h-4 inline mr-1" />
+                        Ajouter une tranche
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -511,13 +678,23 @@ export function WarrantyPlansManagement() {
                         {plan.duration_months} mois
                       </span>
                     </div>
-                    {plan.max_claim_limits?.max_total_amount != null && plan.max_claim_limits.max_total_amount > 0 && (
+                    {/* Display fixed amount or barème */}
+                    {plan.max_claim_limits?.type === 'price_range' && Array.isArray(plan.max_claim_limits.ranges) ? (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
-                        <Shield className="w-4 h-4 text-amber-600" />
+                        <TrendingUp className="w-4 h-4 text-amber-600" />
                         <span className="text-sm font-semibold text-amber-700">
-                          Max: {Number(plan.max_claim_limits.max_total_amount).toFixed(2)} $
+                          Barème ({plan.max_claim_limits.ranges.length} tranches)
                         </span>
                       </div>
+                    ) : (
+                      plan.max_claim_limits?.max_total_amount != null && plan.max_claim_limits.max_total_amount > 0 && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
+                          <Shield className="w-4 h-4 text-amber-600" />
+                          <span className="text-sm font-semibold text-amber-700">
+                            Max: {Number(plan.max_claim_limits.max_total_amount).toFixed(2)} $
+                          </span>
+                        </div>
+                      )
                     )}
                   </div>
 
