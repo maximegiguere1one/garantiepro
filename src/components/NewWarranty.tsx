@@ -478,13 +478,16 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
       }
 
       // Créer un objet normalisé avec toutes les valeurs numériques
+      // Use deductible from selected plan instead of hardcoded PPR value
+      const planDeductible = safeNumber(selectedPlan?.deductible || 0, 0);
+
       const numericFields = {
         base_price: basePrice,
         options_price: optionsPrice,
         taxes: taxes,
         total_price: totalPrice,
         margin: margin,
-        deductible: PPR_DEDUCTIBLE
+        deductible: planDeductible
       };
 
       console.log('[NewWarranty] Pre-validation numeric fields:', numericFields);
