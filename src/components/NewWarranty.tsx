@@ -7,7 +7,6 @@ import { Breadcrumbs } from './common/Breadcrumbs';
 import { ProgressIndicator } from './common/ProgressIndicator';
 import { AnimatedButton } from './common/AnimatedButton';
 import {
-  calculateWarrantyData,
   formatAnnualLimit,
   formatLoyaltyCredit,
 } from '../lib/ppr-utils';
@@ -78,10 +77,8 @@ const CANADIAN_PROVINCES = [
   { code: 'SK', name: 'Saskatchewan' },
 ];
 
-// CONSTANTES PPR (Programme de Protection Remorque)
-// Ces valeurs sont FIXES et ne doivent JAMAIS être modifiées
-const PPR_DURATION_MONTHS = 72; // 6 ans de garantie
-const PPR_DEDUCTIBLE = 100; // Franchise de 100$ par réclamation
+// REMOVED: PPR constants - now using plan values directly
+// Duration and deductible come from the selected warranty plan
 
 export function NewWarranty() {
   const { profile, organization: currentOrganization, activeOrganization } = useAuth();
@@ -363,11 +360,6 @@ export function NewWarranty() {
 
   const generateDocumentContent = () => {
     const pricing = calculatePrice();
-    const pprData = calculateWarrantyData(
-      trailer.purchasePrice,
-      new Date(trailer.manufacturerWarrantyEndDate),
-      trailer.isPromotional
-    );
 
     return `
 CONTRAT DE GARANTIE PROLONGÉE
@@ -389,10 +381,10 @@ Prix d'achat: ${trailer.purchasePrice.toFixed(2)} $
 Détails de la Garantie:
 Plan: ${selectedPlan?.name}
 ${selectedPlan?.description ? `\nDescription:\n${selectedPlan.description}\n` : ''}${selectedPlan?.coverage_details ? `\nCouverture:\n${selectedPlan.coverage_details}\n` : ''}
-Durée: ${PPR_DURATION_MONTHS} mois (${PPR_DURATION_MONTHS / 12} ans)
-Franchise: ${PPR_DEDUCTIBLE}.00 $
-Limite annuelle: ${formatAnnualLimit(pprData.annualLimit)}
-Crédit de fidélité: ${formatLoyaltyCredit(pprData.loyaltyCredit)}
+Durée: ${selectedPlan?.duration_months || 0} mois (${selectedPlan ? Math.floor((selectedPlan.duration_months || 0) / 12) : 0} ans)
+Franchise: ${selectedPlan?.deductible || 0}.00 $
+Limite annuelle: ${formatAnnualLimit(trailer.purchasePrice)}
+Crédit de fidélité: ${formatLoyaltyCredit(trailer.purchasePrice, trailer.isPromotional)}
 
 Tarification:
 Prix de base: ${selectedPlan?.base_price.toFixed(2)} $
@@ -407,9 +399,8 @@ ${selectedOptions.map(optId => {
 }).join('\n')}
 
 Dates de garantie:
-Début: ${pprData.pprStartDate.toLocaleDateString('fr-CA')}
-Fin: ${pprData.pprEndDate.toLocaleDateString('fr-CA')}
-Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
+Début: ${new Date(new Date(trailer.manufacturerWarrantyEndDate).getTime() + 24*60*60*1000).toLocaleDateString('fr-CA')}
+Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.setMonth(end.getMonth() + (selectedPlan?.duration_months || 0)); return end.toLocaleDateString('fr-CA'); })()}
     `.trim();
   };
 
@@ -822,27 +813,26 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
         console.log('[NewWarranty] Step 3/6: Trailer created successfully - ID:', trailerData.id);
       }
 
-      const contractNumber = `PPR-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+      const contractNumber = `W-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
 
-      // CRITIQUE: Calculer pprData pour obtenir la durée correcte (72 mois)
-      const pprData = calculateWarrantyData(
-        trailer.purchasePrice,
-        new Date(trailer.manufacturerWarrantyEndDate),
-        trailer.isPromotional
-      );
-      const startDate = pprData.pprStartDate;
-      const endDate = pprData.pprEndDate;
+      // Calculate warranty dates based on SELECTED PLAN, not hardcoded PPR
+      const planDurationMonths = safeNumber(selectedPlan?.duration_months || 0, 0);
+      const manufacturerWarrantyEnd = new Date(trailer.manufacturerWarrantyEndDate);
+      const startDate = new Date(manufacturerWarrantyEnd);
+      startDate.setDate(startDate.getDate() + 1); // Start the day after manufacturer warranty ends
+
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + planDurationMonths);
 
       console.log('-'.repeat(80));
       console.log('[NewWarranty] Step 4/6: Creating warranty with organization_id:', currentOrganization.id);
       setCreationStep(4);
-      console.log('[NewWarranty] PPR Data Calculated:', {
-        startDate: pprData.pprStartDate.toISOString().split('T')[0],
-        endDate: pprData.pprEndDate.toISOString().split('T')[0],
-        durationMonths: pprData.durationMonths,
-        annualLimit: pprData.annualLimit,
-        loyaltyCredit: pprData.loyaltyCredit,
-        warrantyYear: pprData.warrantyYear
+      console.log('[NewWarranty] Warranty Data Calculated from PLAN:', {
+        planName: selectedPlan?.name,
+        planDuration: planDurationMonths,
+        planDeductible: selectedPlan?.deductible,
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0]
       });
       console.log('-'.repeat(80));
 
@@ -852,8 +842,10 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
       const taxes = safeNumber(pricing.taxes, 0);
       const totalPrice = safeNumber(pricing.total, 0);
       const margin = safeMultiply(totalPrice, 0.3);
-      const normalizedDeductible = PPR_DEDUCTIBLE; // Constante PPR
-      const normalizedDuration = pprData.durationMonths; // Devrait être PPR_DURATION_MONTHS (72 mois)
+
+      // Use values from the selected plan, not hardcoded PPR constants
+      const normalizedDeductible = safeNumber(selectedPlan?.deductible || 0, 0);
+      const normalizedDuration = safeNumber(selectedPlan?.duration_months || 0, 0);
 
       // Log détaillé des valeurs avant insertion
       console.log('[NewWarranty] CRITICAL - Numeric values before DB insert:', {
@@ -864,8 +856,8 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
         margin: { value: margin, type: typeof margin, isValid: !isNaN(margin) },
         deductible: { value: normalizedDeductible, type: typeof normalizedDeductible, isValid: !isNaN(normalizedDeductible) },
         duration_months: { value: normalizedDuration, type: typeof normalizedDuration, isValid: !isNaN(normalizedDuration) },
-        start_date: pprData.pprStartDate.toISOString().split('T')[0],
-        end_date: pprData.pprEndDate.toISOString().split('T')[0]
+        start_date: startDate.toISOString().split('T')[0],
+        end_date: endDate.toISOString().split('T')[0]
       });
 
       // VALIDATION FINALE avant insertion (inclut validation des dates)
@@ -913,12 +905,12 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
           selected_options: selectedOptions,
           status: 'active',
           franchise_amount: normalizedDeductible,
-          annual_claim_limit: pprData.annualLimit,
+          annual_claim_limit: trailer.purchasePrice * 0.10, // 10% of purchase price as annual limit
           total_claimed_current_year: 0,
           warranty_year: 1,
           is_promotional_purchase: trailer.isPromotional,
           entretien_annuel_completed_years: [],
-          next_entretien_due: pprData.nextEntretienDue.toISOString().split('T')[0],
+          next_entretien_due: null, // Maintenance tracking removed - using plan settings only
           legal_validation_passed: validation.passed,
           legal_validation_errors: validation.errors,
           legal_validation_warnings: validation.warnings,
@@ -1137,11 +1129,16 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
         }
       }
 
-      if (pprData.loyaltyCredit > 0) {
+      // Calculate loyalty credit based on purchase price and promotional status
+      const loyaltyCredit = trailer.isPromotional
+        ? trailer.purchasePrice * 0.015 // 1.5% for promotional
+        : trailer.purchasePrice * 0.01; // 1% standard
+
+      if (loyaltyCredit > 0) {
         await supabase.from('loyalty_credits').insert({
           customer_id: customerData.id,
           warranty_id: warrantyData.id,
-          credit_amount: pprData.loyaltyCredit,
+          credit_amount: loyaltyCredit,
           is_eligible: true,
         });
       }
@@ -1687,11 +1684,11 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
                 </div>
                 <div>
                   <span className="text-slate-600">Franchise par réclamation:</span>
-                  <p className="font-semibold text-slate-900">{PPR_DEDUCTIBLE} $</p>
+                  <p className="font-semibold text-slate-900">{selectedPlan?.deductible || 0} $</p>
                 </div>
                 <div>
-                  <span className="text-slate-600">Durée garantie PPR:</span>
-                  <p className="font-semibold text-slate-900">{PPR_DURATION_MONTHS / 12} ans</p>
+                  <span className="text-slate-600">Durée garantie:</span>
+                  <p className="font-semibold text-slate-900">{selectedPlan ? Math.floor((selectedPlan.duration_months || 0) / 12) : 0} ans ({selectedPlan?.duration_months || 0} mois)</p>
                 </div>
               </div>
             </div>
@@ -1901,18 +1898,18 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
                 </div>
 
                 <div className="mt-6 p-4 bg-primary-50 border border-primary-200 rounded-lg">
-                  <h4 className="text-sm font-semibold text-primary-900 mb-2">ℹ️ Caractéristiques de la garantie PPR</h4>
+                  <h4 className="text-sm font-semibold text-primary-900 mb-2">ℹ️ Caractéristiques du plan sélectionné</h4>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="text-slate-600">Durée:</span>
-                      <p className="font-semibold text-slate-900">{PPR_DURATION_MONTHS} mois ({PPR_DURATION_MONTHS / 12} ans)</p>
+                      <p className="font-semibold text-slate-900">{selectedPlan?.duration_months || 0} mois ({selectedPlan ? Math.floor((selectedPlan.duration_months || 0) / 12) : 0} ans)</p>
                     </div>
                     <div>
                       <span className="text-slate-600">Franchise:</span>
-                      <p className="font-semibold text-slate-900">{PPR_DEDUCTIBLE} $ par réclamation</p>
+                      <p className="font-semibold text-slate-900">{selectedPlan?.deductible || 0} $ par réclamation</p>
                     </div>
                   </div>
-                  <p className="text-xs text-slate-600 mt-2">Ces valeurs sont fixes pour tous les contrats PPR</p>
+                  <p className="text-xs text-slate-600 mt-2">Ces valeurs proviennent du plan de garantie sélectionné</p>
                 </div>
               </div>
             </div>
@@ -1991,7 +1988,7 @@ Prochain entretien: ${pprData.nextEntretienDue.toLocaleDateString('fr-CA')}
               <div>
                 <h3 className="font-semibold text-slate-900 mb-2">Coverage</h3>
                 <p className="text-slate-600">
-                  {selectedPlan?.name_en} - {PPR_DURATION_MONTHS} mois ({PPR_DURATION_MONTHS / 12} ans) - {PPR_DEDUCTIBLE}$ franchise
+                  {selectedPlan?.name_en} - {selectedPlan?.duration_months || 0} mois ({selectedPlan ? Math.floor((selectedPlan.duration_months || 0) / 12) : 0} ans) - {selectedPlan?.deductible || 0}$ deductible
                 </p>
               </div>
 
