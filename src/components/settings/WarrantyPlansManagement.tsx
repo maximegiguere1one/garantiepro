@@ -17,6 +17,7 @@ interface WarrantyPlan {
   description: string | null;
   base_price: number;
   duration_months: number;
+  deductible?: number;
   coverage_matrix: any;
   coverage_details: string | null;
   is_active: boolean;
@@ -47,6 +48,7 @@ export function WarrantyPlansManagement() {
     base_price: '',
     direct_price: '',
     duration_months: '12',
+    deductible: '100',
     coverage_details: '',
     max_claim_amount: '',
     is_active: true,
@@ -106,6 +108,7 @@ export function WarrantyPlansManagement() {
       base_price: '',
       direct_price: '',
       duration_months: '12',
+      deductible: '100',
       coverage_details: '',
       max_claim_amount: '',
       is_active: true,
@@ -129,6 +132,7 @@ export function WarrantyPlansManagement() {
       base_price: plan.base_price.toString(),
       direct_price: plan.base_price.toString(),
       duration_months: plan.duration_months.toString(),
+      deductible: plan.deductible?.toString() || '100',
       coverage_details: plan.coverage_details || '',
       max_claim_amount: maxClaimAmount !== undefined && maxClaimAmount !== null ? maxClaimAmount.toString() : '',
       is_active: plan.is_active,
@@ -216,6 +220,7 @@ export function WarrantyPlansManagement() {
         description: formData.description.trim() || null,
         base_price: parseFloat(priceToUse),
         duration_months: parseInt(formData.duration_months),
+        deductible: parseFloat(formData.deductible) || 100,
         coverage_details: formData.coverage_details.trim() || null,
         coverage_matrix: { included: [], excluded: [], limits: {} },
         max_claim_limits: maxClaimLimits,
@@ -407,6 +412,25 @@ export function WarrantyPlansManagement() {
                     <option value="48">48 mois</option>
                     <option value="60">60 mois</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <DollarSign className="w-4 h-4 inline mr-1" />
+                    Franchise / Déductible <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.deductible}
+                    onChange={(e) => setFormData({ ...formData, deductible: e.target.value })}
+                    placeholder="Ex: 100.00"
+                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    required
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Montant que le client doit payer avant que la garantie ne couvre les réparations
+                  </p>
                 </div>
               </div>
 
@@ -678,6 +702,14 @@ export function WarrantyPlansManagement() {
                         {plan.duration_months} mois
                       </span>
                     </div>
+                    {plan.deductible != null && plan.deductible > 0 && (
+                      <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg">
+                        <DollarSign className="w-4 h-4 text-purple-600" />
+                        <span className="text-sm font-semibold text-purple-700">
+                          Franchise: {plan.deductible.toFixed(2)} $
+                        </span>
+                      </div>
+                    )}
                     {/* Display fixed amount or barème */}
                     {plan.max_claim_limits?.type === 'price_range' && Array.isArray(plan.max_claim_limits.ranges) ? (
                       <div className="flex items-center gap-2 px-3 py-1.5 bg-amber-50 rounded-lg">
