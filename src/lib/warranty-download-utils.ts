@@ -81,7 +81,7 @@ export function getDownloadApiUrl(token: string, documentType: 'all' | 'contract
 }
 
 /**
- * Valide un token de téléchargement
+ * Valide un token de téléchargement via l'Edge Function (pas d'auth requise)
  */
 export async function validateDownloadToken(token: string): Promise<{
   isValid: boolean;
@@ -91,33 +91,35 @@ export async function validateDownloadToken(token: string): Promise<{
   errorMessage?: string;
 }> {
   try {
-    const { data, error } = await supabase.rpc('validate_warranty_download_token', {
-      p_token: token,
+    // Appeler l'Edge Function directement (pas besoin d'auth)
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const apiUrl = `${supabaseUrl}/functions/v1/download-warranty-documents?token=${token}&type=all`;
+
+    console.log('[validateDownloadToken] Calling Edge Function:', apiUrl);
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
     });
 
-    if (error) {
-      console.error('[validateDownloadToken] Error validating token:', error);
+    const data = await response.json();
+
+    console.log('[validateDownloadToken] Response:', data);
+
+    if (!response.ok || !data.success) {
       return {
         isValid: false,
-        errorMessage: error.message,
+        errorMessage: data.error || 'Erreur de validation',
       };
     }
 
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      return {
-        isValid: false,
-        errorMessage: 'Invalid response from validation',
-      };
-    }
-
-    const validation = data[0];
-
+    // L'Edge Function retourne les documents + les infos
     return {
-      isValid: validation.is_valid,
-      warrantyId: validation.warranty_id,
-      customerEmail: validation.customer_email,
-      downloadsRemaining: validation.downloads_remaining,
-      errorMessage: validation.error_message,
+      isValid: true,
+      downloadsRemaining: data.downloadsRemaining,
+      errorMessage: undefined,
     };
   } catch (error: any) {
     console.error('[validateDownloadToken] Unexpected error:', error);

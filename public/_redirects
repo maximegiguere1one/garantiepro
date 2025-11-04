@@ -1,4 +1,7 @@
 # Redirects pour SPA (Single Page Application)
-# Toutes les routes qui ne sont pas des fichiers doivent pointer vers index.html
+# API redirects vers Supabase Edge Functions (avec splat pour query params)
+/api/download-warranty-direct https://sjzpkdxwgvhuwxgacbfy.supabase.co/functions/v1/download-warranty-direct:splat 200
+/api/download-warranty-documents https://sjzpkdxwgvhuwxgacbfy.supabase.co/functions/v1/download-warranty-documents:splat 200
 
+# Toutes les autres routes qui ne sont pas des fichiers doivent pointer vers index.html
 /* /index.html 200
