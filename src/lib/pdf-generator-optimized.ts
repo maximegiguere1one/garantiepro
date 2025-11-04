@@ -919,9 +919,32 @@ export function generateOptimizedMerchantInvoicePDF(data: InvoiceData): any {
   }
 
   const { warranty, customer, trailer, plan, companyInfo } = data;
+
+  // Pour la facture marchand, le marchand reçoit 50% du montant total
+  const merchantPercentage = 0.5;
+  const baseNormalized = normalizeWarrantyNumbers(warranty);
+
+  // Ajuster aussi les options si elles existent
+  const adjustedOptions = baseNormalized.selected_options ?
+    (Array.isArray(baseNormalized.selected_options) ?
+      baseNormalized.selected_options.map((opt: any) => ({
+        ...opt,
+        price: (opt.price || 0) * merchantPercentage
+      })) :
+      baseNormalized.selected_options
+    ) :
+    baseNormalized.selected_options;
+
   const normalizedWarranty = {
     ...warranty,
-    ...normalizeWarrantyNumbers(warranty)
+    ...baseNormalized,
+    // Appliquer 50% à tous les montants pour la facture marchand
+    base_price: baseNormalized.base_price * merchantPercentage,
+    options_price: baseNormalized.options_price * merchantPercentage,
+    taxes: baseNormalized.taxes * merchantPercentage,
+    total_price: baseNormalized.total_price * merchantPercentage,
+    margin: baseNormalized.margin * merchantPercentage,
+    selected_options: adjustedOptions,
   };
 
   const pageWidth = doc.internal.pageSize.width;
@@ -1018,6 +1041,22 @@ export function generateOptimizedMerchantInvoicePDF(data: InvoiceData): any {
 
   // Analyse financière
   yPos = addSection(doc, 'ANALYSE FINANCIÈRE', yPos);
+
+  // Note importante sur le partage 50/50
+  doc.setFillColor(255, 251, 235);
+  doc.roundedRect(20, yPos, pageWidth - 40, 14, 2, 2, 'F');
+  yPos += 5;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  doc.setTextColor(180, 83, 9);
+  doc.text('⚠ IMPORTANT: Les montants ci-dessous représentent 50% du prix total de la garantie', 25, yPos);
+  yPos += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(120, 53, 15);
+  doc.text('Le marchand reçoit 50% du montant total. Le client paie le montant complet.', 25, yPos);
+  doc.setTextColor(...BRAND_COLORS.text);
+  yPos += 10;
 
   const selectedOptions = normalizedWarranty.selected_options as any[] || [];
   const tableData: any[] = [
