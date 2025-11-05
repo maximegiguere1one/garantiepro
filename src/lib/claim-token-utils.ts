@@ -20,80 +20,39 @@ export interface TokenValidationResult {
 
 export async function validateClaimToken(token: string): Promise<TokenValidationResult> {
   try {
-    const { data: tokenData, error: tokenError } = await supabase
-      .from('warranty_claim_tokens')
-      .select('*')
-      .eq('token', token)
-      .maybeSingle();
+    // Use RPC function to get all data in one call (bypasses RLS context issues)
+    const { data, error } = await supabase.rpc('validate_claim_token_rpc', {
+      p_token: token,
+    });
 
-    if (tokenError) {
-      console.error('Error fetching token:', tokenError);
+    if (error) {
+      console.error('Error validating token:', error);
       return { valid: false, error: 'Erreur lors de la validation du token' };
     }
 
-    if (!tokenData) {
-      return { valid: false, error: 'Token invalide' };
+    if (!data) {
+      return { valid: false, error: 'Erreur lors de la validation' };
     }
 
-    if (tokenData.is_used) {
-      return { valid: false, error: 'Ce lien a déjà été utilisé pour soumettre une réclamation' };
+    // Parse the JSON response
+    const result = typeof data === 'string' ? JSON.parse(data) : data;
+
+    console.log('Token validation result:', {
+      valid: result.valid,
+      hasWarranty: !!result.warranty,
+      hasCustomer: !!result.warranty?.customers,
+      hasTrailer: !!result.warranty?.trailers,
+      hasPlan: !!result.warranty?.warranty_plans,
+    });
+
+    if (!result.valid) {
+      return { valid: false, error: result.error || 'Token invalide' };
     }
-
-    if (new Date(tokenData.expires_at) < new Date()) {
-      return { valid: false, error: 'Ce lien a expiré' };
-    }
-
-    // Fetch warranty data separately to work with RLS
-    const { data: warrantyData, error: warrantyError } = await supabase
-      .from('warranties')
-      .select('*')
-      .eq('id', tokenData.warranty_id)
-      .maybeSingle();
-
-    if (warrantyError || !warrantyData) {
-      console.error('Error fetching warranty:', warrantyError);
-      return { valid: false, error: 'Garantie introuvable' };
-    }
-
-    // Fetch related data separately (RLS allows via token context)
-    const [customerResult, trailerResult, planResult] = await Promise.all([
-      supabase
-        .from('customers')
-        .select('*')
-        .eq('id', warrantyData.customer_id)
-        .maybeSingle(),
-      supabase
-        .from('trailers')
-        .select('*')
-        .eq('id', warrantyData.trailer_id)
-        .maybeSingle(),
-      supabase
-        .from('warranty_plans')
-        .select('*')
-        .eq('id', warrantyData.plan_id)
-        .maybeSingle(),
-    ]);
-
-    // Combine the data
-    const enrichedWarranty = {
-      ...warrantyData,
-      customers: customerResult.data,
-      trailers: trailerResult.data,
-      warranty_plans: planResult.data,
-    };
-
-    await supabase
-      .from('warranty_claim_tokens')
-      .update({
-        access_count: tokenData.access_count + 1,
-        last_accessed_at: new Date().toISOString(),
-      })
-      .eq('id', tokenData.id);
 
     return {
       valid: true,
-      token: tokenData,
-      warranty: enrichedWarranty,
+      token: result.token,
+      warranty: result.warranty,
     };
   } catch (error: any) {
     console.error('Validation error:', error);
