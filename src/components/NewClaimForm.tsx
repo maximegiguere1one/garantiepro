@@ -63,7 +63,8 @@ export function NewClaimForm({ onClose, onSuccess }: NewClaimFormProps) {
     try {
       setLoading(true);
 
-      const isDealerUser = profile?.role === 'dealer' || profile?.role === 'admin';
+      const isDealerUser = profile?.role === 'dealer' || profile?.role === 'admin' || profile?.role === 'master';
+      console.log('[NewClaimForm] User role:', profile?.role, '- Is dealer:', isDealerUser);
       setIsDealer(isDealerUser);
 
       if (isDealerUser) {
@@ -102,6 +103,8 @@ export function NewClaimForm({ onClose, onSuccess }: NewClaimFormProps) {
 
   const loadWarrantiesForCustomer = async (custId: string) => {
     try {
+      console.log('[NewClaimForm] Loading warranties for customer:', custId);
+
       const { data: warrantiesData, error: warrantiesError } = await supabase
         .from('warranties')
         .select(`
@@ -117,13 +120,22 @@ export function NewClaimForm({ onClose, onSuccess }: NewClaimFormProps) {
         .gte('end_date', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (warrantiesError) throw warrantiesError;
+      if (warrantiesError) {
+        console.error('[NewClaimForm] Error loading warranties:', warrantiesError);
+        throw warrantiesError;
+      }
 
-      console.log('[NewClaimForm] Loaded warranties for customer:', custId, '- Count:', warrantiesData?.length || 0);
+      console.log('[NewClaimForm] Loaded warranties:', {
+        customerId: custId,
+        count: warrantiesData?.length || 0,
+        warranties: warrantiesData,
+      });
+
       setWarranties(warrantiesData || []);
     } catch (error: any) {
-      console.error('Error loading warranties:', error);
+      console.error('[NewClaimForm] Exception loading warranties:', error);
       toast.error('Erreur', 'Impossible de charger les garanties');
+      setWarranties([]);
     }
   };
 
@@ -243,7 +255,10 @@ export function NewClaimForm({ onClose, onSuccess }: NewClaimFormProps) {
     );
   }
 
+  // Only show "no warranties" message for non-dealer users (customers)
+  // Dealers can still create claims even if no warranties loaded yet (they need to select a customer first)
   if (!isDealer && warranties.length === 0 && !loading) {
+    console.log('[NewClaimForm] Showing no warranties message for customer');
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
