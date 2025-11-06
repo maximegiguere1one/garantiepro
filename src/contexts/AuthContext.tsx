@@ -8,6 +8,10 @@ import type { Database } from '../lib/database.types';
 
 const logger = createLogger('[AuthContext]');
 
+const MAX_LOADING_TIME = 30000;
+const MAX_PROFILE_LOAD_RETRIES = 2;
+const INITIAL_RETRY_DELAY = 1000;
+
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Organization = Database['public']['Tables']['organizations']['Row'];
 
@@ -20,6 +24,8 @@ interface AuthContextType {
   loading: boolean;
   isOwner: boolean;
   profileError: string | null;
+  loadingTimedOut: boolean;
+  forceSkipLoading: () => void;
   retryLoadProfile: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, fullName: string, role: Profile['role']) => Promise<void>;
@@ -41,9 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [canSwitchOrganization, setCanSwitchOrganization] = useState(false);
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
 
   const loadingRef = useRef<boolean>(false);
   const lastLoadTimeRef = useRef<number>(0);
+  const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
     // Prevent multiple simultaneous loads
@@ -61,9 +70,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadingRef.current = true;
     lastLoadTimeRef.current = Date.now();
+    setLoadingTimedOut(false);
 
-    const maxRetries = 3;
-    const baseDelay = 1500;
+    abortControllerRef.current = new AbortController();
+
+    const maxRetries = MAX_PROFILE_LOAD_RETRIES;
+    const baseDelay = INITIAL_RETRY_DELAY;
 
     try {
       logger.debug(`Loading profile for user ${userId} (attempt ${retryCount + 1}/${maxRetries + 1})`);
@@ -109,12 +121,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Fetch profile from database
-      const { data: profileData, error: profileError } = await supabase
+      // Fetch profile from database with timeout
+      const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('FETCH_TIMEOUT')), 10000);
+      });
+
+      const { data: profileData, error: profileError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
       if (profileError) {
         logger.error('Profile query error:', profileError);
@@ -125,10 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!profileData) {
         logger.warn(`Profile not found for user ${userId} (attempt ${retryCount + 1}/${maxRetries + 1})`);
 
-        if (retryCount < maxRetries) {
+        if (retryCount < maxRetries && !abortControllerRef.current?.signal.aborted) {
           const exponentialDelay = baseDelay * Math.pow(2, retryCount);
           const jitter = Math.random() * 500;
-          const delay = Math.min(exponentialDelay + jitter, 10000);
+          const delay = Math.min(exponentialDelay + jitter, 5000);
 
           logger.debug(`Profile not created yet. Retrying in ${Math.round(delay)}ms...`);
           loadingRef.current = false;
@@ -146,13 +164,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let orgData = null;
       let ownerStatus = false;
 
-      if (profileData.organization_id) {
+      if (profileData.organization_id && !abortControllerRef.current?.signal.aborted) {
         logger.debug('Loading organization:', profileData.organization_id);
-        const { data: specificOrg, error: orgError } = await supabase
+
+        const orgFetchPromise = supabase
           .from('organizations')
           .select('id, name, type, status')
           .eq('id', profileData.organization_id)
           .maybeSingle();
+
+        const orgTimeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new Error('ORG_FETCH_TIMEOUT')), 5000);
+        });
+
+        const { data: specificOrg, error: orgError } = await Promise.race([orgFetchPromise, orgTimeoutPromise]) as any;
 
         if (orgError) {
           logger.error('Organization query error:', orgError);
@@ -255,25 +280,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       logger.error('Error loading user data:', error);
 
+      // Check if aborted
+      if (abortControllerRef.current?.signal.aborted) {
+        logger.info('Profile load was aborted');
+        return;
+      }
+
       // Determine error type and message using improved error handling
       let errorMessage = 'Une erreur inattendue s\'est produite';
+      let shouldRetry = false;
 
       if (error instanceof Error) {
         if (error.message === 'PROFILE_NOT_FOUND') {
           errorMessage = 'Votre profil n\'a pas pu être créé automatiquement. Veuillez cliquer sur "Réessayer" ou contacter le support.';
+        } else if (error.message === 'FETCH_TIMEOUT' || error.message === 'ORG_FETCH_TIMEOUT') {
+          errorMessage = 'La connexion au serveur prend trop de temps. Vérifiez votre connexion internet.';
+          shouldRetry = retryCount < maxRetries;
         } else if (error.message.includes('permission') || error.message.includes('Permission')) {
           errorMessage = 'Erreur de permission. Les règles de sécurité ont été mises à jour. Veuillez vous déconnecter complètement (Ctrl+Shift+R pour vider le cache) puis vous reconnecter.';
+        } else if (error.message.includes('CORS') || error.message.includes('Failed to fetch')) {
+          errorMessage = 'Problème de connexion détecté. Cela peut être dû à votre environnement de développement. Cliquez sur "Ignorer et continuer" ci-dessous.';
+          shouldRetry = false;
         } else {
           errorMessage = getConnectionErrorMessage(error);
+          shouldRetry = retryCount < maxRetries;
         }
       } else {
         errorMessage = getConnectionErrorMessage(error);
+        shouldRetry = retryCount < maxRetries;
       }
 
       setProfileError(errorMessage);
 
-      // Retry on error with exponential backoff - but not for permission errors
-      if (retryCount < maxRetries && !errorMessage.includes('permission') && !errorMessage.includes('Permission')) {
+      // Retry on error with exponential backoff
+      if (shouldRetry && !abortControllerRef.current?.signal.aborted) {
         const delay = baseDelay * Math.pow(2, retryCount);
         logger.debug(`Retrying after error in ${delay}ms...`);
         loadingRef.current = false;
@@ -291,6 +331,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Set up loading timeout
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (loading) {
+        logger.warn('Loading timed out after 30 seconds');
+        setLoadingTimedOut(true);
+      }
+    }, MAX_LOADING_TIME);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
@@ -298,6 +346,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loadProfile(session.user.id);
       } else {
         setLoading(false);
+        if (loadingTimeoutRef.current) {
+          clearTimeout(loadingTimeoutRef.current);
+        }
+      }
+    }).catch((error) => {
+      logger.error('Failed to get session:', error);
+      setProfileError('Impossible de récupérer la session. Veuillez rafraîchir la page.');
+      setLoading(false);
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
       }
     });
 
@@ -314,15 +372,48 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       })();
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+      }
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
   }, [loadProfile]);
+
+  const forceSkipLoading = useCallback(() => {
+    logger.info('Force skipping loading state');
+    setLoading(false);
+    setLoadingTimedOut(false);
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    loadingRef.current = false;
+  }, []);
 
   const retryLoadProfile = async () => {
     if (!user?.id) return;
 
     setLoading(true);
     setProfileError(null);
+    setLoadingTimedOut(false);
     sessionStorage.removeItem(`user_data_${user.id}`);
+
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+    }
+
+    loadingTimeoutRef.current = setTimeout(() => {
+      if (loading) {
+        logger.warn('Retry loading timed out after 30 seconds');
+        setLoadingTimedOut(true);
+      }
+    }, MAX_LOADING_TIME);
 
     await loadProfile(user.id, 0);
   };
@@ -458,6 +549,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
         isOwner,
         profileError,
+        loadingTimedOut,
+        forceSkipLoading,
         retryLoadProfile,
         signIn,
         signUp,

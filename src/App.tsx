@@ -7,6 +7,7 @@ import { ToastProvider } from './contexts/ToastContext';
 import { ViewModeProvider } from './contexts/ViewModeContext';
 import { PersonalizationProvider } from './contexts/PersonalizationContext';
 import { EnhancedToastProvider } from './components/ui/EnhancedToast';
+import { LoadingWithTimeout } from './components/common/LoadingWithTimeout';
 import { queryClient } from './lib/query-client';
 import 'shepherd.js/dist/css/shepherd.css';
 import './styles/shepherd-custom.css';
@@ -60,14 +61,19 @@ const FeedbackAnalyticsDashboard = lazy(() => import('./components/admin/Feedbac
 const UserEngagementMetrics = lazy(() => import('./components/admin/UserEngagementMetrics').then(m => ({ default: m.UserEngagementMetrics })));
 
 function AppContent() {
-  const { user, loading, profileError, retryLoadProfile, signOut } = useAuth();
+  const { user, loading, profileError, loadingTimedOut, forceSkipLoading, retryLoadProfile, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-      </div>
+      <LoadingWithTimeout
+        message="Chargement de votre profil"
+        submessage="Connexion à Supabase en cours..."
+        timedOut={loadingTimedOut}
+        onSkip={forceSkipLoading}
+        onRetry={retryLoadProfile}
+        showEnvironmentWarning={true}
+      />
     );
   }
 
