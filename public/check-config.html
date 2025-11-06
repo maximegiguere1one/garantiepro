@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Vérification Configuration</title>
+    <style>
+        body {
+            font-family: system-ui;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #0f172a;
+            color: white;
+        }
+        .card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid #334155;
+            margin: 20px 0;
+        }
+        .success { border-color: #10b981; background: #064e3b; }
+        .error { border-color: #ef4444; background: #7f1d1d; }
+        .warning { border-color: #f59e0b; background: #78350f; }
+        h1 { color: #3b82f6; }
+        pre {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #334155;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        .badge-success { background: #10b981; color: white; }
+        .badge-error { background: #ef4444; color: white; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Vérification de Configuration</h1>
+
+    <div class="card">
+        <h2>📍 Environnement Actuel</h2>
+        <p><strong>Origine:</strong> <code id="origin"></code></p>
+        <p><strong>Protocole:</strong> <code id="protocol"></code></p>
+        <p><strong>Host:</strong> <code id="host"></code></p>
+    </div>
+
+    <div class="card" id="supabaseCard">
+        <h2>🗄️ Configuration Supabase</h2>
+        <div id="supabaseConfig"></div>
+    </div>
+
+    <div class="card" id="recommendationsCard">
+        <h2>💡 Recommandations</h2>
+        <div id="recommendations"></div>
+    </div>
+
+    <script>
+        // Afficher l'environnement
+        document.getElementById('origin').textContent = window.location.origin;
+        document.getElementById('protocol').textContent = window.location.protocol;
+        document.getElementById('host').textContent = window.location.host;
+
+        // Vérifier la configuration Supabase
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+        const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+        const siteUrl = import.meta.env.VITE_SITE_URL;
+
+        let configHtml = '';
+        let recommendations = [];
+
+        if (supabaseUrl) {
+            const urlMatch = supabaseUrl.match(/https:\/\/([a-z]+)\.supabase\.co/);
+            const projectId = urlMatch ? urlMatch[1] : 'inconnu';
+
+            configHtml += `<p><strong>URL Supabase:</strong> <span class="badge badge-success">${supabaseUrl}</span></p>`;
+            configHtml += `<p><strong>Project ID:</strong> <code>${projectId}</code></p>`;
+
+            // Vérifier si l'URL correspond
+            const expectedUrl = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+            if (supabaseUrl === expectedUrl) {
+                configHtml += `<p style="color: #10b981;">✅ URL Supabase correcte!</p>`;
+            } else {
+                configHtml += `<p style="color: #ef4444;">❌ URL Supabase incorrecte! Attendu: ${expectedUrl}</p>`;
+                recommendations.push('Mettre à jour VITE_SUPABASE_URL dans les variables d\'environnement Cloudflare');
+            }
+        } else {
+            configHtml += `<p style="color: #ef4444;">❌ VITE_SUPABASE_URL non défini!</p>`;
+            recommendations.push('Définir VITE_SUPABASE_URL dans Cloudflare Pages');
+        }
+
+        if (supabaseKey) {
+            const keyPreview = supabaseKey.substring(0, 50) + '...';
+            configHtml += `<p><strong>Anon Key:</strong> <code>${keyPreview}</code></p>`;
+
+            // Vérifier si la clé correspond au projet
+            if (supabaseKey.includes('fkxldrkkqvputdgfpayi')) {
+                configHtml += `<p style="color: #10b981;">✅ Anon Key correspond au projet!</p>`;
+            } else {
+                configHtml += `<p style="color: #ef4444;">❌ Anon Key ne correspond pas au projet fkxldrkkqvputdgfpayi!</p>`;
+                recommendations.push('Mettre à jour VITE_SUPABASE_ANON_KEY dans Cloudflare');
+            }
+        } else {
+            configHtml += `<p style="color: #ef4444;">❌ VITE_SUPABASE_ANON_KEY non défini!</p>`;
+            recommendations.push('Définir VITE_SUPABASE_ANON_KEY dans Cloudflare Pages');
+        }
+
+        if (siteUrl) {
+            configHtml += `<p><strong>Site URL:</strong> <code>${siteUrl}</code></p>`;
+            if (siteUrl === window.location.origin) {
+                configHtml += `<p style="color: #10b981;">✅ Site URL correspond à l'origine actuelle!</p>`;
+            } else {
+                configHtml += `<p style="color: #f59e0b;">⚠️ Site URL (${siteUrl}) diffère de l'origine (${window.location.origin})</p>`;
+            }
+        }
+
+        document.getElementById('supabaseConfig').innerHTML = configHtml;
+
+        // Afficher les recommandations
+        let recHtml = '';
+        if (recommendations.length === 0) {
+            document.getElementById('recommendationsCard').className = 'card success';
+            recHtml = '<p style="color: #10b981; font-weight: 600;">✅ Configuration correcte! Aucune action requise.</p>';
+            recHtml += '<p>Si vous avez toujours l\'erreur CORS, vérifiez:</p>';
+            recHtml += '<ol>';
+            recHtml += '<li>Allez sur <a href="https://supabase.com/dashboard/project/fkxldrkkqvputdgfpayi/auth/url-configuration" target="_blank" style="color: #3b82f6;">Supabase Auth Settings</a></li>';
+            recHtml += '<li>Ajoutez <code>https://www.garantieproremorque.com/**</code> dans "Redirect URLs"</li>';
+            recHtml += '<li>Définissez <code>https://www.garantieproremorque.com</code> comme "Site URL"</li>';
+            recHtml += '</ol>';
+        } else {
+            document.getElementById('recommendationsCard').className = 'card error';
+            recHtml = '<p style="color: #ef4444; font-weight: 600;">❌ Actions requises:</p>';
+            recHtml += '<ol>';
+            recommendations.forEach(rec => {
+                recHtml += `<li>${rec}</li>`;
+            });
+            recHtml += '</ol>';
+            recHtml += '<p><strong>Instructions:</strong></p>';
+            recHtml += '<ol>';
+            recHtml += '<li>Allez sur <strong>Cloudflare Dashboard</strong> → Pages → Votre projet</li>';
+            recHtml += '<li><strong>Settings</strong> → <strong>Environment variables</strong></li>';
+            recHtml += '<li>Ajoutez/Modifiez les variables ci-dessus</li>';
+            recHtml += '<li><strong>Re-déployez</strong> le site</li>';
+            recHtml += '</ol>';
+        }
+
+        document.getElementById('recommendations').innerHTML = recHtml;
+
+        // Vérifier la couleur de la card Supabase
+        if (recommendations.length === 0) {
+            document.getElementById('supabaseCard').className = 'card success';
+        } else {
+            document.getElementById('supabaseCard').className = 'card error';
+        }
+    </script>
+</body>
+</html>
