@@ -43,10 +43,14 @@ export async function validateClaimToken(token: string): Promise<TokenValidation
       return { valid: false, error: 'Ce lien a expiré' };
     }
 
-    // Fetch warranty data separately to work with RLS
     const { data: warrantyData, error: warrantyError } = await supabase
       .from('warranties')
-      .select('*')
+      .select(`
+        *,
+        customers(*),
+        trailers(*),
+        warranty_plans(*)
+      `)
       .eq('id', tokenData.warranty_id)
       .maybeSingle();
 
@@ -54,33 +58,6 @@ export async function validateClaimToken(token: string): Promise<TokenValidation
       console.error('Error fetching warranty:', warrantyError);
       return { valid: false, error: 'Garantie introuvable' };
     }
-
-    // Fetch related data separately (RLS allows via token context)
-    const [customerResult, trailerResult, planResult] = await Promise.all([
-      supabase
-        .from('customers')
-        .select('*')
-        .eq('id', warrantyData.customer_id)
-        .maybeSingle(),
-      supabase
-        .from('trailers')
-        .select('*')
-        .eq('id', warrantyData.trailer_id)
-        .maybeSingle(),
-      supabase
-        .from('warranty_plans')
-        .select('*')
-        .eq('id', warrantyData.plan_id)
-        .maybeSingle(),
-    ]);
-
-    // Combine the data
-    const enrichedWarranty = {
-      ...warrantyData,
-      customers: customerResult.data,
-      trailers: trailerResult.data,
-      warranty_plans: planResult.data,
-    };
 
     await supabase
       .from('warranty_claim_tokens')
@@ -93,7 +70,7 @@ export async function validateClaimToken(token: string): Promise<TokenValidation
     return {
       valid: true,
       token: tokenData,
-      warranty: enrichedWarranty,
+      warranty: warrantyData,
     };
   } catch (error: any) {
     console.error('Validation error:', error);
