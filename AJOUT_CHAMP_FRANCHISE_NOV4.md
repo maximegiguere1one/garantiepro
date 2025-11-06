@@ -1,293 +1,192 @@
-# ✅ FACTURE MARCHAND 50% - 4 novembre 2025
+# ✅ Ajout du Champ Franchise/Déductible - 4 novembre 2025
 
-## 🎯 PROBLÈME RÉSOLU
+## 🎯 Amélioration Complétée
 
-**Demande du client**: "Si on vend une garantie 2000$, la facture marchand devrait être à 50% alors 1000$"
+Le champ **Franchise/Déductible** est maintenant configurable pour chaque plan de garantie dans l'interface de gestion.
 
-## ✅ SOLUTION IMPLÉMENTÉE
+## 📋 Changements Effectués
 
-La facture marchand affiche maintenant **50% du montant total** de la garantie.
+### 1. Interface TypeScript Mise à Jour
 
-### Exemple Concret
+**Fichier**: `src/components/settings/WarrantyPlansManagement.tsx`
 
-| Type | Prix Garantie | Montant Facture |
-|------|--------------|-----------------|
-| **CLIENT** | 2000$ | 2000$ (100%) |
-| **MARCHAND** | 2000$ | **1000$ (50%)** ✅ |
-
----
-
-## 📋 MODIFICATIONS APPORTÉES
-
-### 1. Générateur PDF Optimisé ✅
-
-**Fichier**: `src/lib/pdf-generator-optimized.ts`
-
-**Fonction modifiée**: `generateOptimizedMerchantInvoicePDF()`
-
+Ajout du champ `deductible` à l'interface `WarrantyPlan`:
 ```typescript
-// Lignes 923-948
-const merchantPercentage = 0.5; // 50%
-const baseNormalized = normalizeWarrantyNumbers(warranty);
-
-// Ajuster les options si elles existent
-const adjustedOptions = baseNormalized.selected_options ?
-  (Array.isArray(baseNormalized.selected_options) ?
-    baseNormalized.selected_options.map((opt: any) => ({
-      ...opt,
-      price: (opt.price || 0) * merchantPercentage
-    })) :
-    baseNormalized.selected_options
-  ) :
-  baseNormalized.selected_options;
-
-const normalizedWarranty = {
-  ...warranty,
-  ...baseNormalized,
-  // Appliquer 50% à tous les montants
-  base_price: baseNormalized.base_price * merchantPercentage,
-  options_price: baseNormalized.options_price * merchantPercentage,
-  taxes: baseNormalized.taxes * merchantPercentage,
-  total_price: baseNormalized.total_price * merchantPercentage,
-  margin: baseNormalized.margin * merchantPercentage,
-  selected_options: adjustedOptions,
-};
+interface WarrantyPlan {
+  id: string;
+  name: string;
+  // ...
+  duration_months: number;
+  deductible?: number;  // ✅ NOUVEAU
+  // ...
+}
 ```
 
-### 2. Note d'Avertissement dans le PDF ✅
+### 2. État du Formulaire
 
-**Ajouté dans la facture marchand** (lignes 1045-1059):
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│ ⚠ IMPORTANT: Les montants ci-dessous représentent 50%     │
-│   du prix total de la garantie                             │
-│                                                             │
-│ Le marchand reçoit 50% du montant total.                   │
-│ Le client paie le montant complet.                         │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### 3. Build Réussi ✅
-
-Le projet compile sans erreur.
-
----
-
-## 🧮 CALCULS APPLIQUÉS
-
-### Montants Ajustés à 50%
-
-Tous les montants de la facture marchand sont divisés par 2:
-
-- **Prix de base**: `base_price × 0.5`
-- **Options additionnelles**: `options_price × 0.5`
-- **Taxes (TPS + TVQ)**: `taxes × 0.5`
-- **Total**: `total_price × 0.5`
-- **Marge**: `margin × 0.5`
-- **Prix de chaque option**: `option.price × 0.5`
-
-### Exemple de Calcul
-
-```
-Garantie vendue: 2000$
-├─ Prix de base: 1500$
-├─ Options: 300$
-├─ Sous-total: 1800$
-├─ Taxes (TPS+TVQ): 200$
-└─ TOTAL: 2000$
-
-FACTURE CLIENT:
-└─ Total facturé: 2000$ ✅
-
-FACTURE MARCHAND (50%):
-├─ Prix de base: 750$ (1500$ × 50%)
-├─ Options: 150$ (300$ × 50%)
-├─ Sous-total: 900$ (1800$ × 50%)
-├─ Taxes: 100$ (200$ × 50%)
-└─ TOTAL: 1000$ (2000$ × 50%) ✅
-```
-
----
-
-## 📄 STRUCTURE DE LA FACTURE MARCHAND
-
-```
-┌──────────────────────────────────────────┐
-│ FACTURE MARCHANDE                        │
-│ Document interne confidentiel            │
-├──────────────────────────────────────────┤
-│ CONFIDENTIEL - USAGE INTERNE UNIQUEMENT  │
-│ Généré le [date/heure]                   │
-├──────────────────────────────────────────┤
-│ INFORMATIONS DE LA TRANSACTION           │
-│ • Numéro de contrat: W-xxx               │
-│ • Date de vente: [date]                  │
-│ • Vendeur: Location Pro Remorque         │
-│ • Province: QC                           │
-├──────────────────────────────────────────┤
-│ CLIENT                                   │
-│ • Nom: [Prénom Nom]                      │
-│ • Email: [email]                         │
-│ • Téléphone: [phone]                     │
-│ • Adresse complète                       │
-├──────────────────────────────────────────┤
-│ BIEN ASSURÉ                              │
-│ • [Année] [Marque] [Modèle]              │
-│ • Type: [type]                           │
-│ • NIV: [vin]                             │
-│ • Prix d'achat: [prix] $ CAD             │
-├──────────────────────────────────────────┤
-│ ⚠ IMPORTANT:                             │
-│ Les montants ci-dessous représentent     │
-│ 50% du prix total de la garantie         │
-│                                          │
-│ Le marchand reçoit 50% du montant total. │
-│ Le client paie le montant complet.       │
-├──────────────────────────────────────────┤
-│ ANALYSE FINANCIÈRE                       │
-├──────────────────────────────────────────┤
-│ Type | Description | Montant | % du plan │
-│──────┼─────────────┼─────────┼───────────│
-│ Base | Plan Std    | 750.00$ | 100%      │
-│ Opt  | Option 1    |  75.00$ |  10%      │
-│ Opt  | Option 2    |  75.00$ |  10%      │
-│      | Sous-total  | 900.00$ |           │
-│      | TPS (5%)    |  45.00$ |           │
-│      | TVQ (9.975%)│  55.00$ |           │
-│      | TOTAL       |1000.00$ |           │
-└──────────────────────────────────────────┘
-```
-
----
-
-## 🧪 TESTS À EFFECTUER
-
-### Test 1: Créer Garantie 2000$
-
-```bash
-1. Créer nouvelle garantie avec:
-   - Plan: 1500$
-   - Options: 300$
-   - Total avec taxes: 2000$
-
-2. Vérifier facture CLIENT:
-   ✅ Total = 2000$
-
-3. Télécharger facture MARCHAND:
-   ✅ Total = 1000$ (50%)
-   ✅ Note d'avertissement visible
-   ✅ Tous les montants à 50%
-```
-
-### Test 2: Garantie Simple 500$
-
-```bash
-1. Créer garantie simple:
-   - Plan: 400$
-   - Taxes: 100$
-   - Total: 500$
-
-2. Facture MARCHAND:
-   ✅ Total = 250$ (50%)
-```
-
-### Test 3: Garantie avec Options 3000$
-
-```bash
-1. Créer garantie avec:
-   - Plan: 2000$
-   - Options: 600$
-   - Total avec taxes: 3000$
-
-2. Facture MARCHAND:
-   ✅ Total = 1500$ (50%)
-   ✅ Chaque option à 50%
-```
-
----
-
-## 🔧 MAINTENANCE
-
-### Changer le Pourcentage Marchand
-
-Si besoin de modifier le pourcentage (ex: 60% au lieu de 50%):
-
-**Fichier**: `src/lib/pdf-generator-optimized.ts`
-
-**Ligne 924**: Changer `merchantPercentage`
-
+Ajout du champ franchise dans l'état du formulaire:
 ```typescript
-// Pour 60% au marchand
-const merchantPercentage = 0.6;
-
-// Pour 40% au marchand
-const merchantPercentage = 0.4;
-```
-
-### Vérifier les Montants
-
-```typescript
-// Dans la console du navigateur après génération:
-console.log('Montants facture marchand:', {
-  base_price: normalizedWarranty.base_price,
-  options_price: normalizedWarranty.options_price,
-  taxes: normalizedWarranty.taxes,
-  total_price: normalizedWarranty.total_price
+const [formData, setFormData] = useState({
+  name: '',
+  description: '',
+  base_price: '',
+  direct_price: '',
+  duration_months: '12',
+  deductible: '100',  // ✅ NOUVEAU - valeur par défaut: 100$
+  // ...
 });
 ```
 
+### 3. Interface Utilisateur
+
+**Nouveau champ de saisie** dans le modal de création/édition de plan:
+- Position: Juste après le champ "Durée (mois)"
+- Type: Input numérique avec validation
+- Valeur par défaut: 100.00$
+- Validation: Montant >= 0
+- Description d'aide: "Montant que le client doit payer avant que la garantie ne couvre les réparations"
+
+```tsx
+<div>
+  <label className="block text-sm font-medium text-slate-700 mb-2">
+    <DollarSign className="w-4 h-4 inline mr-1" />
+    Franchise / Déductible <span className="text-red-500">*</span>
+  </label>
+  <input
+    type="number"
+    step="0.01"
+    min="0"
+    value={formData.deductible}
+    onChange={(e) => setFormData({ ...formData, deductible: e.target.value })}
+    placeholder="Ex: 100.00"
+    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
+    required
+  />
+  <p className="text-xs text-slate-500 mt-1">
+    Montant que le client doit payer avant que la garantie ne couvre les réparations
+  </p>
+</div>
+```
+
+### 4. Affichage dans la Liste
+
+**Badge visuel** dans la liste des plans de garantie:
+- Couleur: Violet (bg-purple-50, text-purple-700)
+- Icône: DollarSign
+- Format: "Franchise: XX.XX $"
+- Condition: Affiché seulement si franchise > 0
+
+```tsx
+{plan.deductible != null && plan.deductible > 0 && (
+  <div className="flex items-center gap-2 px-3 py-1.5 bg-purple-50 rounded-lg">
+    <DollarSign className="w-4 h-4 text-purple-600" />
+    <span className="text-sm font-semibold text-purple-700">
+      Franchise: {plan.deductible.toFixed(2)} $
+    </span>
+  </div>
+)}
+```
+
+### 5. Sauvegarde en Base de Données
+
+Ajout du champ dans l'objet de données sauvegardé:
+```typescript
+const planData = {
+  organization_id: organization.id,
+  name: formData.name.trim(),
+  // ...
+  duration_months: parseInt(formData.duration_months),
+  deductible: parseFloat(formData.deductible) || 100,  // ✅ NOUVEAU
+  // ...
+};
+```
+
+## 🔄 Flux Utilisateur
+
+### Créer/Modifier un Plan avec Franchise
+
+1. **Accéder aux réglages**: Réglages → Plans de garantie
+2. **Ouvrir le modal**: Cliquer sur "Nouveau plan" ou "Modifier" sur un plan existant
+3. **Remplir les champs**:
+   - Nom du plan
+   - Prix
+   - Durée en mois
+   - **Franchise/Déductible** ← NOUVEAU
+   - Type de limite (Montant fixe ou Barème)
+4. **Sauvegarder**: Le plan est sauvegardé avec la franchise configurée
+
+### Visualiser la Franchise
+
+Dans la liste des plans, la franchise s'affiche dans un badge violet:
+```
+┌─────────────────────────────────────────┐
+│ Plan Standard 12 mois                   │
+│                                         │
+│ [$249.99] [12 mois] [Franchise: 100$]  │
+│ [Barème (3 tranches)]                   │
+└─────────────────────────────────────────┘
+```
+
+## 📊 Exemple de Configuration
+
+### Plan 1: Économique
+- Durée: 12 mois
+- **Franchise: 150.00$** ← Franchise plus élevée
+- Limite: Barème selon valeur
+
+### Plan 2: Standard
+- Durée: 24 mois
+- **Franchise: 100.00$** ← Franchise standard
+- Limite: Barème selon valeur
+
+### Plan 3: Premium
+- Durée: 36 mois
+- **Franchise: 50.00$** ← Franchise réduite
+- Limite: Barème selon valeur
+
+## ✅ Utilisation dans la Création de Garantie
+
+Lorsqu'un vendeur crée une garantie:
+
+1. **Sélection du plan**: Le vendeur choisit un plan (ex: "Standard 24 mois")
+2. **Franchise automatique**: La franchise du plan (100$) est automatiquement appliquée
+3. **Sauvegarde**: La garantie est créée avec:
+   - `deductible: 100` (depuis le plan)
+   - `annual_claim_limit: XXXX` (calculé depuis le barème)
+4. **Affichage PDF**: Le contrat PDF affiche la franchise correcte
+
+## 🎨 Design
+
+- **Couleur badge**: Violet (différent des autres badges pour distinction)
+- **Icône**: DollarSign (cohérent avec les montants monétaires)
+- **Format**: 2 décimales toujours affichées (XX.XX $)
+- **Responsive**: S'adapte sur mobile et desktop
+
+## ✅ Tests Recommandés
+
+1. **Créer un plan avec franchise personnalisée** (ex: 75.00$)
+2. **Modifier un plan existant** et changer la franchise
+3. **Créer une garantie** avec ce plan et vérifier que la franchise est correcte
+4. **Vérifier le PDF** pour confirmer l'affichage de la franchise
+
+## 📝 Notes Techniques
+
+- La franchise est **optionnelle** dans l'interface TypeScript (`deductible?: number`)
+- Valeur par défaut: **100$** si non spécifiée
+- Validation: Montant doit être **>= 0**
+- Format: Nombre décimal avec 2 décimales
+- Persistance: Sauvegardé dans la table `warranty_plans` de Supabase
+
+## 🚀 Prochaines Étapes (Optionnelles)
+
+1. Ajouter des **presets de franchise** (50$, 100$, 150$, 200$)
+2. Créer des **rapports** sur l'impact de la franchise sur les réclamations
+3. Permettre la **franchise variable** selon la valeur de la remorque
+4. Ajouter des **explications détaillées** sur la franchise dans le système d'aide
+
 ---
 
-## 📝 FICHIERS MODIFIÉS
-
-1. **src/lib/pdf-generator-optimized.ts**
-   - Lignes 923-948: Calcul 50%
-   - Lignes 1045-1059: Note d'avertissement
-
-2. **src/lib/invoice-generator.ts** (facultatif, si utilisé)
-   - Calcul 50% alternatif
-
----
-
-## ✅ RÉSULTAT FINAL
-
-**AVANT**:
-```
-Garantie 2000$
-├─ Facture Client: 2000$ ✅
-└─ Facture Marchand: 2000$ ❌ (100%, INCORRECT)
-```
-
-**APRÈS**:
-```
-Garantie 2000$
-├─ Facture Client: 2000$ ✅
-└─ Facture Marchand: 1000$ ✅ (50%, CORRECT)
-```
-
----
-
-## 🎉 CONFIRMATION
-
-✅ **Le marchand reçoit maintenant 50% du montant total!**
-
-### Exemples Réels
-
-| Prix Garantie | Facture Marchand |
-|--------------|------------------|
-| 500$ | 250$ |
-| 1000$ | 500$ |
-| **2000$** | **1000$** ✅ |
-| 3000$ | 1500$ |
-| 5000$ | 2500$ |
-
-**La facture marchand est 100% fonctionnelle et affiche toujours 50% du total!**
-
----
-
-**Date**: 4 novembre 2025, 13:30 EST
-**Status**: ✅ 100% FONCTIONNEL ET TESTÉ
-**Build**: Réussi sans erreur
-**Modifications**: 2 fichiers
-**Tests**: Prêt pour validation client
+**Date**: 4 novembre 2025
+**Version**: 1.0.0
+**Status**: ✅ Fonctionnel et prêt à utiliser
+**Build**: Réussi sans erreurs
