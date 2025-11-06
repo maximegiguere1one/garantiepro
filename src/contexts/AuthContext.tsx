@@ -193,8 +193,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[AuthContext] User org:', orgData?.id, orgData?.name);
       console.log('[AuthContext] Can switch:', canSwitch);
 
+      // Set user's org IMMEDIATELY to unblock UI
+      if (orgData) {
+        setActiveOrganization(orgData);
+        logger.info('[AuthContext] Setting activeOrganization to user org (will update if stored org found)');
+      }
+
       if (storedActiveOrgId && canSwitch) {
-        // Master/admin has a stored active organization
+        // Master/admin has a stored active organization - load in background
         console.log('[AuthContext] 🔄 Loading stored active organization:', storedActiveOrgId);
 
         supabase
@@ -205,11 +211,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .then(({ data, error }) => {
             if (error) {
               logger.warn('[AuthContext] Failed to load stored organization:', error);
-              // Fallback to user's org
-              if (orgData) {
-                setActiveOrganization(orgData);
-                logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
-              }
             } else if (data) {
               setActiveOrganization(data);
               console.log('[AuthContext] ✅ Restored active organization:', data.name, data.id);
@@ -217,28 +218,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               logger.warn('[AuthContext] Stored organization not found');
               // Clear invalid stored org
               localStorage.removeItem('active_organization_id');
-              if (orgData) {
-                setActiveOrganization(orgData);
-                logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
-              }
             }
           })
           .catch((err) => {
             logger.warn('[AuthContext] Exception loading stored organization:', err);
-            if (orgData) {
-              setActiveOrganization(orgData);
-              logger.info(`[AuthContext] Fallback to user org: ${orgData.name}`);
-            }
           });
-      } else {
-        // No stored org, or not master/admin
-        // Just use user's org
-        if (orgData) {
-          setActiveOrganization(orgData);
-          console.log('[AuthContext] 📍 Setting activeOrganization to user org:', orgData.name, orgData.id);
-        } else {
-          logger.warn('[AuthContext] No organization data available');
-        }
+      } else if (!orgData) {
+        logger.warn('[AuthContext] No organization data available');
       }
 
       // Synchroniser last_sign_in_at en arrière-plan (ne pas bloquer)
