@@ -55,11 +55,6 @@ export function PublicClaimSubmission() {
     }
 
     await logClaimAccess(token, 'view_form', true);
-    console.log('Token validation result:', {
-      valid: result.valid,
-      hasWarranty: !!result.warranty,
-      warrantyData: result.warranty,
-    });
     setTokenData(result);
     setValidating(false);
   };
@@ -253,27 +248,7 @@ export function PublicClaimSubmission() {
     );
   }
 
-  // Check if we have warranty data
-  if (!tokenData || !tokenData.warranty) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <AlertCircle className="w-8 h-8 text-slate-600" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-3">Aucune garantie active</h2>
-            <p className="text-slate-600 leading-relaxed">
-              Pour soumettre une réclamation, vous devez avoir au moins une garantie active. Contactez votre
-              concessionnaire si vous pensez avoir une garantie.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const warranty = tokenData.warranty;
+  const warranty = tokenData!.warranty!;
   const customer = warranty.customers;
   const trailer = warranty.trailers;
   const plan = warranty.warranty_plans;
