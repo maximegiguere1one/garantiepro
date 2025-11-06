@@ -19,6 +19,7 @@ const FranchiseeSetup = lazy(() => import('./components/FranchiseeSetup').then(m
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { NetworkStatusIndicator } from './components/NetworkStatusIndicator';
 import { TourInitializer } from './components/TourInitializer';
+import { BoltModeWarning } from './components/BoltModeWarning';
 
 const NewWarranty = lazy(() => import('./components/NewWarranty').then(m => ({ default: m.NewWarranty })));
 const SmartNewWarranty = lazy(() => import('./components/SmartNewWarranty').then(m => ({ default: m.SmartNewWarranty })));
@@ -200,6 +201,7 @@ function App() {
                 <AuthProvider>
                   <PersonalizationProvider>
                     <OrganizationProvider>
+                      <BoltModeWarning />
                       <NetworkStatusIndicator />
                       <Suspense fallback={
                         <div className="min-h-screen bg-slate-50 flex items-center justify-center">

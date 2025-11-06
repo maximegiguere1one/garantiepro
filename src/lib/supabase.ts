@@ -14,9 +14,9 @@ const isWebContainer = isWebContainerEnvironment();
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: !isWebContainer,
     detectSessionInUrl: true,
-    flowType: 'pkce',
+    flowType: 'implicit',
     storage: typeof window !== 'undefined' ? window.localStorage : undefined,
     storageKey: 'supabase.auth.token',
   },
