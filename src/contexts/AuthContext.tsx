@@ -333,32 +333,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
+    // Shorter timeout for WebContainer (5 seconds instead of 30)
+    const WEBCONTAINER_TIMEOUT = 5000;
+    const isWebContainer = window.location.hostname.includes('webcontainer') ||
+                          window.location.hostname.includes('stackblitz');
+
+    const timeoutDuration = isWebContainer ? WEBCONTAINER_TIMEOUT : MAX_LOADING_TIME;
+
     // Set up loading timeout
     loadingTimeoutRef.current = setTimeout(() => {
       if (mounted && loading) {
-        logger.warn('Loading timed out after 30 seconds');
+        logger.warn(`Loading timed out after ${timeoutDuration / 1000} seconds`);
         setLoadingTimedOut(true);
+        setProfileError('Environnement WebContainer détecté. Connexion limitée. Vous pouvez ignorer et continuer sans connexion.');
       }
-    }, MAX_LOADING_TIME);
+    }, timeoutDuration);
 
-    // Absolute fallback - force stop loading after 45 seconds
+    // Absolute fallback - force stop loading
+    const emergencyTimeout = isWebContainer ? 8000 : 45000;
     const emergencyTimeoutRef = setTimeout(() => {
       if (mounted && loading) {
         logger.error('EMERGENCY TIMEOUT - Force stopping loading');
         setLoading(false);
         setLoadingTimedOut(true);
-        setProfileError('La connexion a pris trop de temps. Cliquez sur "Ignorer et continuer" pour accéder à l\'application.');
+        setProfileError('La connexion a pris trop de temps. Vous êtes dans un environnement de développement avec des limitations réseau. Cliquez sur "Ignorer et continuer".');
       }
-    }, 45000);
+    }, emergencyTimeout);
 
     const initAuth = async () => {
       try {
         logger.info('Initializing authentication...');
 
+        // Shorter timeout for WebContainer
+        const sessionTimeout = isWebContainer ? 3000 : 8000;
+
         const { data: { session }, error } = await Promise.race([
           supabase.auth.getSession(),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('GET_SESSION_TIMEOUT')), 8000)
+            setTimeout(() => reject(new Error('GET_SESSION_TIMEOUT')), sessionTimeout)
           )
         ]) as any;
 
@@ -389,7 +401,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error('Failed to initialize auth:', error);
 
         if (error instanceof Error && error.message === 'GET_SESSION_TIMEOUT') {
-          setProfileError('La connexion à Supabase a échoué. Vous pouvez ignorer et continuer.');
+          if (isWebContainer) {
+            setProfileError('Environnement WebContainer: connexion à Supabase limitée. Cliquez sur "Ignorer et continuer" pour utiliser l\'application en mode dégradé.');
+          } else {
+            setProfileError('La connexion à Supabase a échoué. Vous pouvez ignorer et continuer.');
+          }
         } else if (error instanceof Error && error.message.includes('CORS')) {
           setProfileError('Erreur CORS détectée. Environnement WebContainer - Vous pouvez ignorer et continuer.');
         } else {
