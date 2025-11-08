@@ -1,18 +1,32 @@
 # Solution CORS Production - 8 Novembre 2025
 
-## Problème Identifié ✋
+## ROOT CAUSE IDENTIFIÉ 🎯
 
-Erreurs CORS répétées en production sur `www.garantieproremorque.com`:
+### Problème #1: Processeur d'Email en Boucle Infinie
+
+**Fichier:** `src/main.tsx` (lignes 102-109)
+
+En production, un processeur d'email démarre automatiquement et fait du polling vers `email_queue` **TOUTES LES 60 SECONDES**:
+
+```typescript
+// src/lib/email-queue.ts ligne 346-357
+export function startEmailQueueProcessor(): void {
+  setInterval(() => {
+    processQueuedEmailsInBackground(); // ← APPEL TOUTES LES 60 SECONDES
+  }, 60000);
+}
+```
+
+Ce polling répété cause des **centaines d'erreurs CORS** :
 
 ```
 Access to fetch at 'https://fkxldrkkqvputdgfpayi.supabase.co/rest/v1/email_queue...'
-from origin 'https://www.garantieproremorque.com' has been blocked by CORS policy:
-No 'Access-Control-Allow-Origin' header is present on the requested resource.
+from origin 'https://www.garantieproremorque.com' has been blocked by CORS policy
 ```
 
-### Cause Racine
+### Problème #2: Configuration CORS Manquante
 
-Votre domaine `https://www.garantieproremorque.com` n'est **PAS** configuré dans les "Allowed Origins" de Supabase. C'est une configuration obligatoire pour que Supabase accepte les requêtes depuis votre domaine personnalisé.
+Votre domaine `https://www.garantieproremorque.com` n'est **PAS** configuré dans les "Allowed Origins" de Supabase. Sans cette configuration, **TOUTES** les requêtes depuis votre domaine sont bloquées par le navigateur.
 
 ## Solution URGENTE (5 minutes) 🚨
 
@@ -61,13 +75,25 @@ En attendant que vous fassiez la configuration ci-dessus, j'ai appliqué ces cor
 - Banner visible expliquant le mode démo Bolt
 - Instructions: "Entrez n'importe quel email et mot de passe"
 
-### 2. Protection EmailQueueManager
+### 2. DÉSACTIVATION du Processeur d'Email Automatique ⚠️
+
+**Fichier:** `src/main.tsx` (lignes 102-114)
+- **Le processeur d'email automatique est maintenant DÉSACTIVÉ en production**
+- Empêche les centaines d'erreurs CORS répétées
+- Instructions claires pour réactiver après configuration CORS
+
+**Pour réactiver après configuration Supabase:**
+1. Ouvrez `src/main.tsx`
+2. Décommentez les lignes 110-114
+3. Recompilez avec `npm run build`
+
+### 3. Protection EmailQueueManager
 
 **Fichier:** `src/components/EmailQueueManager.tsx`
 - Ajout d'une vérification de rôle avant de charger les emails
 - Évite les requêtes CORS inutiles pour les non-admin
 
-### 3. Timeouts Optimisés
+### 4. Timeouts Optimisés
 
 **Fichier:** `src/lib/environment-detection.ts`
 - Bolt/WebContainer: 15s session, 20s profile, 90s emergency timeout
@@ -75,10 +101,15 @@ En attendant que vous fassiez la configuration ci-dessus, j'ai appliqué ces cor
 
 ## Résultats Attendus ✅
 
+**IMMÉDIATEMENT (sans configuration Supabase):**
+- ✅ PLUS d'erreurs CORS répétées toutes les 60 secondes
+- ✅ Console propre sans spam d'erreurs
+- ✅ Application utilisable (mais emails en attente)
+
 **Après configuration Supabase:**
-- ✅ Plus d'erreurs CORS en production
-- ✅ Requêtes email_queue fonctionnelles
-- ✅ Authentification fluide
+- ✅ Authentification normale fonctionnelle
+- ✅ Possibilité de réactiver le processeur d'email
+- ✅ Système d'email queue opérationnel
 
 **Dans Bolt:**
 - ✅ Mode démo fonctionnel sans erreurs

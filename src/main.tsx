@@ -99,14 +99,19 @@ if (rootElement) {
 
 registerServiceWorker();
 
+// DÉSACTIVÉ TEMPORAIREMENT: Le processeur d'email cause des erreurs CORS répétées
+// tant que le domaine n'est pas configuré dans Supabase Dashboard.
+// Pour réactiver: Configurez www.garantieproremorque.com dans Supabase Dashboard > Settings > API > URL Configuration
 if (!import.meta.env.DEV) {
-  logger.info('Production mode: Background processes enabled');
+  logger.info('Production mode: Background email processor DISABLED (waiting for CORS configuration)');
+  logger.info('To enable: Configure www.garantieproremorque.com in Supabase Dashboard');
 
-  import('./lib/email-queue').then(({ startEmailQueueProcessor }) => {
-    startEmailQueueProcessor();
-  }).catch(err => {
-    logger.error('Failed to start email queue processor:', err);
-  });
+  // Décommentez ces lignes après avoir configuré CORS dans Supabase:
+  // import('./lib/email-queue').then(({ startEmailQueueProcessor }) => {
+  //   startEmailQueueProcessor();
+  // }).catch(err => {
+  //   logger.error('Failed to start email queue processor:', err);
+  // });
 } else {
   logger.info('Development mode: Background processes disabled for performance');
 }
