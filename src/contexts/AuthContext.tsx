@@ -4,13 +4,12 @@ import { supabase } from '../lib/supabase';
 import { getConnectionErrorMessage } from '../lib/supabase-health-check';
 import { createLogger } from '../lib/logger';
 import { supabaseCache } from '../lib/supabase-cache';
+import { getOptimalTimeouts, getEnvironmentType, shouldUseAggressiveCaching } from '../lib/environment-detection';
 import type { Database } from '../lib/database.types';
 
 const logger = createLogger('[AuthContext]');
 
-const MAX_LOADING_TIME = 30000;
-const MAX_PROFILE_LOAD_RETRIES = 2;
-const INITIAL_RETRY_DELAY = 1000;
+const getTimeouts = () => getOptimalTimeouts();
 
 type Profile = Database['public']['Tables']['profiles']['Row'];
 type Organization = Database['public']['Tables']['organizations']['Row'];
@@ -55,16 +54,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
-    // Prevent multiple simultaneous loads
+    const timeouts = getTimeouts();
+    const envType = getEnvironmentType();
+    const useAggressiveCache = shouldUseAggressiveCaching();
+
     if (loadingRef.current) {
       logger.debug('Profile load already in progress, skipping');
       return;
     }
 
-    // Debounce: Don't load if we just loaded within 5 seconds
+    const debounceTime = envType === 'bolt' ? 2000 : 5000;
     const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
-    if (timeSinceLastLoad < 5000 && retryCount === 0) {
-      logger.debug('Debouncing profile load, too soon since last load');
+    if (timeSinceLastLoad < debounceTime && retryCount === 0) {
+      logger.debug(`Debouncing profile load (${debounceTime}ms), too soon since last load`);
       return;
     }
 
@@ -74,8 +76,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     abortControllerRef.current = new AbortController();
 
-    const maxRetries = MAX_PROFILE_LOAD_RETRIES;
-    const baseDelay = INITIAL_RETRY_DELAY;
+    const maxRetries = timeouts.maxRetries;
+    const baseDelay = timeouts.retryDelay;
 
     try {
       logger.debug(`Loading profile for user ${userId} (attempt ${retryCount + 1}/${maxRetries + 1})`);
@@ -83,14 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Clear error on new attempt
       setProfileError(null);
 
-      // Use cache if available and recent (5 minutes)
+      const cacheMaxAge = useAggressiveCache ? 600000 : 300000;
+
       if (retryCount === 0) {
         const cachedData = sessionStorage.getItem(`user_data_${userId}`);
         if (cachedData) {
           try {
             const parsed = JSON.parse(cachedData);
-            // Use cache if less than 5 minutes old
-            if (Date.now() - parsed.timestamp < 300000 && parsed.profile) {
+            if (Date.now() - parsed.timestamp < cacheMaxAge && parsed.profile) {
               logger.debug('Using cached profile data');
               setProfile(parsed.profile);
               setOrganization(parsed.organization);
@@ -129,7 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('FETCH_TIMEOUT')), 10000);
+        setTimeout(() => reject(new Error('FETCH_TIMEOUT')), timeouts.profileTimeout);
       });
 
       const { data: profileData, error: profileError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
@@ -174,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .maybeSingle();
 
         const orgTimeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('ORG_FETCH_TIMEOUT')), 5000);
+          setTimeout(() => reject(new Error('ORG_FETCH_TIMEOUT')), timeouts.profileTimeout / 2);
         });
 
         const { data: specificOrg, error: orgError } = await Promise.race([orgFetchPromise, orgTimeoutPromise]) as any;
@@ -332,40 +334,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let mounted = true;
+    const timeouts = getTimeouts();
+    const envType = getEnvironmentType();
 
-    // Shorter timeout for WebContainer (5 seconds instead of 30)
-    const WEBCONTAINER_TIMEOUT = 5000;
-    const isWebContainer = window.location.hostname.includes('webcontainer') ||
-                          window.location.hostname.includes('stackblitz');
-
-    const timeoutDuration = isWebContainer ? WEBCONTAINER_TIMEOUT : MAX_LOADING_TIME;
+    const timeoutDuration = timeouts.emergencyTimeout;
 
     // Set up loading timeout
     loadingTimeoutRef.current = setTimeout(() => {
       if (mounted && loading) {
-        logger.warn(`Loading timed out after ${timeoutDuration / 1000} seconds`);
+        logger.warn(`Loading timed out after ${timeoutDuration / 1000} seconds in ${envType} environment`);
         setLoadingTimedOut(true);
-        setProfileError('Environnement WebContainer détecté. Connexion limitée. Vous pouvez ignorer et continuer sans connexion.');
+        if (envType === 'bolt' || envType === 'webcontainer') {
+          setProfileError('Environnement Bolt: Connexion Supabase limitée. Cliquez sur "Ignorer et continuer".');
+        } else {
+          setProfileError('Connexion limitée. Vous pouvez ignorer et continuer.');
+        }
       }
     }, timeoutDuration);
 
-    // Absolute fallback - force stop loading
-    const emergencyTimeout = isWebContainer ? 8000 : 45000;
     const emergencyTimeoutRef = setTimeout(() => {
       if (mounted && loading) {
         logger.error('EMERGENCY TIMEOUT - Force stopping loading');
         setLoading(false);
         setLoadingTimedOut(true);
-        setProfileError('La connexion a pris trop de temps. Vous êtes dans un environnement de développement avec des limitations réseau. Cliquez sur "Ignorer et continuer".');
+        if (envType === 'bolt' || envType === 'webcontainer') {
+          setProfileError('Environnement Bolt détecté. Connexion Supabase limitée. Cliquez sur "Ignorer et continuer" pour utiliser l\'application.');
+        } else {
+          setProfileError('La connexion a pris trop de temps. Cliquez sur "Ignorer et continuer".');
+        }
       }
-    }, emergencyTimeout);
+    }, timeouts.emergencyTimeout * 2);
 
     const initAuth = async () => {
       try {
-        logger.info('Initializing authentication...');
+        logger.info(`Initializing authentication in ${envType} environment...`);
 
-        // Shorter timeout for WebContainer
-        const sessionTimeout = isWebContainer ? 3000 : 8000;
+        const sessionTimeout = timeouts.sessionTimeout;
 
         const { data: { session }, error } = await Promise.race([
           supabase.auth.getSession(),
@@ -401,13 +405,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logger.error('Failed to initialize auth:', error);
 
         if (error instanceof Error && error.message === 'GET_SESSION_TIMEOUT') {
-          if (isWebContainer) {
-            setProfileError('Environnement WebContainer: connexion à Supabase limitée. Cliquez sur "Ignorer et continuer" pour utiliser l\'application en mode dégradé.');
+          if (envType === 'bolt' || envType === 'webcontainer') {
+            setProfileError('Environnement Bolt: connexion à Supabase limitée. Cliquez sur "Ignorer et continuer" pour utiliser l\'application.');
           } else {
             setProfileError('La connexion à Supabase a échoué. Vous pouvez ignorer et continuer.');
           }
         } else if (error instanceof Error && error.message.includes('CORS')) {
-          setProfileError('Erreur CORS détectée. Environnement WebContainer - Vous pouvez ignorer et continuer.');
+          setProfileError(`Erreur CORS détectée en environnement ${envType}. Vous pouvez ignorer et continuer.`);
         } else {
           setProfileError('Impossible de récupérer la session. Vous pouvez ignorer et continuer.');
         }
@@ -473,6 +477,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const retryLoadProfile = async () => {
     if (!user?.id) return;
 
+    const timeouts = getTimeouts();
+
     setLoading(true);
     setProfileError(null);
     setLoadingTimedOut(false);
@@ -484,10 +490,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     loadingTimeoutRef.current = setTimeout(() => {
       if (loading) {
-        logger.warn('Retry loading timed out after 30 seconds');
+        logger.warn(`Retry loading timed out after ${timeouts.emergencyTimeout / 1000} seconds`);
         setLoadingTimedOut(true);
       }
-    }, MAX_LOADING_TIME);
+    }, timeouts.emergencyTimeout);
 
     await loadProfile(user.id, 0);
   };

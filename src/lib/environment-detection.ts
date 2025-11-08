@@ -15,6 +15,18 @@ export const isWebContainerEnvironment = () => {
   );
 };
 
+export const isLocalDevelopment = () => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('192.168.');
+};
+
+export const isProduction = () => {
+  if (typeof window === 'undefined') return false;
+  const hostname = window.location.hostname;
+  return hostname.includes('garantieproremorque.com') || (!isWebContainerEnvironment() && !isLocalDevelopment());
+};
+
 export const isBoltEnvironment = () => {
   if (typeof window === 'undefined') return false;
   return window.location.hostname.includes('bolt.new');
@@ -47,4 +59,65 @@ export const getEnvironmentWarnings = (): string[] => {
   }
 
   return warnings;
+};
+
+export const getOptimalTimeouts = () => {
+  const envType = getEnvironmentType();
+
+  if (envType === 'bolt' || envType === 'webcontainer' || envType === 'stackblitz') {
+    return {
+      sessionTimeout: 2000,
+      profileTimeout: 3000,
+      retryDelay: 500,
+      maxRetries: 1,
+      emergencyTimeout: 5000
+    };
+  }
+
+  return {
+    sessionTimeout: 8000,
+    profileTimeout: 10000,
+    retryDelay: 1000,
+    maxRetries: 2,
+    emergencyTimeout: 30000
+  };
+};
+
+export const getSiteUrl = () => {
+  if (typeof window === 'undefined') {
+    return import.meta.env.VITE_SITE_URL || 'https://www.garantieproremorque.com';
+  }
+
+  const envType = getEnvironmentType();
+
+  if (envType === 'bolt' || envType === 'webcontainer' || envType === 'stackblitz') {
+    return window.location.origin;
+  }
+
+  if (envType === 'development') {
+    return window.location.origin;
+  }
+
+  return import.meta.env.VITE_SITE_URL || window.location.origin;
+};
+
+export const shouldUseAggressiveCaching = () => {
+  const envType = getEnvironmentType();
+  return envType === 'bolt' || envType === 'webcontainer' || envType === 'stackblitz';
+};
+
+export const getEnvironmentInfo = () => {
+  const envType = getEnvironmentType();
+  return {
+    environment: envType,
+    siteUrl: getSiteUrl(),
+    isProduction: envType === 'production',
+    isDevelopment: envType === 'development' || envType === 'bolt' || envType === 'webcontainer' || envType === 'stackblitz',
+    isBolt: envType === 'bolt',
+  };
+};
+
+export const getCurrentOrigin = (): string => {
+  if (typeof window === 'undefined') return import.meta.env.VITE_SITE_URL || 'https://www.garantieproremorque.com';
+  return window.location.origin;
 };

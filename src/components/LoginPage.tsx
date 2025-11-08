@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { ShieldCheck, AlertTriangle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
 import { microcopy } from '../lib/microcopy';
 import { getConnectionErrorMessage } from '../lib/supabase-health-check';
+import { getEnvironmentInfo } from '../lib/environment-detection';
 
 export function LoginPage() {
   const { signIn, profileError } = useAuth();
@@ -12,6 +13,7 @@ export function LoginPage() {
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const envInfo = getEnvironmentInfo();
 
   useEffect(() => {
     const savedEmail = localStorage.getItem('remembered_email');
@@ -56,6 +58,19 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
+        {envInfo.isBolt && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600" />
+              <p className="text-sm font-medium text-blue-900">
+                Mode Bolt Développé
+              </p>
+            </div>
+            <p className="text-xs text-blue-700 mt-1">
+              Environnement optimisé pour développement rapide
+            </p>
+          </div>
+        )}
         <div className="bg-white rounded-2xl shadow-xl p-8">
           <div className="flex flex-col items-center mb-8">
             <img

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
-import { isWebContainerEnvironment } from './environment-detection';
+import { isWebContainerEnvironment, getEnvironmentType, getOptimalTimeouts } from './environment-detection';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -10,6 +10,8 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 const isWebContainer = isWebContainerEnvironment();
+const envType = getEnvironmentType();
+const timeouts = getOptimalTimeouts();
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -21,21 +23,33 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     storageKey: 'supabase.auth.token',
   },
   global: {
-    headers: isWebContainer
-      ? {
-          'X-Client-Info': 'supabase-js-web',
-          'X-Environment': 'webcontainer',
-        }
-      : {
-          'X-Client-Info': 'supabase-js-web',
-        },
+    headers: {
+      'X-Client-Info': 'supabase-js-web',
+      'X-Environment': envType,
+      ...(isWebContainer && { 'X-WebContainer': 'true' }),
+    },
+    fetch: (url, options = {}) => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeouts.sessionTimeout);
+
+      return fetch(url, {
+        ...options,
+        signal: controller.signal,
+      }).finally(() => clearTimeout(timeoutId));
+    },
   },
   db: {
     schema: 'public',
   },
   realtime: {
     params: {
-      eventsPerSecond: 10,
+      eventsPerSecond: isWebContainer ? 2 : 10,
     },
   },
 });
+
+console.log(`[Supabase] Initialized in ${envType} environment with ${timeouts.sessionTimeout}ms timeout`);
+
+if (envType === 'bolt' || envType === 'webcontainer') {
+  console.log('[Supabase] Running in WebContainer - using optimized settings for limited network access');
+}
