@@ -9,6 +9,7 @@ import { PersonalizationProvider } from './contexts/PersonalizationContext';
 import { EnhancedToastProvider } from './components/ui/EnhancedToast';
 import { LoadingWithTimeout } from './components/common/LoadingWithTimeout';
 import { EmergencyAccessPage } from './components/EmergencyAccessPage';
+import { BoltAutoDemo } from './components/BoltAutoDemo';
 import { queryClient } from './lib/query-client';
 import 'shepherd.js/dist/css/shepherd.css';
 import './styles/shepherd-custom.css';
@@ -230,6 +231,7 @@ function App() {
                 <AuthProvider>
                   <PersonalizationProvider>
                     <OrganizationProvider>
+                      <BoltAutoDemo />
                       <BoltModeWarning />
                       <NetworkStatusIndicator />
                       <Suspense fallback={
