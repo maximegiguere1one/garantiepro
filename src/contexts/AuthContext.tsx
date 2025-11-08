@@ -559,6 +559,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     logger.info('Attempting sign in for:', email);
 
+    const envType = getEnvironmentType();
+
+    // Mode démo pour WebContainer/Bolt (pas de connexion réseau disponible)
+    if (envType === 'bolt' || envType === 'webcontainer') {
+      logger.warn('WebContainer detected - using demo mode (no network access)');
+
+      // Simuler une connexion réussie avec des données mockées
+      const mockUser = {
+        id: 'demo-user-id',
+        email: email,
+        role: 'master',
+        aud: 'authenticated',
+        created_at: new Date().toISOString(),
+      } as any;
+
+      const mockProfile = {
+        id: 'demo-user-id',
+        full_name: 'Mode Démo',
+        email: email,
+        role: 'master' as const,
+        organization_id: 'demo-org-id',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const mockOrganization = {
+        id: 'demo-org-id',
+        name: 'Organisation Démo',
+        type: 'owner' as const,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      // Mettre à jour l'état avec les données mockées
+      setUser(mockUser);
+      setProfile(mockProfile);
+      setOrganization(mockOrganization);
+      setActiveOrganization(mockOrganization);
+      setIsOwner(true);
+      setLoading(false);
+
+      logger.info('Demo mode sign in successful');
+      return;
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,

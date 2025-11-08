@@ -59,16 +59,24 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {envInfo.isBolt && (
-          <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-blue-600" />
-              <p className="text-sm font-medium text-blue-900">
-                Mode Bolt Développé
+          <div className="mb-4 bg-amber-50 border border-amber-300 rounded-lg p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <Zap className="w-5 h-5 text-amber-600" />
+              <p className="text-base font-semibold text-amber-900">
+                Mode Démo Bolt
               </p>
             </div>
-            <p className="text-xs text-blue-700 mt-1">
-              Environnement optimisé pour développement rapide
+            <p className="text-sm text-amber-800 mb-2">
+              WebContainer détecté - Connexion réseau limitée
             </p>
+            <div className="bg-amber-100 rounded-md p-3 mt-3">
+              <p className="text-xs font-medium text-amber-900 mb-1">
+                💡 Pour utiliser le mode démo:
+              </p>
+              <p className="text-xs text-amber-800">
+                Entrez n'importe quel email et mot de passe pour explorer l'interface.
+              </p>
+            </div>
           </div>
         )}
         <div className="bg-white rounded-2xl shadow-xl p-8">
