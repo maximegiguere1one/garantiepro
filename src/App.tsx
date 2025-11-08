@@ -8,6 +8,7 @@ import { ViewModeProvider } from './contexts/ViewModeContext';
 import { PersonalizationProvider } from './contexts/PersonalizationContext';
 import { EnhancedToastProvider } from './components/ui/EnhancedToast';
 import { LoadingWithTimeout } from './components/common/LoadingWithTimeout';
+import { EmergencyAccessPage } from './components/EmergencyAccessPage';
 import { queryClient } from './lib/query-client';
 import 'shepherd.js/dist/css/shepherd.css';
 import './styles/shepherd-custom.css';
@@ -64,6 +65,17 @@ const UserEngagementMetrics = lazy(() => import('./components/admin/UserEngageme
 function AppContent() {
   const { user, loading, profileError, loadingTimedOut, forceSkipLoading, retryLoadProfile, signOut } = useAuth();
   const [currentPage, setCurrentPage] = useState('dashboard');
+
+  // Show emergency access page if loading timed out AND there's an error
+  if (loadingTimedOut && profileError && !user) {
+    return (
+      <EmergencyAccessPage
+        errorMessage={profileError}
+        onRetry={retryLoadProfile}
+        onSkip={forceSkipLoading}
+      />
+    );
+  }
 
   if (loading) {
     return (

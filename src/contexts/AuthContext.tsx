@@ -331,52 +331,110 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up loading timeout
     loadingTimeoutRef.current = setTimeout(() => {
-      if (loading) {
+      if (mounted && loading) {
         logger.warn('Loading timed out after 30 seconds');
         setLoadingTimedOut(true);
       }
     }, MAX_LOADING_TIME);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        loadProfile(session.user.id);
-      } else {
+    // Absolute fallback - force stop loading after 45 seconds
+    const emergencyTimeoutRef = setTimeout(() => {
+      if (mounted && loading) {
+        logger.error('EMERGENCY TIMEOUT - Force stopping loading');
         setLoading(false);
+        setLoadingTimedOut(true);
+        setProfileError('La connexion a pris trop de temps. Cliquez sur "Ignorer et continuer" pour accéder à l\'application.');
+      }
+    }, 45000);
+
+    const initAuth = async () => {
+      try {
+        logger.info('Initializing authentication...');
+
+        const { data: { session }, error } = await Promise.race([
+          supabase.auth.getSession(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('GET_SESSION_TIMEOUT')), 8000)
+          )
+        ]) as any;
+
+        if (!mounted) return;
+
+        if (error) {
+          logger.error('Session error:', error);
+          throw error;
+        }
+
+        logger.info('Session retrieved:', session ? 'Active' : 'None');
+        setSession(session);
+        setUser(session?.user ?? null);
+
+        if (session?.user) {
+          logger.info('User found, loading profile...');
+          await loadProfile(session.user.id);
+        } else {
+          logger.info('No active session');
+          setLoading(false);
+          if (loadingTimeoutRef.current) {
+            clearTimeout(loadingTimeoutRef.current);
+          }
+        }
+      } catch (error) {
+        if (!mounted) return;
+
+        logger.error('Failed to initialize auth:', error);
+
+        if (error instanceof Error && error.message === 'GET_SESSION_TIMEOUT') {
+          setProfileError('La connexion à Supabase a échoué. Vous pouvez ignorer et continuer.');
+        } else if (error instanceof Error && error.message.includes('CORS')) {
+          setProfileError('Erreur CORS détectée. Environnement WebContainer - Vous pouvez ignorer et continuer.');
+        } else {
+          setProfileError('Impossible de récupérer la session. Vous pouvez ignorer et continuer.');
+        }
+
+        setLoading(false);
+        setLoadingTimedOut(true);
+
         if (loadingTimeoutRef.current) {
           clearTimeout(loadingTimeoutRef.current);
         }
       }
-    }).catch((error) => {
-      logger.error('Failed to get session:', error);
-      setProfileError('Impossible de récupérer la session. Veuillez rafraîchir la page.');
-      setLoading(false);
+    };
+
+    initAuth();
+
+    return () => {
+      mounted = false;
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
       }
-    });
+      clearTimeout(emergencyTimeoutRef);
+    };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      (() => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          loadProfile(session.user.id);
-        } else {
-          setProfile(null);
-          setLoading(false);
-        }
-      })();
+  }, []);
+
+  // Separate effect for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      logger.info('Auth state changed:', _event);
+      setSession(session);
+      setUser(session?.user ?? null);
+
+      if (session?.user && _event !== 'INITIAL_SESSION') {
+        await loadProfile(session.user.id);
+      } else if (!session?.user) {
+        setProfile(null);
+        setOrganization(null);
+        setActiveOrganization(null);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
-      if (loadingTimeoutRef.current) {
-        clearTimeout(loadingTimeoutRef.current);
-      }
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
