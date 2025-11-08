@@ -1,5 +1,5 @@
-import { useState, lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { useState, lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { OrganizationProvider } from './contexts/OrganizationContext';
@@ -62,9 +62,29 @@ const NotificationPreferences = lazy(() => import('./components/NotificationPref
 const FeedbackAnalyticsDashboard = lazy(() => import('./components/admin/FeedbackAnalyticsDashboard').then(m => ({ default: m.FeedbackAnalyticsDashboard })));
 const UserEngagementMetrics = lazy(() => import('./components/admin/UserEngagementMetrics').then(m => ({ default: m.UserEngagementMetrics })));
 
+function LoginRoute() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+      </div>
+    }>
+      <LoginPage />
+    </Suspense>
+  );
+}
+
 function AppContent() {
   const { user, loading, profileError, loadingTimedOut, forceSkipLoading, retryLoadProfile, signOut } = useAuth();
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState('dashboard');
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user && !profileError) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, loading, profileError, navigate]);
 
   // Show emergency access page if loading timed out AND there's an error
   if (loadingTimedOut && profileError && !user) {
@@ -107,15 +127,12 @@ function AppContent() {
     );
   }
 
+  // Don't render anything if not authenticated (will redirect via useEffect)
   if (!user) {
     return (
-      <Suspense fallback={
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
-        </div>
-      }>
-        <LoginPage />
-      </Suspense>
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
+      </div>
     );
   }
 
@@ -221,6 +238,7 @@ function App() {
                         </div>
                       }>
                         <Routes>
+                          <Route path="/login" element={<LoginRoute />} />
                           <Route path="/claim/submit/:token" element={<PublicClaimSubmission />} />
                           <Route path="/verify-signature" element={<PublicSignatureVerification />} />
                           <Route path="/download-warranty" element={<WarrantyDownloadPage />} />
