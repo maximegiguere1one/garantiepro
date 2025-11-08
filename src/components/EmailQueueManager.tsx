@@ -23,28 +23,44 @@ interface QueuedEmail {
 export function EmailQueueManager() {
   const { profile } = useAuth();
   const [emails, setEmails] = useState<QueuedEmail[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [retrying, setRetrying] = useState<string | null>(null);
 
+  // Désactiver temporairement si pas admin/master pour éviter erreurs CORS
+  if (!profile || (profile.role !== 'admin' && profile.role !== 'master')) {
+    return (
+      <div className="p-6">
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <p className="text-yellow-800">
+            Cette fonctionnalité est réservée aux administrateurs et masters.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
-    loadEmails();
+    // Only load emails if user has admin or master role
+    if (profile?.role === 'admin' || profile?.role === 'master') {
+      loadEmails();
 
-    const subscription = supabase
-      .channel('email_queue_changes')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'email_queue'
-      }, () => {
-        loadEmails();
-      })
-      .subscribe();
+      const subscription = supabase
+        .channel('email_queue_changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'email_queue'
+        }, () => {
+          loadEmails();
+        })
+        .subscribe();
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [selectedStatus]);
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [selectedStatus, profile?.role]);
 
   const loadEmails = async () => {
     try {
