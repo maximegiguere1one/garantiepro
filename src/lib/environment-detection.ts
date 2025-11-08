@@ -66,11 +66,11 @@ export const getOptimalTimeouts = () => {
 
   if (envType === 'bolt' || envType === 'webcontainer' || envType === 'stackblitz') {
     return {
-      sessionTimeout: 2000,
-      profileTimeout: 3000,
-      retryDelay: 500,
-      maxRetries: 1,
-      emergencyTimeout: 5000
+      sessionTimeout: 15000,
+      profileTimeout: 20000,
+      retryDelay: 2000,
+      maxRetries: 3,
+      emergencyTimeout: 90000
     };
   }
 
