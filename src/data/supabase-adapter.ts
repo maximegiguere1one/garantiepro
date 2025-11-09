@@ -125,6 +125,40 @@ class SupabaseAuthRepo implements AuthRepo {
 class SupabaseProfileRepo implements ProfileRepo {
   async getProfile(userId: string): Promise<Profile | null> {
     try {
+      // Use optimized RPC function for current user
+      if (userId === (await supabase.auth.getUser()).data.user?.id) {
+        console.log('[SupabaseProfileRepo] Using optimized RPC for current user');
+
+        const { data, error } = await supabase.rpc('get_user_profile_complete');
+
+        if (error) {
+          console.warn('[SupabaseProfileRepo] RPC failed, falling back to direct query:', error);
+          // Fallback to direct query
+          const fallback = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .maybeSingle();
+
+          if (fallback.error) throw fallback.error;
+          return fallback.data;
+        }
+
+        // RPC returns jsonb with { profile, organization }
+        if (data?.profile) {
+          console.log('[SupabaseProfileRepo] Profile loaded via RPC successfully');
+          return data.profile as Profile;
+        }
+
+        if (data?.error) {
+          throw new Error(data.error);
+        }
+
+        return null;
+      }
+
+      // For other users (admin viewing), use direct query
+      console.log('[SupabaseProfileRepo] Using direct query for user:', userId);
       const { data, error } = await supabase
         .from('profiles')
         .select('*')

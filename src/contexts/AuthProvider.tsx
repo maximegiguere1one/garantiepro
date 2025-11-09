@@ -36,9 +36,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const envType = getEnvironmentType();
   const isDemo = envType === 'webcontainer' || envType === 'bolt' || envType === 'stackblitz';
 
-  const loadProfile = useCallback(async (userId: string, silent = false) => {
+  const loadProfile = useCallback(async (userId: string, silent = false, retryCount = 0) => {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAYS = [1000, 2000, 5000]; // Progressive backoff
+
     try {
-      console.log('[AuthProvider] Loading profile for user:', userId, silent ? '(silent)' : '');
+      console.log('[AuthProvider] Loading profile for user:', userId, {
+        silent,
+        attempt: retryCount + 1,
+        maxRetries: MAX_RETRIES
+      });
 
       if (isDemo) {
         console.log('[AuthProvider] Demo mode - using DEMO_PROFILE');
@@ -46,28 +53,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
+      const startTime = Date.now();
       const profileData = await dataClient.profiles.getProfile(userId);
+      const duration = Date.now() - startTime;
+
+      console.log(`[AuthProvider] Profile query completed in ${duration}ms`);
 
       if (!profileData) {
-        throw new Error('Profile not found');
+        throw new Error('Profile not found in database');
       }
 
       setProfile(profileData);
-      console.log('[AuthProvider] Profile loaded successfully');
+      console.log('[AuthProvider] ✓ Profile loaded successfully', {
+        role: profileData.role,
+        organizationId: profileData.organization_id,
+        duration: `${duration}ms`
+      });
     } catch (err: any) {
-      console.error('[AuthProvider] Profile load error:', err);
+      console.error('[AuthProvider] Profile load error:', {
+        error: err.message,
+        attempt: retryCount + 1,
+        silent
+      });
 
-      // In silent mode (background retry), don't throw errors
-      if (silent) {
-        console.warn('[AuthProvider] Silent profile load failed - will retry later');
+      // In silent mode (background retry), schedule another retry
+      if (silent && retryCount < MAX_RETRIES) {
+        const delay = RETRY_DELAYS[retryCount] || 5000;
+        console.log(`[AuthProvider] Scheduling retry #${retryCount + 2} in ${delay}ms`);
+
+        setTimeout(() => {
+          loadProfile(userId, true, retryCount + 1);
+        }, delay);
         return;
       }
 
-      if (err?.message === 'FETCH_TIMEOUT') {
-        throw new Error('Profile loading timed out. Please check your connection.');
+      // Not silent mode - throw the error
+      if (!silent) {
+        if (err?.message === 'FETCH_TIMEOUT') {
+          throw new Error('Profile loading timed out. Please check your connection.');
+        }
+        throw err;
       }
-
-      throw err;
     }
   }, [isDemo]);
 
