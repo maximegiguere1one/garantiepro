@@ -38,6 +38,11 @@ export const isStackBlitzEnvironment = () => {
 };
 
 export const getEnvironmentType = (): 'production' | 'development' | 'webcontainer' | 'bolt' | 'stackblitz' => {
+  // IMPORTANT: Toujours forcer production sur garantieproremorque.com
+  if (typeof window !== 'undefined' && window.location.hostname.includes('garantieproremorque.com')) {
+    return 'production';
+  }
+
   if (isBoltEnvironment()) return 'bolt';
   if (isStackBlitzEnvironment()) return 'stackblitz';
   if (isWebContainerEnvironment()) return 'webcontainer';
