@@ -583,10 +583,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    logger.info('Attempting sign in for:', email);
+    // Guard: prevent concurrent sign-in calls
+    if (loadingRef.current) {
+      logger.debug('Sign in skipped: already loading');
+      return;
+    }
+
+    // Guard: prevent sign-in if user already exists
+    if (user) {
+      logger.debug('Sign in skipped: user already authenticated');
+      return;
+    }
+
+    logger.info(`Attempting sign in for: ${email}`);
 
     const envType = getEnvironmentType();
     const timeouts = getTimeouts();
+
+    // Mark as loading to prevent concurrent calls
+    loadingRef.current = true;
 
     // Mode démo pour WebContainer/Bolt (pas de connexion réseau disponible)
     if (envType === 'bolt' || envType === 'webcontainer') {
@@ -614,6 +629,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
 
       logger.info('Demo mode sign in successful');
+      loadingRef.current = false;
       return;
     }
 
@@ -657,9 +673,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .then(() => logger.debug('Last sign-in timestamp updated'))
           .catch(error => logger.warn('Failed to update last sign-in timestamp:', error));
       }
+
+      // Sign-in successful, reset loading ref
+      loadingRef.current = false;
     } catch (error) {
+      // Reset loading ref on error
+      loadingRef.current = false;
+
       if (error instanceof Error && error.message === 'SIGNIN_TIMEOUT') {
-        logger.error('Sign in timed out after', signInTimeout, 'ms');
+        logger.error('Sign in timed out');
         throw new Error('La connexion a pris trop de temps. Vérifiez votre connexion internet et réessayez.');
       }
       throw error;

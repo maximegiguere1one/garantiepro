@@ -1,7 +1,9 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { createLogger } from '../lib/logger';
+import { getEnvironmentType } from '../lib/environment-detection';
+import { DEMO_ORG_ID, DEMO_ORGANIZATION } from '../lib/demo-constants';
 import type { Database } from '../lib/database.types';
 
 const logger = createLogger('[OrganizationContext]');
@@ -25,7 +27,27 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadOrganization = async () => {
+  const loadOrganization = useCallback(async () => {
+    // Check for demo environment first
+    const envType = getEnvironmentType();
+    if (envType === 'webcontainer' || envType === 'bolt') {
+      logger.info('[OrganizationContext] Demo env detected — returning DEMO_ORGANIZATION');
+
+      // Clean up localStorage if it contains stale organization IDs in demo mode
+      const stored = localStorage.getItem('active_organization_id');
+      if (stored && stored !== DEMO_ORG_ID) {
+        logger.debug('[OrganizationContext] Clearing stale organization ID from localStorage');
+        localStorage.removeItem('active_organization_id');
+      }
+
+      // Set demo organization and exit
+      setCurrentOrganization(DEMO_ORGANIZATION);
+      setIsOwner(true);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
     if (!profile) {
       setLoading(false);
       return;
@@ -39,7 +61,7 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      logger.debug('Loading organization:', profile.organization_id);
+      logger.debug('[OrganizationContext] Loading organization:', profile.organization_id);
       setError(null);
 
       const { data, error: fetchError } = await supabase
@@ -67,11 +89,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile]);
 
   useEffect(() => {
     loadOrganization();
-  }, [profile?.organization_id]);
+  }, [loadOrganization]);
 
   const refreshOrganization = async () => {
     setLoading(true);
