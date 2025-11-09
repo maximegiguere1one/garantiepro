@@ -128,13 +128,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let profileData;
       let profileError;
 
+      console.log('[AuthContext] About to fetch profile for user:', userId);
       try {
+        console.log('[AuthContext] Calling supabase.from(profiles)...');
         const result = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle();
 
+        console.log('[AuthContext] Profile query result:', result);
         profileData = result.data;
         profileError = result.error;
       } catch (err: any) {
