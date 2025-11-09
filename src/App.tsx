@@ -153,8 +153,10 @@ function AppContent() {
   console.log('[AppContent] Rendering dashboard layout');
 
   const renderPage = () => {
+    console.log('[AppContent] renderPage called, currentPage:', currentPage);
     switch (currentPage) {
       case 'dashboard':
+        console.log('[AppContent] Rendering DealerDashboardComplete');
         return <DealerDashboardComplete onNavigate={setCurrentPage} />;
       case 'admin-dashboard':
         return <AdminDashboard />;
@@ -219,8 +221,10 @@ function AppContent() {
     }
   };
 
+  console.log('[AppContent] About to render DashboardLayoutV2');
+
   return (
-    <>
+    <ErrorBoundary>
       <TourInitializer />
       <DashboardLayoutV2 currentPage={currentPage} onNavigate={setCurrentPage}>
         <Suspense fallback={
@@ -231,7 +235,7 @@ function AppContent() {
           {renderPage()}
         </Suspense>
       </DashboardLayoutV2>
-    </>
+    </ErrorBoundary>
   );
 }
 
