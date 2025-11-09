@@ -456,7 +456,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (session?.user) {
           logger.info('User found, loading profile...');
+          console.log('[AuthContext] initAuth - calling loadProfile for:', session.user.id);
           await loadProfile(session.user.id);
+          console.log('[AuthContext] initAuth - loadProfile completed');
         } else {
           logger.info('No active session');
           setLoading(false);
@@ -510,11 +512,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
 
-      // CRITICAL FIX: Load profile for ALL auth events when user exists
-      // Previously we skipped INITIAL_SESSION which prevented profile loading after login
-      if (session?.user) {
-        console.log('[AuthContext] User exists, calling loadProfile for:', session.user.id);
+      // Only load profile for non-INITIAL_SESSION events
+      // INITIAL_SESSION is already handled by the initAuth() useEffect
+      if (session?.user && _event !== 'INITIAL_SESSION') {
+        console.log('[AuthContext] User exists (non-initial), calling loadProfile for:', session.user.id);
         await loadProfile(session.user.id);
+      } else if (session?.user && _event === 'INITIAL_SESSION') {
+        console.log('[AuthContext] INITIAL_SESSION - profile loading handled by initAuth, skipping');
       } else if (!session?.user) {
         console.log('[AuthContext] No user, clearing profile');
         setProfile(null);
