@@ -131,13 +131,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[AuthContext] About to fetch profile for user:', userId);
       try {
         console.log('[AuthContext] Calling supabase.from(profiles)...');
+
+        // Check if we have a session first
+        const { data: { session } } = await supabase.auth.getSession();
+        console.log('[AuthContext] Current session:', session ? 'EXISTS' : 'NULL');
+        console.log('[AuthContext] Session user:', session?.user?.id);
+
         const result = await supabase
           .from('profiles')
           .select('*')
           .eq('id', userId)
           .maybeSingle();
 
-        console.log('[AuthContext] Profile query result:', result);
+        console.log('[AuthContext] Profile query result:', {
+          data: result.data ? 'EXISTS' : 'NULL',
+          error: result.error,
+          status: result.status,
+          statusText: result.statusText
+        });
+
         profileData = result.data;
         profileError = result.error;
       } catch (err: any) {
