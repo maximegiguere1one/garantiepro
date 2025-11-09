@@ -1,5 +1,5 @@
 import { ReactNode, useState } from 'react';
-import { ShieldCheck, LogOut, Search } from 'lucide-react';
+import { ShieldCheck, LogOut, Search, LayoutDashboard, Plus, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { GlobalSearch } from './GlobalSearch';
 import { NotificationCenter } from './NotificationCenter';
@@ -19,6 +19,7 @@ import {
   getPageTitle,
   getPageDescription,
 } from '../utils/navigation.utils';
+import * as icons from 'lucide-react';
 
 interface DashboardLayoutV2Props {
   children: ReactNode;
