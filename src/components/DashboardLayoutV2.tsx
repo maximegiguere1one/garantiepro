@@ -43,7 +43,18 @@ export function DashboardLayoutV2({
   );
 
   if (!profile) {
-    return null;
+    console.warn('[DashboardLayoutV2] No profile - rendering children anyway for demo mode');
+    // Return children directly without layout if no profile
+    return (
+      <div className="min-h-screen bg-slate-50">
+        <div className="p-4 bg-yellow-50 border-b border-yellow-200">
+          <p className="text-yellow-800 text-sm text-center">
+            ⚠️ Mode dégradé - Profil non chargé
+          </p>
+        </div>
+        {children}
+      </div>
+    );
   }
 
   // Build navigation based on user context
