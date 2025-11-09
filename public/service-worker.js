@@ -1,6 +1,6 @@
-const CACHE_NAME = 'warranty-app-v2';
-const RUNTIME_CACHE = 'warranty-runtime-v2';
-const IMAGE_CACHE = 'warranty-images-v1';
+const CACHE_NAME = 'warranty-app-v3';
+const RUNTIME_CACHE = 'warranty-runtime-v3';
+const IMAGE_CACHE = 'warranty-images-v2';
 const MAX_CACHE_AGE = 30 * 24 * 60 * 60 * 1000;
 
 const STATIC_ASSETS = [
@@ -88,13 +88,14 @@ async function cleanupOldCacheEntries() {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
+  let url;
 
   try {
-    const url = new URL(request.url);
+    url = new URL(request.url);
 
     // Exclude Supabase requests - let them pass through directly to network
     if (url.hostname.endsWith('.supabase.co') || url.href.includes('supabase.co')) {
-      console.log('[Service Worker] Bypassing Supabase request:', url.href);
+      console.log('[Service Worker] Bypassing Supabase request:', request.url);
       return; // Let browser handle it directly
     }
 
@@ -106,10 +107,12 @@ self.addEventListener('fetch', (event) => {
       return;
     }
   } catch (e) {
-    // Ignore non-http(s) requests
+    // Ignore non-http(s) requests or URL parsing errors
+    console.error('[Service Worker] Error parsing URL:', e);
     return;
   }
 
+  // At this point, url is guaranteed to be defined and valid
   if (isImageRequest(request)) {
     event.respondWith(handleImageRequest(request));
     return;
