@@ -75,11 +75,11 @@ export const getOptimalTimeouts = () => {
   }
 
   return {
-    sessionTimeout: 8000,
-    profileTimeout: 10000,
-    retryDelay: 1000,
-    maxRetries: 2,
-    emergencyTimeout: 30000
+    sessionTimeout: 30000,
+    profileTimeout: 30000,
+    retryDelay: 2000,
+    maxRetries: 3,
+    emergencyTimeout: 60000
   };
 };
 
