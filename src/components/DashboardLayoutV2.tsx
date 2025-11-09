@@ -45,41 +45,87 @@ export function DashboardLayoutV2({
 
   // If no profile but we have a user, show layout with fallback data
   if (!profile && user) {
-    console.log('[DashboardLayoutV2] No profile yet, using fallback layout');
+    console.log('[DashboardLayoutV2] No profile yet, using fallback layout with navigation');
 
     // Minimal fallback navigation
     const fallbackNavigation = [
       { id: 'dashboard', label: 'Tableau de bord', icon: 'LayoutDashboard', page: 'dashboard' },
+      { id: 'new-warranty', label: 'Nouvelle garantie', icon: 'Plus', page: 'new-warranty' },
+      { id: 'warranties', label: 'Garanties', icon: 'FileText', page: 'warranties' },
     ];
 
     return (
-      <div className="min-h-screen bg-slate-50">
-        <div className="sticky top-0 z-40 bg-white border-b border-slate-200/60 shadow-sm">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <img
-                  src="/Pro remorque.png"
-                  alt="Pro Remorque"
-                  className="h-8 w-auto"
-                />
-                <span className="font-semibold text-slate-900">Pro Remorque</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span className="text-sm text-slate-600">{user.email}</span>
+      <div className="min-h-screen bg-slate-50 flex">
+        {/* Sidebar Navigation */}
+        <div className="w-64 bg-white border-r border-slate-200 flex flex-col">
+          {/* Logo */}
+          <div className="p-6 border-b border-slate-200">
+            <div className="flex items-center gap-3">
+              <img
+                src="/Pro remorque.png"
+                alt="Pro Remorque"
+                className="h-8 w-auto"
+              />
+              <span className="font-semibold text-slate-900">Pro Remorque</span>
+            </div>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex-1 p-4 space-y-1">
+            {fallbackNavigation.map((item) => {
+              const Icon = icons[item.icon as keyof typeof icons];
+              const isActive = currentPage === item.page;
+
+              return (
                 <button
-                  onClick={signOut}
-                  className="text-slate-600 hover:text-slate-900"
-                  title="Déconnexion"
+                  key={item.id}
+                  onClick={() => onNavigate(item.page)}
+                  className={`
+                    w-full flex items-center gap-3 px-4 py-3 rounded-lg
+                    transition-all duration-200 text-left
+                    ${isActive
+                      ? 'bg-red-50 text-red-700 font-medium'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    }
+                  `}
                 >
-                  <LogOut className="h-5 w-5" />
+                  <Icon className="h-5 w-5 flex-shrink-0" />
+                  <span>{item.label}</span>
                 </button>
+              );
+            })}
+          </nav>
+
+          {/* User Info at Bottom */}
+          <div className="p-4 border-t border-slate-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="h-8 w-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-sm font-medium text-red-700">
+                    {user.email?.[0]?.toUpperCase()}
+                  </span>
+                </div>
+                <span className="text-sm text-slate-600 truncate">{user.email}</span>
               </div>
+              <button
+                onClick={signOut}
+                className="text-slate-400 hover:text-slate-600 flex-shrink-0 ml-2"
+                title="Déconnexion"
+              >
+                <LogOut className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+              Chargement du profil...
             </div>
           </div>
         </div>
-        <div className="px-6 py-8">
-          {children}
+
+        {/* Main Content */}
+        <div className="flex-1 overflow-auto">
+          <div className="p-6">
+            {children}
+          </div>
         </div>
       </div>
     );

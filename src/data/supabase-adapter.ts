@@ -125,47 +125,30 @@ class SupabaseAuthRepo implements AuthRepo {
 class SupabaseProfileRepo implements ProfileRepo {
   async getProfile(userId: string): Promise<Profile | null> {
     try {
-      // Use optimized RPC function for current user
-      if (userId === (await supabase.auth.getUser()).data.user?.id) {
-        console.log('[SupabaseProfileRepo] Using optimized RPC for current user');
+      console.log('[SupabaseProfileRepo] Loading profile for:', userId);
 
-        const { data, error } = await supabase.rpc('get_user_profile_complete');
-
-        if (error) {
-          console.warn('[SupabaseProfileRepo] RPC failed, falling back to direct query:', error);
-          // Fallback to direct query
-          const fallback = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-
-          if (fallback.error) throw fallback.error;
-          return fallback.data;
-        }
-
-        // RPC returns jsonb with { profile, organization }
-        if (data?.profile) {
-          console.log('[SupabaseProfileRepo] Profile loaded via RPC successfully');
-          return data.profile as Profile;
-        }
-
-        if (data?.error) {
-          throw new Error(data.error);
-        }
-
-        return null;
-      }
-
-      // For other users (admin viewing), use direct query
-      console.log('[SupabaseProfileRepo] Using direct query for user:', userId);
+      // Simple direct query - RLS handles permissions
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[SupabaseProfileRepo] Error:', error);
+        throw error;
+      }
+
+      if (data) {
+        console.log('[SupabaseProfileRepo] ✓ Profile loaded:', {
+          id: data.id,
+          role: data.role,
+          organizationId: data.organization_id
+        });
+      } else {
+        console.warn('[SupabaseProfileRepo] No profile found for user:', userId);
+      }
+
       return data;
     } catch (err: any) {
       if (err?.name === 'AbortError' || err?.message?.toLowerCase().includes('aborted')) {
