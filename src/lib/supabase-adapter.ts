@@ -65,6 +65,48 @@ export const profilesAdapter = {
 
     return { data, error };
   },
+
+  async count() {
+    if (isDemoMode()) {
+      return { count: 1, error: null };
+    }
+
+    const { count, error } = await supabase
+      .from('profiles')
+      .select('id', { count: 'exact', head: true });
+
+    return { count, error };
+  },
+
+  async selectLimit(limit: number = 1) {
+    if (isDemoMode()) {
+      return { data: [DEMO_PROFILE].slice(0, limit), error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('id')
+      .limit(limit);
+
+    return { data, error };
+  },
+
+  async getByEmail(email: string) {
+    if (isDemoMode()) {
+      if (email === DEMO_PROFILE.email) {
+        return { data: DEMO_PROFILE, error: null };
+      }
+      return { data: null, error: null };
+    }
+
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('email', email)
+      .maybeSingle();
+
+    return { data, error };
+  },
 };
 
 export const organizationsAdapter = {

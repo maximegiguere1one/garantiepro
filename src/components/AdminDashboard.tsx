@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import { profilesAdapter } from '../lib/supabase-adapter';
 import { useAuth } from '../contexts/AuthContext';
 import {
   Building2,
@@ -72,7 +73,7 @@ export function AdminDashboard() {
         supabase.from('organizations').select('*').eq('type', 'franchisee'),
         supabase.from('warranty_transactions').select('*'),
         supabase.from('franchise_invoices').select('*').in('status', ['sent', 'overdue']),
-        supabase.from('profiles').select('id', { count: 'exact', head: true })
+        profilesAdapter.count()
       ]);
 
       const warrantyTransactions = (transactions.data || []) as WarrantyTransaction[];

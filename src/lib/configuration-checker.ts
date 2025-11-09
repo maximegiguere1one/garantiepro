@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { profilesAdapter } from './supabase-adapter';
 import { checkServiceHealth } from './error-tracking';
 
 export interface ConfigCheck {
@@ -36,7 +37,7 @@ async function checkSupabaseConfiguration(): Promise<ConfigCheck> {
     }
 
     // Tester la connexion
-    const { error } = await supabase.from('profiles').select('id').limit(1);
+    const { error } = await profilesAdapter.selectLimit(1);
 
     if (error) {
       return {

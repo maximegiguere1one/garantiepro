@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { profilesAdapter } from './supabase-adapter';
 
 export interface HealthCheckResult {
   status: 'healthy' | 'unhealthy' | 'degraded';
@@ -26,9 +27,7 @@ export async function performHealthCheck(): Promise<HealthCheckResult> {
 
   try {
     // Test 1: Basic connection
-    const { data: pingData, error: pingError } = await supabase
-      .from('profiles')
-      .select('count', { count: 'exact', head: true });
+    const { count: pingData, error: pingError } = await profilesAdapter.count();
 
     if (pingError) {
       result.checks.details = `Connection failed: ${pingError.message}`;
@@ -48,10 +47,7 @@ export async function performHealthCheck(): Promise<HealthCheckResult> {
 
     // Test 3: Database query
     try {
-      const { data: dbData, error: dbError } = await supabase
-        .from('profiles')
-        .select('id')
-        .limit(1);
+      const { data: dbData, error: dbError } = await profilesAdapter.selectLimit(1);
 
       if (!dbError) {
         result.checks.database = true;

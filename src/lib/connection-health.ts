@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { profilesAdapter } from './supabase-adapter';
 import { createLogger } from './logger';
 import { isWebContainerEnvironment } from './environment-detection';
 
@@ -37,7 +38,7 @@ export async function checkConnectionHealth(timeout = 8000): Promise<ConnectionH
   try {
     const healthCheckPromise = (async () => {
       try {
-        const { error } = await supabase.from('profiles').select('id').limit(1);
+        const { error } = await profilesAdapter.selectLimit(1);
 
         if (!error || error.code === 'PGRST116') {
           result.details.supabaseReachable = true;

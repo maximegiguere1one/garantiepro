@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, UserPlus, Shield, Key, Trash2, CreditCard as Edit3, RefreshCw, Lock, Mail, CheckCircle, XCircle, AlertCircle, Send } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { profilesAdapter } from '../../lib/supabase-adapter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../common/Button';
@@ -69,11 +70,7 @@ export function UsersManagement() {
     if (!organization?.id) return;
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('organization_id', organization.id)
-        .order('created_at', { ascending: false });
+      const { data, error } = await profilesAdapter.getByOrganization(organization.id);
 
       if (error) throw error;
 
