@@ -52,4 +52,10 @@ console.log(`[Supabase] Initialized in ${envType} environment with ${timeouts.se
 
 if (envType === 'bolt' || envType === 'webcontainer') {
   console.log('[Supabase] Running in WebContainer - using optimized settings for limited network access');
+
+  // Disable remote logs in demo environments to prevent unnecessary network requests
+  if (typeof window !== 'undefined') {
+    (window as any).__DISABLE_REMOTE_LOGS__ = true;
+    console.log('[Supabase] Remote logging disabled in demo environment');
+  }
 }

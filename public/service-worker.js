@@ -88,60 +88,70 @@ async function cleanupOldCacheEntries() {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  let url;
 
-  try {
-    url = new URL(request.url);
+  // Wrap everything in respondWith to handle all requests properly
+  event.respondWith((async () => {
+    try {
+      const url = new URL(request.url);
 
-    // Exclude Supabase requests - let them pass through directly to network
-    if (url.hostname.endsWith('.supabase.co') || url.href.includes('supabase.co')) {
-      console.log('[Service Worker] Bypassing Supabase request:', request.url);
-      return; // Let browser handle it directly
+      // CRITICAL: Bypass all Supabase requests - return fetch directly without caching
+      // This prevents auth/v1/token and rest/v1/* from being intercepted
+      if (url.hostname.endsWith('.supabase.co') || url.href.includes('supabase.co')) {
+        console.log('[Service Worker] Bypassing Supabase request:', request.url);
+        return fetch(request);
+      }
+
+      // Bypass non-GET requests (POST, PUT, DELETE, etc.)
+      if (request.method !== 'GET') {
+        return fetch(request);
+      }
+
+      // Bypass cross-origin requests (not from our domain)
+      if (url.origin !== location.origin) {
+        return fetch(request);
+      }
+
+      // Handle image requests with image cache
+      if (isImageRequest(request)) {
+        return handleImageRequest(request);
+      }
+
+      // Handle CSS/JS with cache-first strategy
+      if (isCSSOrJS(request)) {
+        return cacheFirst(request);
+      }
+
+      // Determine strategy for other requests
+      const strategy = getStrategyForRoute(url.pathname);
+
+      switch (strategy) {
+        case CACHE_STRATEGIES.cacheFirst:
+          return cacheFirst(request);
+        case CACHE_STRATEGIES.networkFirst:
+          return networkFirst(request);
+        case CACHE_STRATEGIES.networkOnly:
+          return fetch(request);
+        case CACHE_STRATEGIES.cacheOnly:
+          return caches.match(request);
+        default:
+          return networkFirst(request);
+      }
+    } catch (error) {
+      // On any error, try to fetch directly as fallback
+      console.error('[Service Worker] Fetch handler error:', error);
+      try {
+        return fetch(request);
+      } catch (fetchError) {
+        return new Response('Service Worker Error', {
+          status: 502,
+          statusText: 'Bad Gateway',
+          headers: new Headers({ 'Content-Type': 'text/plain' }),
+        });
+      }
     }
-
-    if (request.method !== 'GET') {
-      return;
-    }
-
-    if (url.origin !== location.origin) {
-      return;
-    }
-  } catch (e) {
-    // Ignore non-http(s) requests or URL parsing errors
-    console.error('[Service Worker] Error parsing URL:', e);
-    return;
-  }
-
-  // At this point, url is guaranteed to be defined and valid
-  if (isImageRequest(request)) {
-    event.respondWith(handleImageRequest(request));
-    return;
-  }
-
-  if (isCSSOrJS(request)) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  const strategy = getStrategyForRoute(url.pathname);
-
-  switch (strategy) {
-    case CACHE_STRATEGIES.cacheFirst:
-      event.respondWith(cacheFirst(request));
-      break;
-    case CACHE_STRATEGIES.networkFirst:
-      event.respondWith(networkFirst(request));
-      break;
-    case CACHE_STRATEGIES.networkOnly:
-      event.respondWith(fetch(request));
-      break;
-    case CACHE_STRATEGIES.cacheOnly:
-      event.respondWith(caches.match(request));
-      break;
-    default:
-      event.respondWith(networkFirst(request));
-  }
+  })());
 });
+
 
 async function handleImageRequest(request) {
   const cache = await caches.open(IMAGE_CACHE);

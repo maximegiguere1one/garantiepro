@@ -1,3 +1,13 @@
+/**
+ * demo-constants.ts
+ *
+ * Stable demo data constants for WebContainer/Bolt environments.
+ * These UUIDs are deterministic and match expected database format.
+ *
+ * IMPORTANT: These values are only used when getEnvironmentType()
+ * returns 'webcontainer', 'bolt', or 'stackblitz'.
+ */
+
 export const DEMO_USER_ID = '00000000-0000-4000-8000-000000000001';
 export const DEMO_ORG_ID = '00000000-0000-4000-8000-0000000000ab';
 
@@ -25,6 +35,7 @@ export const DEMO_ORGANIZATION = {
   id: DEMO_ORG_ID,
   name: 'Organisation Démo',
   type: 'owner' as const,
+  status: 'active' as const,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
   parent_organization_id: null,
