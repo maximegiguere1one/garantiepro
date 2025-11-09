@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, AlertTriangle, Eye, EyeOff, Loader2, Zap } from 'lucide-react';
 import { microcopy } from '../lib/microcopy';
 import { getConnectionErrorMessage } from '../lib/supabase-health-check';
@@ -8,8 +9,10 @@ import { getEnvironmentInfo } from '../lib/environment-detection';
 export function LoginPage() {
   const authContext = useAuth();
   console.log('[LoginPage] useAuth returned:', authContext);
-  const { signIn, profileError } = authContext;
+  const { user, signIn, profileError } = authContext;
   console.log('[LoginPage] signIn function:', typeof signIn);
+  console.log('[LoginPage] user:', user);
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +28,14 @@ export function LoginPage() {
       setRememberMe(true);
     }
   }, []);
+
+  // Redirect to dashboard if user is logged in
+  useEffect(() => {
+    if (user) {
+      console.log('[LoginPage] User logged in, redirecting to dashboard');
+      navigate('/', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
