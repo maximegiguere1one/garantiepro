@@ -62,18 +62,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const useAggressiveCache = shouldUseAggressiveCaching();
 
     if (loadingRef.current) {
+      console.warn('[AuthContext] ⚠️ Profile load already in progress, skipping!');
       logger.debug('Profile load already in progress, skipping');
       return;
     }
+    console.log('[AuthContext] ✓ No concurrent load, proceeding...');
 
-    const debounceTime = envType === 'bolt' ? 2000 : 5000;
-    const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
-    if (timeSinceLastLoad < debounceTime && retryCount === 0) {
-      logger.debug(`Debouncing profile load (${debounceTime}ms), too soon since last load`);
-      return;
-    }
+    try {
+      const debounceTime = envType === 'bolt' ? 2000 : 5000;
+      const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
+      console.log('[AuthContext] Debounce check:', timeSinceLastLoad, 'ms since last load, threshold:', debounceTime);
+      if (timeSinceLastLoad < debounceTime && retryCount === 0) {
+        console.warn('[AuthContext] ⚠️ Debouncing - too soon since last load!');
+        logger.debug(`Debouncing profile load (${debounceTime}ms), too soon since last load`);
+        return;
+      }
 
-    loadingRef.current = true;
+      loadingRef.current = true;
     lastLoadTimeRef.current = Date.now();
     setLoadingTimedOut(false);
 
@@ -326,6 +331,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
     } catch (error) {
+      console.error('[AuthContext] ❌ CATCH BLOCK - Error loading user data:', error);
       logger.error('Error loading user data:', error);
 
       // Check if aborted
@@ -373,9 +379,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.removeItem(`user_data_${userId}`);
 
     } finally {
+      console.log('[AuthContext] FINALLY block - resetting loading states');
       setLoading(false);
       loadingRef.current = false;
     }
+  } catch (outerError) {
+    console.error('[AuthContext] ❌ OUTER CATCH - Unexpected error in loadProfile:', outerError);
+    loadingRef.current = false;
+    setLoading(false);
+  }
   }, []);
 
   useEffect(() => {
