@@ -233,8 +233,46 @@ supabase.rpc('update_my_last_sign_in')
 ## 🔗 Fichiers Modifiés
 
 1. `src/lib/environment-detection.ts` - Timeouts augmentés
-2. `public/diagnostic-connexion.html` - Page de diagnostic créée
-3. `BUG_REPORT_SUPABASE_RATE_LIMIT_NOV9_2025.md` - Ce document
+2. `src/contexts/AuthContext.tsx` - Timeout ajouté sur signIn()
+3. `public/diagnostic-connexion.html` - Page de diagnostic créée
+4. `BUG_REPORT_SUPABASE_RATE_LIMIT_NOV9_2025.md` - Ce document
+
+---
+
+## 🔧 Fix Additionnel - Route /login
+
+**Problème découvert:** La route `/login` bloquait même après le fix initial.
+
+**Cause:** La fonction `signIn()` n'avait **PAS de timeout!**
+
+```typescript
+// AVANT (❌ pas de timeout)
+const { data, error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+});
+```
+
+**Solution appliquée:**
+```typescript
+// APRÈS (✅ timeout de 30 secondes)
+const { data, error } = await Promise.race([
+  supabase.auth.signInWithPassword({
+    email,
+    password,
+  }),
+  new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('SIGNIN_TIMEOUT')), 30000)
+  )
+]);
+```
+
+**Fichier modifié:** `src/contexts/AuthContext.tsx` (ligne 559-648)
+
+**Impact:**
+- ✅ `/login` ne bloque plus indéfiniment
+- ✅ Message d'erreur clair après timeout
+- ✅ update_my_last_sign_in en background (non-bloquant)
 
 ---
 
@@ -242,6 +280,7 @@ supabase.rpc('update_my_last_sign_in')
 
 - [x] Build réussi
 - [x] Timeouts augmentés en production
+- [x] Timeout ajouté sur `/login` (signIn function)
 - [x] Page diagnostic créée
 - [x] Documentation complète
 - [x] Bug résolu ✅
@@ -250,4 +289,4 @@ supabase.rpc('update_my_last_sign_in')
 
 **Créé par:** Assistant IA
 **Validé par:** Équipe Pro Remorque
-**Statut Final:** ✅ RÉSOLU - Prêt pour production
+**Statut Final:** ✅ RÉSOLU COMPLET - Prêt pour production

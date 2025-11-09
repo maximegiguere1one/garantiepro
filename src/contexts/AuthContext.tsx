@@ -560,6 +560,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logger.info('Attempting sign in for:', email);
 
     const envType = getEnvironmentType();
+    const timeouts = getTimeouts();
 
     // Mode démo pour WebContainer/Bolt (pas de connexion réseau disponible)
     if (envType === 'bolt' || envType === 'webcontainer') {
@@ -604,31 +605,45 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    // Ajouter un timeout pour éviter le blocage
+    const signInTimeout = timeouts.sessionTimeout;
+    logger.info(`Sign in with ${signInTimeout}ms timeout in ${envType} environment`);
 
-    if (error) {
-      logger.error('Sign in error:', {
-        message: error.message,
-        status: error.status,
-        name: error.name,
-        code: (error as any).code,
-      });
-      throw error;
-    }
+    try {
+      const { data, error } = await Promise.race([
+        supabase.auth.signInWithPassword({
+          email,
+          password,
+        }),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('SIGNIN_TIMEOUT')), signInTimeout)
+        )
+      ]);
 
-    logger.info('Sign in successful:', data.user?.email);
-
-    // Mettre à jour la dernière connexion
-    if (data.user?.id) {
-      try {
-        await supabase.rpc('update_my_last_sign_in');
-        logger.debug('Last sign-in timestamp updated');
-      } catch (error) {
-        logger.warn('Failed to update last sign-in timestamp:', error);
+      if (error) {
+        logger.error('Sign in error:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          code: (error as any).code,
+        });
+        throw error;
       }
+
+      logger.info('Sign in successful:', data.user?.email);
+
+      // Mettre à jour la dernière connexion (en arrière-plan, non-bloquant)
+      if (data.user?.id) {
+        supabase.rpc('update_my_last_sign_in')
+          .then(() => logger.debug('Last sign-in timestamp updated'))
+          .catch(error => logger.warn('Failed to update last sign-in timestamp:', error));
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'SIGNIN_TIMEOUT') {
+        logger.error('Sign in timed out after', signInTimeout, 'ms');
+        throw new Error('La connexion a pris trop de temps. Vérifiez votre connexion internet et réessayez.');
+      }
+      throw error;
     }
   };
 
