@@ -80,15 +80,25 @@ function AppContent() {
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState('dashboard');
 
+  // Debug logs
+  console.log('[AppContent] State:', {
+    user: user ? 'present' : 'null',
+    loading,
+    profileError,
+    loadingTimedOut
+  });
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user && !profileError) {
+      console.log('[AppContent] No user, redirecting to login');
       navigate('/login', { replace: true });
     }
   }, [user, loading, profileError, navigate]);
 
   // Show emergency access page if loading timed out AND there's an error
   if (loadingTimedOut && profileError && !user) {
+    console.log('[AppContent] Showing emergency access page');
     return (
       <EmergencyAccessPage
         errorMessage={profileError}
@@ -99,6 +109,7 @@ function AppContent() {
   }
 
   if (loading) {
+    console.log('[AppContent] Showing loading screen');
     return (
       <LoadingWithTimeout
         message="Chargement de votre profil"
@@ -113,6 +124,7 @@ function AppContent() {
 
   // Show profile recovery if there's a profile error and user is authenticated
   if (user && profileError && (profileError.includes('PROFILE_NOT_FOUND') || profileError.includes('permission') || profileError.includes('Permission'))) {
+    console.log('[AppContent] Showing profile recovery');
     return (
       <Suspense fallback={
         <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -130,12 +142,15 @@ function AppContent() {
 
   // Don't render anything if not authenticated (will redirect via useEffect)
   if (!user) {
+    console.log('[AppContent] No user, showing spinner (will redirect)');
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900"></div>
       </div>
     );
   }
+
+  console.log('[AppContent] Rendering dashboard layout');
 
   const renderPage = () => {
     switch (currentPage) {
