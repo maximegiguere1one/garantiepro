@@ -118,8 +118,15 @@ const EmptyState = ({ onNavigate }: { onNavigate?: (page: string) => void }) => 
 );
 
 export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardCompleteProps) => {
+  console.log('[DealerDashboardComplete] Component rendering');
+
   const { profile, organization: currentOrganization } = useAuth();
   const toast = useToast();
+
+  console.log('[DealerDashboardComplete] Auth state:', {
+    profile: profile ? 'present' : 'null',
+    organization: currentOrganization ? 'present' : 'null'
+  });
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -130,11 +137,23 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
   const [hasData, setHasData] = useState(true);
 
   const loadDashboardData = useCallback(async () => {
+    console.log('[DealerDashboardComplete] loadDashboardData called');
     if (!profile?.id || !currentOrganization?.id) {
+      console.log('[DealerDashboardComplete] Missing profile or organization - using demo mode');
+
+      // Set demo stats instead of leaving empty
+      setStats({
+        revenue: { current: 0, previous: 0, trend: 0, projected: 0 },
+        warranties: { total: 0, active: 0, thisWeek: 0, avgDuration: 0 },
+        claims: { open: 0, pending: 0, avgResolution: 0, approvalRate: 0 },
+        inventory: { totalValue: 0, available: 0, lowStock: 0 }
+      });
+      setHasData(false);
       setLoading(false);
       return;
     }
 
+    console.log('[DealerDashboardComplete] Starting data fetch for org:', currentOrganization.id);
     try {
       setError(null);
       const now = new Date();
