@@ -6,7 +6,10 @@ import { getConnectionErrorMessage } from '../lib/supabase-health-check';
 import { getEnvironmentInfo } from '../lib/environment-detection';
 
 export function LoginPage() {
-  const { signIn, profileError } = useAuth();
+  const authContext = useAuth();
+  console.log('[LoginPage] useAuth returned:', authContext);
+  const { signIn, profileError } = authContext;
+  console.log('[LoginPage] signIn function:', typeof signIn);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +28,7 @@ export function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[LoginPage] Submit clicked', { email, password: '***' });
     setLoading(true);
     setError('');
 
@@ -34,8 +38,11 @@ export function LoginPage() {
       } else {
         localStorage.removeItem('remembered_email');
       }
+      console.log('[LoginPage] Calling signIn...');
       await signIn(email, password);
+      console.log('[LoginPage] signIn completed');
     } catch (err: any) {
+      console.error('[LoginPage] signIn error:', err);
       const errorMessage = getConnectionErrorMessage(err);
       setError(errorMessage);
     } finally {
