@@ -482,12 +482,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       logger.info('Auth state changed:', _event);
+      console.log('[AuthContext] onAuthStateChange - event:', _event, 'has user:', !!session?.user);
       setSession(session);
       setUser(session?.user ?? null);
 
-      if (session?.user && _event !== 'INITIAL_SESSION') {
+      // CRITICAL FIX: Load profile for ALL auth events when user exists
+      // Previously we skipped INITIAL_SESSION which prevented profile loading after login
+      if (session?.user) {
+        console.log('[AuthContext] User exists, calling loadProfile for:', session.user.id);
         await loadProfile(session.user.id);
       } else if (!session?.user) {
+        console.log('[AuthContext] No user, clearing profile');
         setProfile(null);
         setOrganization(null);
         setActiveOrganization(null);
