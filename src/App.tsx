@@ -157,7 +157,24 @@ function AppContent() {
     switch (currentPage) {
       case 'dashboard':
         console.log('[AppContent] Rendering DealerDashboardComplete');
-        return <DealerDashboardComplete onNavigate={setCurrentPage} />;
+        // TEMP: Test with simple component to debug lazy loading
+        return (
+          <div className="min-h-screen bg-slate-50 p-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200/60 p-8">
+                <h1 className="text-2xl font-bold text-slate-900 mb-4">Dashboard Test</h1>
+                <p className="text-slate-600">Si vous voyez ceci, le problème est dans DealerDashboardComplete lazy loading.</p>
+                <button
+                  onClick={() => console.log('Test OK')}
+                  className="mt-4 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                >
+                  Test Button
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+        // return <DealerDashboardComplete onNavigate={setCurrentPage} />;
       case 'admin-dashboard':
         return <AdminDashboard />;
       case 'organizations':
