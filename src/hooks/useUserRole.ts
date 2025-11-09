@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { profilesAdapter } from '../lib/supabase-adapter';
 import { useAuth } from '../contexts/AuthContext';
 
 export type UserRole = 'dealer' | 'operator' | 'support' | 'admin' | 'master' | 'employee' | 'customer';
@@ -19,11 +19,7 @@ export function useUserRole() {
       }
 
       try {
-        const { data, error: fetchError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle();
+        const { data, error: fetchError } = await profilesAdapter.getById(user.id);
 
         if (fetchError) {
           console.error('Error fetching user role:', fetchError);

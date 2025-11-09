@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { User, Mail, Lock, Save, AlertCircle, CheckCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { profilesAdapter } from '../../lib/supabase-adapter';
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
 import { Button } from '../common/Button';
@@ -127,14 +128,10 @@ export function MyProfile() {
         }
       });
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: fullName.trim(),
-          phone: phone.trim() || null
-        })
-        .eq('id', profile.id)
-        .select();
+      const { data, error } = await profilesAdapter.update(profile.id, {
+        full_name: fullName.trim(),
+        phone: phone.trim() || null
+      });
 
       if (error) {
         console.error('[MyProfile] Supabase error details:', {

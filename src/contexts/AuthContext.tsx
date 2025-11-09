@@ -6,6 +6,7 @@ import { createLogger } from '../lib/logger';
 import { supabaseCache } from '../lib/supabase-cache';
 import { getOptimalTimeouts, getEnvironmentType, shouldUseAggressiveCaching } from '../lib/environment-detection';
 import type { Database } from '../lib/database.types';
+import { DEMO_USER_ID, DEMO_ORG_ID, DEMO_USER, DEMO_PROFILE, DEMO_ORGANIZATION } from '../lib/demo-constants';
 
 const logger = createLogger('[AuthContext]');
 
@@ -568,30 +569,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Simuler une connexion réussie avec des données mockées
       const mockUser = {
-        id: 'demo-user-id',
+        ...DEMO_USER,
         email: email,
-        role: 'master',
-        aud: 'authenticated',
-        created_at: new Date().toISOString(),
       } as any;
 
       const mockProfile = {
-        id: 'demo-user-id',
-        full_name: 'Mode Démo',
+        ...DEMO_PROFILE,
         email: email,
-        role: 'master' as const,
-        organization_id: 'demo-org-id',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
       };
 
-      const mockOrganization = {
-        id: 'demo-org-id',
-        name: 'Organisation Démo',
-        type: 'owner' as const,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
+      const mockOrganization = DEMO_ORGANIZATION;
 
       // Mettre à jour l'état avec les données mockées
       setUser(mockUser);
