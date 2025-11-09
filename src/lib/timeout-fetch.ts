@@ -93,16 +93,23 @@ export function createTimeoutFetch(config: TimeoutConfig) {
 
     // Set timeout to abort the request
     const timeoutId = setTimeout(() => {
+      console.warn(`[timeout-fetch] Aborted ${url} after ${timeoutMs}ms`);
       timeoutController.abort();
-      if (import.meta.env.DEV) {
-        console.warn(`[timeout-fetch] Aborted ${url} after ${timeoutMs}ms`);
-      }
     }, timeoutMs);
+
+    const startTime = Date.now();
+    console.log(`[timeout-fetch] Starting request to ${url} (timeout: ${timeoutMs}ms)`);
 
     try {
       // Execute fetch with merged abort signal
       const response = await nativeFetch(input, { ...(init || {}), signal: compositeSignal });
+      const elapsed = Date.now() - startTime;
+      console.log(`[timeout-fetch] ✓ Response received in ${elapsed}ms (status: ${response.status})`);
       return response;
+    } catch (error: any) {
+      const elapsed = Date.now() - startTime;
+      console.error(`[timeout-fetch] ✗ Request failed after ${elapsed}ms:`, error.message);
+      throw error;
     } finally {
       // Always clear timeout to prevent memory leaks
       clearTimeout(timeoutId);

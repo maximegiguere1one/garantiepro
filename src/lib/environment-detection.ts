@@ -79,13 +79,13 @@ export const getOptimalTimeouts = () => {
     };
   }
 
-  // Production: Use shorter timeouts for faster UX
+  // Production: Use longer timeouts temporarily for debugging
   return {
-    sessionTimeout: 8000,    // 8s for session (faster than 30s)
-    profileTimeout: 10000,   // 10s for profile
+    sessionTimeout: 30000,   // 30s for session (debug)
+    profileTimeout: 30000,   // 30s for profile (debug)
     retryDelay: 1500,        // 1.5s between retries
-    maxRetries: 3,
-    emergencyTimeout: 25000  // 25s total emergency timeout
+    maxRetries: 5,           // More retries
+    emergencyTimeout: 60000  // 60s total emergency timeout
   };
 };
 
