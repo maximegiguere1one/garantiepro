@@ -124,18 +124,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Fetch profile from database with timeout
-      const fetchPromise = supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
+      // Fetch profile from database with timeout (now handled by fetchWithTimeout in supabase client)
+      let profileData;
+      let profileError;
 
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('FETCH_TIMEOUT')), timeouts.profileTimeout);
-      });
+      try {
+        const result = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle();
 
-      const { data: profileData, error: profileError } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+        profileData = result.data;
+        profileError = result.error;
+      } catch (err: any) {
+        // Normalize abort errors to FETCH_TIMEOUT
+        if (err?.name === 'AbortError' || (err?.message && err.message.toLowerCase().includes('aborted'))) {
+          logger.warn('Profile fetch aborted due to timeout');
+          throw new Error('FETCH_TIMEOUT');
+        }
+        throw err;
+      }
 
       if (profileError) {
         logger.error('Profile query error:', profileError);
@@ -170,17 +179,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (profileData.organization_id && !abortControllerRef.current?.signal.aborted) {
         logger.debug('Loading organization:', profileData.organization_id);
 
-        const orgFetchPromise = supabase
-          .from('organizations')
-          .select('id, name, type, status')
-          .eq('id', profileData.organization_id)
-          .maybeSingle();
+        let specificOrg;
+        let orgError;
 
-        const orgTimeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('ORG_FETCH_TIMEOUT')), timeouts.profileTimeout / 2);
-        });
+        try {
+          const result = await supabase
+            .from('organizations')
+            .select('id, name, type, status')
+            .eq('id', profileData.organization_id)
+            .maybeSingle();
 
-        const { data: specificOrg, error: orgError } = await Promise.race([orgFetchPromise, orgTimeoutPromise]) as any;
+          specificOrg = result.data;
+          orgError = result.error;
+        } catch (err: any) {
+          // Normalize abort errors
+          if (err?.name === 'AbortError' || (err?.message && err.message.toLowerCase().includes('aborted'))) {
+            logger.warn('Organization fetch aborted due to timeout');
+            throw new Error('ORG_FETCH_TIMEOUT');
+          }
+          throw err;
+        }
 
         if (orgError) {
           logger.error('Organization query error:', orgError);
@@ -370,14 +388,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         logger.info(`Initializing authentication in ${envType} environment...`);
 
-        const sessionTimeout = timeouts.sessionTimeout;
+        let sessionResult;
 
-        const { data: { session }, error } = await Promise.race([
-          supabase.auth.getSession(),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('GET_SESSION_TIMEOUT')), sessionTimeout)
-          )
-        ]) as any;
+        try {
+          // fetchWithTimeout will handle the timeout and abort automatically
+          sessionResult = await supabase.auth.getSession();
+        } catch (err: any) {
+          // Normalize abort errors to GET_SESSION_TIMEOUT
+          if (err?.name === 'AbortError' || (err?.message && err.message.toLowerCase().includes('aborted'))) {
+            logger.warn('Session fetch aborted due to timeout');
+            throw new Error('GET_SESSION_TIMEOUT');
+          }
+          throw err;
+        }
+
+        const { data: { session }, error } = sessionResult as any;
 
         if (!mounted) return;
 
@@ -592,20 +617,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Ajouter un timeout pour éviter le blocage
-    const signInTimeout = timeouts.sessionTimeout;
-    logger.info(`Sign in with ${signInTimeout}ms timeout in ${envType} environment`);
+    // fetchWithTimeout will handle the timeout automatically
+    logger.info(`Sign in with ${timeouts.sessionTimeout}ms timeout in ${envType} environment`);
 
     try {
-      const { data, error } = await Promise.race([
-        supabase.auth.signInWithPassword({
+      let signInResult;
+
+      try {
+        signInResult = await supabase.auth.signInWithPassword({
           email,
           password,
-        }),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('SIGNIN_TIMEOUT')), signInTimeout)
-        )
-      ]);
+        });
+      } catch (err: any) {
+        // Normalize abort errors to SIGNIN_TIMEOUT
+        if (err?.name === 'AbortError' || (err?.message && err.message.toLowerCase().includes('aborted'))) {
+          logger.warn('Sign in aborted due to timeout');
+          throw new Error('SIGNIN_TIMEOUT');
+        }
+        throw err;
+      }
+
+      const { data, error } = signInResult;
 
       if (error) {
         logger.error('Sign in error:', {

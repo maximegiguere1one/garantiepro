@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { isWebContainerEnvironment, getEnvironmentType, getOptimalTimeouts } from './environment-detection';
+import { createTimeoutFetch } from './timeout-fetch';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -12,6 +13,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 const isWebContainer = isWebContainerEnvironment();
 const envType = getEnvironmentType();
 const timeouts = getOptimalTimeouts();
+
+const fetchWithTimeout = (typeof window !== 'undefined')
+  ? createTimeoutFetch({
+      sessionTimeout: timeouts.sessionTimeout,
+      profileTimeout: timeouts.profileTimeout,
+    })
+  : fetch;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -28,6 +36,7 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
       'X-Environment': envType,
       ...(isWebContainer && { 'X-WebContainer': 'true' }),
     },
+    fetch: fetchWithTimeout as any,
   },
   db: {
     schema: 'public',

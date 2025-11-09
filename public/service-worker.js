@@ -88,13 +88,25 @@ async function cleanupOldCacheEntries() {
 
 self.addEventListener('fetch', (event) => {
   const { request } = event;
-  const url = new URL(request.url);
 
-  if (request.method !== 'GET') {
-    return;
-  }
+  try {
+    const url = new URL(request.url);
 
-  if (url.origin !== location.origin && !url.href.includes('supabase')) {
+    // Exclude Supabase requests - let them pass through directly to network
+    if (url.hostname.endsWith('.supabase.co') || url.href.includes('supabase.co')) {
+      console.log('[Service Worker] Bypassing Supabase request:', url.href);
+      return; // Let browser handle it directly
+    }
+
+    if (request.method !== 'GET') {
+      return;
+    }
+
+    if (url.origin !== location.origin) {
+      return;
+    }
+  } catch (e) {
+    // Ignore non-http(s) requests
     return;
   }
 
