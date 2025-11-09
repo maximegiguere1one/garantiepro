@@ -55,6 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
+    console.log('[AuthContext] loadProfile called for userId:', userId, 'retryCount:', retryCount);
+
     const timeouts = getTimeouts();
     const envType = getEnvironmentType();
     const useAggressiveCache = shouldUseAggressiveCaching();
@@ -90,11 +92,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (retryCount === 0) {
         const cachedData = sessionStorage.getItem(`user_data_${userId}`);
+        console.log('[AuthContext] Checking cache:', cachedData ? 'EXISTS' : 'EMPTY');
         if (cachedData) {
           try {
             const parsed = JSON.parse(cachedData);
+            const cacheAge = Date.now() - parsed.timestamp;
+            console.log('[AuthContext] Cache age:', cacheAge, 'max:', cacheMaxAge, 'has profile:', !!parsed.profile);
+
             if (Date.now() - parsed.timestamp < cacheMaxAge && parsed.profile) {
               logger.debug('Using cached profile data');
+              console.log('[AuthContext] ✓ Using CACHED profile:', parsed.profile.email);
               setProfile(parsed.profile);
               setOrganization(parsed.organization);
               setIsOwner(parsed.isOwner);
@@ -107,6 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               const storedActiveOrgId = localStorage.getItem('active_organization_id');
               if (storedActiveOrgId && canSwitch && storedActiveOrgId !== parsed.organization?.id) {
                 logger.debug('[AuthContext] Cache: stored org differs, will reload without cache');
+                console.log('[AuthContext] Cache: clearing due to org mismatch');
                 // Don't use cache, continue to full load to get stored org
                 sessionStorage.removeItem(`user_data_${userId}`);
               } else {
@@ -114,8 +122,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setActiveOrganization(parsed.organization);
                 setLoading(false);
                 loadingRef.current = false;
+                console.log('[AuthContext] Returning from cache early');
                 return;
               }
+            } else {
+              console.log('[AuthContext] Cache expired or invalid, clearing');
+              sessionStorage.removeItem(`user_data_${userId}`);
             }
           } catch (cacheError) {
             logger.warn('Cache parse error:', cacheError);

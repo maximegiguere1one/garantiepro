@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Clear Cache</title>
+  <style>
+    body {
+      font-family: system-ui;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      text-align: center;
+    }
+    .btn {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 15px 30px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 10px;
+    }
+    .btn:hover {
+      background: #b91c1c;
+    }
+    .success {
+      background: #10b981;
+      color: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 20px 0;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧹 Nettoyage du Cache</h1>
+  <p>Cliquez pour vider tous les caches et redémarrer l'application proprement</p>
+
+  <button class="btn" onclick="clearAll()">🗑️ Vider Tout le Cache</button>
+  <button class="btn" onclick="clearSessionOnly()">🔄 Vider Session Storage</button>
+  <button class="btn" onclick="clearLocalOnly()">📦 Vider Local Storage</button>
+
+  <div id="result" class="success"></div>
+
+  <script>
+    function clearAll() {
+      sessionStorage.clear();
+      localStorage.clear();
+
+      // Also clear service worker cache
+      if ('caches' in window) {
+        caches.keys().then(names => {
+          names.forEach(name => caches.delete(name));
+        });
+      }
+
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+      result.innerHTML = '✅ Tous les caches vidés !<br>Redirection dans 2 secondes...';
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+
+    function clearSessionOnly() {
+      sessionStorage.clear();
+
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+      result.innerHTML = '✅ Session Storage vidé !<br>Redirection dans 2 secondes...';
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+
+    function clearLocalOnly() {
+      localStorage.clear();
+
+      const result = document.getElementById('result');
+      result.style.display = 'block';
+      result.innerHTML = '✅ Local Storage vidé !<br>Redirection dans 2 secondes...';
+
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    }
+
+    // Show what's in storage
+    window.addEventListener('load', () => {
+      const sessionKeys = Object.keys(sessionStorage);
+      const localKeys = Object.keys(localStorage);
+
+      if (sessionKeys.length > 0 || localKeys.length > 0) {
+        const info = document.createElement('div');
+        info.style.cssText = 'background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;';
+        info.innerHTML = `
+          <strong>📊 Cache actuel:</strong><br>
+          Session Storage: ${sessionKeys.length} items<br>
+          Local Storage: ${localKeys.length} items<br>
+          <details style="margin-top: 10px;">
+            <summary>Voir les clés</summary>
+            <pre style="font-size: 12px; overflow-x: auto;">Session: ${sessionKeys.join(', ')}\nLocal: ${localKeys.join(', ')}</pre>
+          </details>
+        `;
+        document.body.appendChild(info);
+      }
+    });
+  </script>
+</body>
+</html>
