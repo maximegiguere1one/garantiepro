@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Profile Load - Nov 9</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f8fafc;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .test-section {
+      margin: 20px 0;
+      padding: 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+    }
+    .success { border-color: #10b981; background: #ecfdf5; }
+    .error { border-color: #ef4444; background: #fef2f2; }
+    .warning { border-color: #f59e0b; background: #fffbeb; }
+    pre {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      overflow-x: auto;
+      font-size: 12px;
+    }
+    button {
+      background: #dc2626;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+    button:hover {
+      background: #b91c1c;
+    }
+    input {
+      padding: 8px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      width: 300px;
+      font-size: 14px;
+    }
+    h1 { color: #dc2626; }
+    h2 { color: #1e293b; margin-top: 30px; }
+    h3 { color: #475569; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Test Chargement Profil - Nov 9</h1>
+    <p>Diagnostique pourquoi le profil ne se charge pas après login</p>
+
+    <div class="test-section">
+      <h3>1. Login</h3>
+      <input type="email" id="email" placeholder="Email" value="maxime@giguere-influence.com">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="testLogin()">Login</button>
+      <div id="login-result"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>2. Test Session</h3>
+      <button onclick="testSession()">Vérifier Session</button>
+      <div id="session-result"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>3. Test Query Profiles (avec session)</h3>
+      <button onclick="testProfileQuery()">Query Profiles</button>
+      <div id="profile-result"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>4. Test RLS Policy</h3>
+      <button onclick="testRLSPolicy()">Test Policy</button>
+      <div id="rls-result"></div>
+    </div>
+
+    <div class="test-section">
+      <h3>5. Test Helper Functions</h3>
+      <button onclick="testHelperFunctions()">Test Functions</button>
+      <div id="helper-result"></div>
+    </div>
+
+    <h2>📊 Résultats</h2>
+    <div id="all-results"></div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mjc4MTYyNTIsImV4cCI6MjA0MzM5MjI1Mn0.GmsFkBgVDYB-1B7EM5NkQS9Sn13qmnO7pAkp2rCXtnw';
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function log(elementId, message, type = 'info') {
+      const element = document.getElementById(elementId);
+      const color = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6';
+      element.innerHTML += `<div style="color: ${color}; margin: 5px 0;">${message}</div>`;
+    }
+
+    function logJson(elementId, data) {
+      const element = document.getElementById(elementId);
+      element.innerHTML += `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    }
+
+    async function testLogin() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const resultDiv = document.getElementById('login-result');
+      resultDiv.innerHTML = '';
+
+      log('login-result', '⏳ Login en cours...', 'info');
+
+      try {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          log('login-result', `❌ Erreur: ${error.message}`, 'error');
+          logJson('login-result', error);
+          return;
+        }
+
+        log('login-result', '✅ Login réussi !', 'success');
+        log('login-result', `User ID: ${data.user.id}`, 'success');
+        log('login-result', `Email: ${data.user.email}`, 'success');
+        logJson('login-result', { user: data.user, session: data.session });
+
+      } catch (err) {
+        log('login-result', `❌ Exception: ${err.message}`, 'error');
+        console.error(err);
+      }
+    }
+
+    async function testSession() {
+      const resultDiv = document.getElementById('session-result');
+      resultDiv.innerHTML = '';
+
+      log('session-result', '⏳ Vérification session...', 'info');
+
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+
+        if (error) {
+          log('session-result', `❌ Erreur: ${error.message}`, 'error');
+          return;
+        }
+
+        if (!session) {
+          log('session-result', '❌ Pas de session active', 'error');
+          log('session-result', 'Faites d\'abord le login ci-dessus', 'error');
+          return;
+        }
+
+        log('session-result', '✅ Session active !', 'success');
+        log('session-result', `User ID: ${session.user.id}`, 'success');
+        log('session-result', `Expires at: ${new Date(session.expires_at * 1000).toLocaleString()}`, 'success');
+
+        // Check if token has auth.uid()
+        const payload = JSON.parse(atob(session.access_token.split('.')[1]));
+        log('session-result', `JWT sub (auth.uid): ${payload.sub}`, 'success');
+        logJson('session-result', { session_info: { user_id: session.user.id, jwt_sub: payload.sub, role: payload.role } });
+
+      } catch (err) {
+        log('session-result', `❌ Exception: ${err.message}`, 'error');
+        console.error(err);
+      }
+    }
+
+    async function testProfileQuery() {
+      const resultDiv = document.getElementById('profile-result');
+      resultDiv.innerHTML = '';
+
+      log('profile-result', '⏳ Query profiles...', 'info');
+
+      try {
+        // First check session
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+          log('profile-result', '❌ Pas de session - faites le login d\'abord', 'error');
+          return;
+        }
+
+        log('profile-result', `Querying for user: ${session.user.id}`, 'info');
+
+        // Try to fetch profile
+        const startTime = Date.now();
+        const { data, error, status, statusText } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        const elapsed = Date.now() - startTime;
+
+        log('profile-result', `⏱️ Query took ${elapsed}ms`, 'info');
+        log('profile-result', `Status: ${status} ${statusText}`, 'info');
+
+        if (error) {
+          log('profile-result', `❌ Erreur: ${error.message}`, 'error');
+          log('profile-result', `Code: ${error.code}`, 'error');
+          logJson('profile-result', error);
+          return;
+        }
+
+        if (!data) {
+          log('profile-result', '⚠️ Query réussie mais data = null', 'warning');
+          log('profile-result', 'Cela signifie que la policy RLS bloque l\'accès', 'warning');
+          return;
+        }
+
+        log('profile-result', '✅ Profil chargé avec succès !', 'success');
+        log('profile-result', `Email: ${data.email}`, 'success');
+        log('profile-result', `Role: ${data.role}`, 'success');
+        log('profile-result', `Org ID: ${data.organization_id}`, 'success');
+        logJson('profile-result', data);
+
+      } catch (err) {
+        log('profile-result', `❌ Exception: ${err.message}`, 'error');
+        console.error(err);
+      }
+    }
+
+    async function testRLSPolicy() {
+      const resultDiv = document.getElementById('rls-result');
+      resultDiv.innerHTML = '';
+
+      log('rls-result', '⏳ Test RLS policies...', 'info');
+
+      try {
+        // Check current policies
+        const { data: policies, error: policiesError } = await supabase
+          .rpc('execute_sql', {
+            query: `SELECT policyname, cmd, qual::text FROM pg_policies WHERE tablename = 'profiles'`
+          });
+
+        if (policiesError) {
+          log('rls-result', '❌ Cannot fetch policies (need permissions)', 'error');
+        } else {
+          log('rls-result', '📋 Policies actuelles:', 'info');
+          logJson('rls-result', policies);
+        }
+
+        // Test if we can see our own profile
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          log('rls-result', `Testing policy with auth.uid() = ${session.user.id}`, 'info');
+        }
+
+      } catch (err) {
+        log('rls-result', `❌ Exception: ${err.message}`, 'error');
+        console.error(err);
+      }
+    }
+
+    async function testHelperFunctions() {
+      const resultDiv = document.getElementById('helper-result');
+      resultDiv.innerHTML = '';
+
+      log('helper-result', '⏳ Test helper functions...', 'info');
+
+      try {
+        // Test get_current_user_org_id()
+        const { data: orgId, error: orgError } = await supabase
+          .rpc('get_current_user_org_id');
+
+        if (orgError) {
+          log('helper-result', `❌ get_current_user_org_id error: ${orgError.message}`, 'error');
+        } else {
+          log('helper-result', `✅ get_current_user_org_id(): ${orgId}`, 'success');
+        }
+
+        // Test get_current_user_role()
+        const { data: role, error: roleError } = await supabase
+          .rpc('get_current_user_role');
+
+        if (roleError) {
+          log('helper-result', `❌ get_current_user_role error: ${roleError.message}`, 'error');
+        } else {
+          log('helper-result', `✅ get_current_user_role(): ${role}`, 'success');
+        }
+
+      } catch (err) {
+        log('helper-result', `❌ Exception: ${err.message}`, 'error');
+        console.error(err);
+      }
+    }
+
+    // Auto-test on load if already logged in
+    window.addEventListener('load', async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        document.getElementById('all-results').innerHTML = '<div style="background: #dbeafe; padding: 15px; border-radius: 6px; margin-top: 20px;">✅ Session détectée - vous pouvez tester directement les queries</div>';
+      }
+    });
+  </script>
+</body>
+</html>
