@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Direct Supabase</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #1a202c;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #718096;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .test-item {
+      background: #f7fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-item h3 {
+      color: #2d3748;
+      margin-bottom: 10px;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+    .status.success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    .status.error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .status.warning {
+      background: #fed7aa;
+      color: #92400e;
+    }
+    .info {
+      background: white;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .info strong {
+      color: #2d3748;
+    }
+    .code {
+      background: #1a202c;
+      color: #68d391;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      overflow-x: auto;
+      margin-top: 10px;
+      white-space: pre-wrap;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #5a67d8;
+      transform: translateY(-1px);
+    }
+    button:disabled {
+      background: #cbd5e0;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f4f6;
+      border-top-color: #667eea;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .recommendation {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+    }
+    .recommendation h4 {
+      color: #92400e;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+    .recommendation ul {
+      margin-left: 20px;
+      color: #78350f;
+      font-size: 13px;
+    }
+    .recommendation li {
+      margin-bottom: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔍 Diagnostic Supabase Direct</h1>
+    <p class="subtitle">Test de connectivité et performance Supabase</p>
+
+    <div class="test-item">
+      <h3>
+        <span id="status-env" class="status pending">⏳</span>
+        Configuration Environnement
+      </h3>
+      <div id="result-env" class="info">En attente du test...</div>
+    </div>
+
+    <div class="test-item">
+      <h3>
+        <span id="status-ping" class="status pending">⏳</span>
+        Ping Supabase API
+      </h3>
+      <div id="result-ping" class="info">En attente du test...</div>
+    </div>
+
+    <div class="test-item">
+      <h3>
+        <span id="status-health" class="status pending">⏳</span>
+        Health Check Projet
+      </h3>
+      <div id="result-health" class="info">En attente du test...</div>
+    </div>
+
+    <div class="test-item">
+      <h3>
+        <span id="status-auth" class="status pending">⏳</span>
+        Test Authentification
+      </h3>
+      <div id="result-auth" class="info">En attente du test...</div>
+    </div>
+
+    <div id="recommendation-container"></div>
+
+    <button id="run-tests" style="margin-top: 20px;">
+      🚀 Lancer les Tests
+    </button>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzE4NDUsImV4cCI6MjA3NTEwNzg0NX0.cfWvm-NeUcVONV1VWd6U65lwg-2JdEBMWhSFWUJZdxg';
+
+    let issues = [];
+
+    function setStatus(testId, status, html) {
+      const statusEl = document.getElementById(`status-${testId}`);
+      const resultEl = document.getElementById(`result-${testId}`);
+
+      statusEl.className = `status ${status}`;
+      statusEl.textContent = status === 'pending' ? '⏳' :
+                            status === 'success' ? '✅' :
+                            status === 'warning' ? '⚠️' : '❌';
+
+      resultEl.innerHTML = html;
+    }
+
+    async function testEnvironment() {
+      console.log('[TEST] Environment check...');
+
+      const html = `
+        <strong>URL Supabase:</strong> ${SUPABASE_URL}<br>
+        <strong>Anon Key:</strong> ${SUPABASE_ANON_KEY.substring(0, 30)}...<br>
+        <strong>Navigateur:</strong> ${navigator.userAgent}<br>
+        <strong>Date:</strong> ${new Date().toLocaleString('fr-CA')}
+      `;
+
+      setStatus('env', 'success', html);
+    }
+
+    async function testPing() {
+      console.log('[TEST] Ping Supabase...');
+
+      const start = Date.now();
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+          }
+        });
+
+        const duration = Date.now() - start;
+
+        if (response.ok) {
+          setStatus('ping', 'success', `
+            <strong>✅ Supabase est accessible!</strong><br>
+            <strong>Temps de réponse:</strong> ${duration}ms<br>
+            <strong>Status:</strong> ${response.status} ${response.statusText}
+          `);
+        } else {
+          setStatus('ping', 'error', `
+            <strong>❌ Erreur HTTP ${response.status}</strong><br>
+            ${response.statusText}
+          `);
+          issues.push('API inaccessible - Status: ' + response.status);
+        }
+      } catch (error) {
+        setStatus('ping', 'error', `
+          <strong>❌ Impossible de joindre Supabase</strong><br>
+          <div class="code">${error.message}</div>
+          <br><strong>Causes possibles:</strong>
+          <ul style="margin-left: 20px; margin-top: 5px;">
+            <li>Projet Supabase en pause (inactivité)</li>
+            <li>Problème réseau/firewall</li>
+            <li>URL Supabase incorrecte</li>
+          </ul>
+        `);
+        issues.push('Impossible de joindre l\'API: ' + error.message);
+      }
+    }
+
+    async function testHealth() {
+      console.log('[TEST] Health check...');
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/`, {
+          method: 'GET',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const headers = {};
+        response.headers.forEach((value, key) => {
+          headers[key] = value;
+        });
+
+        setStatus('health', 'success', `
+          <strong>Headers reçus:</strong>
+          <div class="code">${JSON.stringify(headers, null, 2)}</div>
+        `);
+      } catch (error) {
+        setStatus('health', 'error', `
+          <strong>❌ Erreur health check</strong><br>
+          <div class="code">${error.message}</div>
+        `);
+        issues.push('Health check échoué');
+      }
+    }
+
+    async function testAuth() {
+      console.log('[TEST] Test auth...');
+
+      const start = Date.now();
+
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 30000);
+
+        const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: 'test@example.com',
+            password: 'wrongpassword'
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeout);
+        const duration = Date.now() - start;
+
+        if (response.status === 400) {
+          setStatus('auth', 'success', `
+            <strong>✅ Service d'authentification fonctionne!</strong><br>
+            <strong>Temps de réponse:</strong> ${duration}ms<br>
+            <strong>Status:</strong> ${response.status} (attendu - mauvais credentials)<br>
+            <br>L'API répond correctement aux requêtes d'authentification.
+          `);
+        } else if (response.status === 429) {
+          setStatus('auth', 'error', `
+            <strong>❌ RATE LIMITING ACTIF!</strong><br>
+            <strong>Code:</strong> 429 Too Many Requests<br>
+            <strong>Durée:</strong> ${duration}ms<br>
+            <br><strong>🚨 PROBLÈME IDENTIFIÉ:</strong><br>
+            Supabase bloque vos requêtes car vous avez dépassé la limite du plan gratuit (500 req/sec)
+          `);
+          issues.push('RATE LIMITING - Trop de requêtes');
+        } else {
+          setStatus('auth', 'warning', `
+            <strong>⚠️ Réponse inattendue</strong><br>
+            <strong>Status:</strong> ${response.status}<br>
+            <strong>Durée:</strong> ${duration}ms
+          `);
+          issues.push('Status inattendu: ' + response.status);
+        }
+      } catch (error) {
+        const duration = Date.now() - start;
+
+        if (error.name === 'AbortError') {
+          setStatus('auth', 'error', `
+            <strong>❌ TIMEOUT après 30 secondes!</strong><br>
+            <br><strong>🚨 PROBLÈME IDENTIFIÉ:</strong><br>
+            L'authentification prend plus de 30 secondes à répondre.<br>
+            <br><strong>Causes possibles:</strong>
+            <ul style="margin-left: 20px; margin-top: 5px;">
+              <li><strong>Projet en pause</strong> - Allez sur dashboard Supabase et réveillez-le</li>
+              <li><strong>Rate limiting sévère</strong> - Attendez 1 heure</li>
+              <li><strong>Problème serveur Supabase</strong> - Vérifiez status.supabase.com</li>
+            </ul>
+          `);
+          issues.push('TIMEOUT 30s sur authentification');
+        } else {
+          setStatus('auth', 'error', `
+            <strong>❌ Erreur réseau</strong><br>
+            <div class="code">${error.message}</div>
+          `);
+          issues.push('Erreur réseau: ' + error.message);
+        }
+      }
+    }
+
+    function showRecommendations() {
+      if (issues.length === 0) {
+        document.getElementById('recommendation-container').innerHTML = `
+          <div class="recommendation" style="background: #d1fae5; border-left-color: #10b981;">
+            <h4 style="color: #065f46;">✅ Tout fonctionne!</h4>
+            <p style="color: #047857; font-size: 13px;">
+              Votre connexion Supabase est opérationnelle.
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      let recommendations = '<div class="recommendation"><h4>🔧 Actions Recommandées:</h4><ul>';
+
+      if (issues.some(i => i.includes('TIMEOUT') || i.includes('Impossible de joindre'))) {
+        recommendations += `
+          <li><strong>Vérifiez le dashboard Supabase:</strong>
+            <a href="https://supabase.com/dashboard/project/fkxldrkkqvputdgfpayi" target="_blank" style="color: #2563eb;">
+              Ouvrir le dashboard
+            </a>
+          </li>
+          <li><strong>Projet en pause?</strong> Les projets gratuits se mettent en pause après 7 jours d'inactivité. Réveillez-le dans le dashboard.</li>
+          <li><strong>Vérifiez le status Supabase:</strong>
+            <a href="https://status.supabase.com" target="_blank" style="color: #2563eb;">
+              status.supabase.com
+            </a>
+          </li>
+        `;
+      }
+
+      if (issues.some(i => i.includes('RATE LIMITING'))) {
+        recommendations += `
+          <li><strong>Rate Limiting Actif:</strong> Attendez 1 heure avant de réessayer</li>
+          <li><strong>Considérez upgrader:</strong> Plan Pro = 5,000 req/sec ($25/mois)</li>
+          <li><strong>Optimisez vos requêtes:</strong> Réduisez le nombre d'appels API</li>
+        `;
+      }
+
+      recommendations += '</ul></div>';
+      document.getElementById('recommendation-container').innerHTML = recommendations;
+    }
+
+    document.getElementById('run-tests').addEventListener('click', async function() {
+      this.disabled = true;
+      this.innerHTML = '<span class="spinner"></span> Tests en cours...';
+
+      issues = [];
+
+      await testEnvironment();
+      await new Promise(r => setTimeout(r, 500));
+
+      await testPing();
+      await new Promise(r => setTimeout(r, 500));
+
+      await testHealth();
+      await new Promise(r => setTimeout(r, 500));
+
+      await testAuth();
+
+      showRecommendations();
+
+      this.disabled = false;
+      this.innerHTML = '🔄 Relancer les Tests';
+    });
+
+    // Auto-run on load
+    window.addEventListener('load', () => {
+      document.getElementById('run-tests').click();
+    });
+  </script>
+</body>
+</html>
