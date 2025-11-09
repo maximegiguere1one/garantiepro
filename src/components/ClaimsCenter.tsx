@@ -56,7 +56,7 @@ export const ClaimsCenter = memo(() => {
         .select(`
           *,
           customers(*),
-          warranties(*, warranty_plans(*))
+          warranties!claims_warranty_id_fkey(*, warranty_plans(*))
         `)
         .order('created_at', { ascending: false });
 
