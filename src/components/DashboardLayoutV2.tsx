@@ -36,25 +36,59 @@ export function DashboardLayoutV2({
     signOut,
     isOwner,
     organization: currentOrganization,
+    user,
   } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const [showDevTools, setShowDevTools] = useState(
     () => localStorage.getItem('devMode') === 'true'
   );
 
-  if (!profile) {
-    console.warn('[DashboardLayoutV2] No profile - rendering children anyway for demo mode');
-    // Return children directly without layout if no profile
+  // If no profile but we have a user, show layout with fallback data
+  if (!profile && user) {
+    console.log('[DashboardLayoutV2] No profile yet, using fallback layout');
+
+    // Minimal fallback navigation
+    const fallbackNavigation = [
+      { id: 'dashboard', label: 'Tableau de bord', icon: 'LayoutDashboard', page: 'dashboard' },
+    ];
+
     return (
       <div className="min-h-screen bg-slate-50">
-        <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-          <p className="text-yellow-800 text-sm text-center">
-            ⚠️ Mode dégradé - Profil non chargé
-          </p>
+        <div className="sticky top-0 z-40 bg-white border-b border-slate-200/60 shadow-sm">
+          <div className="px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img
+                  src="/Pro remorque.png"
+                  alt="Pro Remorque"
+                  className="h-8 w-auto"
+                />
+                <span className="font-semibold text-slate-900">Pro Remorque</span>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-sm text-slate-600">{user.email}</span>
+                <button
+                  onClick={signOut}
+                  className="text-slate-600 hover:text-slate-900"
+                  title="Déconnexion"
+                >
+                  <LogOut className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-        {children}
+        <div className="px-6 py-8">
+          {children}
+        </div>
       </div>
     );
+  }
+
+  // If no user at all, return null
+  if (!profile) {
+    console.warn('[DashboardLayoutV2] No profile and no user - returning null');
+    return null;
   }
 
   // Build navigation based on user context

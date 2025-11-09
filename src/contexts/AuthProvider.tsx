@@ -36,9 +36,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const envType = getEnvironmentType();
   const isDemo = envType === 'webcontainer' || envType === 'bolt' || envType === 'stackblitz';
 
-  const loadProfile = useCallback(async (userId: string) => {
+  const loadProfile = useCallback(async (userId: string, silent = false) => {
     try {
-      console.log('[AuthProvider] Loading profile for user:', userId);
+      console.log('[AuthProvider] Loading profile for user:', userId, silent ? '(silent)' : '');
 
       if (isDemo) {
         console.log('[AuthProvider] Demo mode - using DEMO_PROFILE');
@@ -56,6 +56,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('[AuthProvider] Profile loaded successfully');
     } catch (err: any) {
       console.error('[AuthProvider] Profile load error:', err);
+
+      // In silent mode (background retry), don't throw errors
+      if (silent) {
+        console.warn('[AuthProvider] Silent profile load failed - will retry later');
+        return;
+      }
 
       if (err?.message === 'FETCH_TIMEOUT') {
         throw new Error('Profile loading timed out. Please check your connection.');
@@ -99,7 +105,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
           role: currentSession.user.role,
         });
 
-        await loadProfile(currentSession.user.id);
+        // Try to load profile, but don't block on timeout
+        try {
+          await loadProfile(currentSession.user.id);
+        } catch (profileErr) {
+          console.warn('[AuthProvider] Profile load failed, continuing with user only');
+          // Start background retry after 2 seconds
+          setTimeout(() => {
+            console.log('[AuthProvider] Retrying profile load in background...');
+            loadProfile(currentSession.user.id, true);
+          }, 2000);
+        }
       } else {
         console.log('[AuthProvider] No active session');
       }
