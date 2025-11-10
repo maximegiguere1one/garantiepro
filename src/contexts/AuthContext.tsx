@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadingRef = useRef<boolean>(false);
   const lastLoadTimeRef = useRef<number>(0);
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const emergencyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
@@ -382,6 +383,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[AuthContext] FINALLY block - resetting loading states');
       setLoading(false);
       loadingRef.current = false;
+
+      // Clear all timeouts to prevent EMERGENCY TIMEOUT from firing
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+        console.log('[AuthContext] Cleared loading timeout');
+      }
+      if (emergencyTimeoutRef.current) {
+        clearTimeout(emergencyTimeoutRef.current);
+        emergencyTimeoutRef.current = null;
+        console.log('[AuthContext] Cleared emergency timeout');
+      }
     }
   } catch (outerError) {
     console.error('[AuthContext] ❌ OUTER CATCH - Unexpected error in loadProfile:', outerError);
@@ -410,7 +423,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }, timeoutDuration);
 
-    const emergencyTimeoutRef = setTimeout(() => {
+    emergencyTimeoutRef.current = setTimeout(() => {
       if (mounted && loading) {
         logger.error('EMERGENCY TIMEOUT - Force stopping loading');
         setLoading(false);
@@ -499,7 +512,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (loadingTimeoutRef.current) {
         clearTimeout(loadingTimeoutRef.current);
       }
-      clearTimeout(emergencyTimeoutRef);
+      if (emergencyTimeoutRef.current) {
+        clearTimeout(emergencyTimeoutRef.current);
+      }
     };
 
   }, []);
