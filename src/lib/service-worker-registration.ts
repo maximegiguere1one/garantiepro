@@ -1,4 +1,21 @@
 export function registerServiceWorker(): void {
+  // DÉSACTIVÉ TEMPORAIREMENT - Le Service Worker bloque les requêtes Supabase
+  console.log('[ServiceWorker] Registration disabled - Service Worker causes Supabase request timeouts');
+
+  // Unregister any existing service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('[ServiceWorker] Unregistered existing service worker');
+      });
+    });
+  }
+
+  return;
+
+  // OLD CODE - KEPT FOR REFERENCE
+  /*
   // Check if we're in StackBlitz or similar environment where Service Workers are not supported
   const isStackBlitz = window.location.hostname.includes('stackblitz') ||
                        window.location.hostname.includes('webcontainer');
@@ -39,6 +56,7 @@ export function registerServiceWorker(): void {
   } else {
     console.log('[ServiceWorker] Not supported in this browser');
   }
+  */
 }
 
 export function unregisterServiceWorker(): Promise<boolean> {
