@@ -1,113 +1,194 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-  <title>Clear Cache</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fix Connexion - Garantie Pro Remorque</title>
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: system-ui;
-      max-width: 600px;
-      margin: 50px auto;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
+    }
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      padding: 50px;
+      max-width: 700px;
+      width: 100%;
       text-align: center;
     }
-    .btn {
-      background: #dc2626;
+    h1 {
+      color: #1e293b;
+      font-size: 32px;
+      margin-bottom: 15px;
+      font-weight: 800;
+    }
+    .subtitle {
+      color: #64748b;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    .status-grid {
+      display: grid;
+      gap: 15px;
+      margin: 30px 0;
+    }
+    .status-item {
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .status-item.good {
+      background: #d1fae5;
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+    .status-item.bad {
+      background: #fee2e2;
+      color: #991b1b;
+      border: 2px solid #dc2626;
+    }
+    .icon { font-size: 24px; margin-right: 10px; }
+    button {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
       color: white;
       border: none;
-      padding: 15px 30px;
-      border-radius: 8px;
-      font-size: 16px;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
       cursor: pointer;
+      transition: all 0.3s ease;
       margin: 10px;
+      box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);
+      text-transform: uppercase;
     }
-    .btn:hover {
-      background: #b91c1c;
+    button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(220, 38, 38, 0.5);
     }
-    .success {
-      background: #10b981;
-      color: white;
-      padding: 15px;
-      border-radius: 8px;
+    .alert {
+      background: #fef3c7;
+      color: #92400e;
+      padding: 20px;
+      border-radius: 12px;
       margin: 20px 0;
-      display: none;
+      border-left: 4px solid #f59e0b;
+      text-align: left;
+      line-height: 1.8;
+    }
+    .success-message {
+      background: #d1fae5;
+      color: #065f46;
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 18px;
+      font-weight: 600;
+      border: 2px solid #10b981;
+      animation: slideIn 0.5s ease;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
   </style>
 </head>
 <body>
-  <h1>🧹 Nettoyage du Cache</h1>
-  <p>Cliquez pour vider tous les caches et redémarrer l'application proprement</p>
+  <div class="container">
+    <h1>🔧 Fix Connexion Complète</h1>
+    <div class="subtitle">Répare tous les problèmes de cache et de session</div>
 
-  <button class="btn" onclick="clearAll()">🗑️ Vider Tout le Cache</button>
-  <button class="btn" onclick="clearSessionOnly()">🔄 Vider Session Storage</button>
-  <button class="btn" onclick="clearLocalOnly()">📦 Vider Local Storage</button>
+    <div class="status-grid" id="statusGrid">
+      <div class="status-item bad">
+        <span><span class="icon">⏳</span> Vérification...</span>
+      </div>
+    </div>
 
-  <div id="result" class="success"></div>
+    <div class="alert">
+      <strong>⚠️ Problème de Connexion</strong>
+      Tu ne peux pas te connecter parce que :
+      <ul style="margin-top: 10px; margin-left: 20px;">
+        <li><strong>Mode Emergency activé</strong> dans localStorage</li>
+        <li><strong>Session Supabase cached</strong> corrompue</li>
+        <li><strong>Cache navigateur</strong> avec ancienne version</li>
+      </ul>
+    </div>
+
+    <button onclick="fixEverything()">🚀 TOUT RÉPARER</button>
+
+    <div id="result"></div>
+  </div>
 
   <script>
-    function clearAll() {
-      sessionStorage.clear();
-      localStorage.clear();
+    function checkStatus() {
+      const statusGrid = document.getElementById('statusGrid');
+      statusGrid.innerHTML = '';
 
-      // Also clear service worker cache
+      const emergencyMode = localStorage.getItem('emergency_mode_enabled');
+      const emergencyClass = emergencyMode === 'true' ? 'bad' : 'good';
+      const emergencyIcon = emergencyMode === 'true' ? '❌' : '✅';
+      const emergencyText = emergencyMode === 'true' ? 'Mode Emergency ACTIF' : 'Mode Emergency OK';
+
+      statusGrid.innerHTML += `<div class="status-item ${emergencyClass}"><span><span class="icon">${emergencyIcon}</span> ${emergencyText}</span></div>`;
+
+      const authToken = localStorage.getItem('supabase.auth.token');
+      const authClass = authToken ? 'bad' : 'good';
+      const authIcon = authToken ? '🔐' : '✅';
+      const authText = authToken ? 'Session cached (doit être cleared)' : 'Pas de session cached';
+
+      statusGrid.innerHTML += `<div class="status-item ${authClass}"><span><span class="icon">${authIcon}</span> ${authText}</span></div>`;
+    }
+
+    async function fixEverything() {
+      const resultDiv = document.getElementById('result');
+
+      localStorage.removeItem('emergency_mode_enabled');
+      localStorage.removeItem('emergency_profile');
+      localStorage.clear();
+      sessionStorage.clear();
+
+      document.cookie.split(";").forEach(c => {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+      });
+
       if ('caches' in window) {
-        caches.keys().then(names => {
-          names.forEach(name => caches.delete(name));
-        });
+        const names = await caches.keys();
+        await Promise.all(names.map(name => caches.delete(name)));
       }
 
-      const result = document.getElementById('result');
-      result.style.display = 'block';
-      result.innerHTML = '✅ Tous les caches vidés !<br>Redirection dans 2 secondes...';
+      resultDiv.innerHTML = `
+        <div class="success-message">
+          ✅ TOUT EST RÉPARÉ !<br><br>
+          <strong>Maintenant :</strong><br>
+          1. Ctrl+Shift+R pour vider le cache<br>
+          2. Ferme TOUS les onglets<br>
+          3. Navigation privée (Ctrl+Shift+N)<br>
+          4. Va sur www.garantieproremorque.com<br>
+          5. Login normalement<br><br>
+          Redirection dans 3 secondes...
+        </div>
+      `;
+
+      await checkStatus();
 
       setTimeout(() => {
         window.location.href = '/';
-      }, 2000);
+      }, 3000);
     }
 
-    function clearSessionOnly() {
-      sessionStorage.clear();
-
-      const result = document.getElementById('result');
-      result.style.display = 'block';
-      result.innerHTML = '✅ Session Storage vidé !<br>Redirection dans 2 secondes...';
-
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
-    }
-
-    function clearLocalOnly() {
-      localStorage.clear();
-
-      const result = document.getElementById('result');
-      result.style.display = 'block';
-      result.innerHTML = '✅ Local Storage vidé !<br>Redirection dans 2 secondes...';
-
-      setTimeout(() => {
-        window.location.href = '/';
-      }, 2000);
-    }
-
-    // Show what's in storage
-    window.addEventListener('load', () => {
-      const sessionKeys = Object.keys(sessionStorage);
-      const localKeys = Object.keys(localStorage);
-
-      if (sessionKeys.length > 0 || localKeys.length > 0) {
-        const info = document.createElement('div');
-        info.style.cssText = 'background: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: left;';
-        info.innerHTML = `
-          <strong>📊 Cache actuel:</strong><br>
-          Session Storage: ${sessionKeys.length} items<br>
-          Local Storage: ${localKeys.length} items<br>
-          <details style="margin-top: 10px;">
-            <summary>Voir les clés</summary>
-            <pre style="font-size: 12px; overflow-x: auto;">Session: ${sessionKeys.join(', ')}\nLocal: ${localKeys.join(', ')}</pre>
-          </details>
-        `;
-        document.body.appendChild(info);
-      }
-    });
+    checkStatus();
   </script>
 </body>
 </html>
