@@ -79,6 +79,8 @@ export function NewClaimForm({ onClose, onSuccess }: NewClaimFormProps) {
           .from('customers')
           .select('id')
           .eq('user_id', profile?.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
           .maybeSingle();
 
         if (customerError) throw customerError;
