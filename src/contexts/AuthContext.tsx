@@ -148,20 +148,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       console.log('[AuthContext] About to fetch profile for user:', userId);
       try {
-        console.log('[AuthContext] Calling supabase.from(profiles)...');
+        console.log('[AuthContext] Calling get_my_profile() RPC...');
 
         // Check if we have a session first
         const { data: { session } } = await supabase.auth.getSession();
         console.log('[AuthContext] Current session:', session ? 'EXISTS' : 'NULL');
         console.log('[AuthContext] Session user:', session?.user?.id);
 
+        // Use RPC function instead of direct query to avoid RLS timeout
         const result = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
+          .rpc('get_my_profile')
           .maybeSingle();
 
-        console.log('[AuthContext] Profile query result:', {
+        console.log('[AuthContext] Profile RPC result:', {
           data: result.data ? 'EXISTS' : 'NULL',
           error: result.error,
           status: result.status,
