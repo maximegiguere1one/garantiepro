@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Désactiver le Mode Démo - Garantie Pro Remorque</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      text-align: center;
+    }
+
+    h1 {
+      color: #1e293b;
+      font-size: 28px;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .status {
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      font-size: 16px;
+      font-weight: 500;
+    }
+
+    .status.active {
+      background-color: #fef3c7;
+      color: #92400e;
+      border: 2px solid #f59e0b;
+    }
+
+    .status.inactive {
+      background-color: #d1fae5;
+      color: #065f46;
+      border: 2px solid #10b981;
+    }
+
+    .info {
+      background-color: #e0e7ff;
+      color: #3730a3;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 20px 0;
+      text-align: left;
+      line-height: 1.6;
+    }
+
+    .info strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .info ul {
+      margin-left: 20px;
+      margin-top: 10px;
+    }
+
+    .info li {
+      margin: 5px 0;
+    }
+
+    button {
+      background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 10px;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button.secondary {
+      background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+      box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+    }
+
+    button.secondary:hover {
+      box-shadow: 0 6px 16px rgba(100, 116, 139, 0.4);
+    }
+
+    .success {
+      color: #10b981;
+      font-weight: 600;
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    .icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+    }
+
+    .steps {
+      text-align: left;
+      margin: 20px 0;
+      padding: 20px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border-left: 4px solid #3b82f6;
+    }
+
+    .steps ol {
+      margin-left: 20px;
+    }
+
+    .steps li {
+      margin: 10px 0;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">🔧</div>
+    <h1>Désactiver le Mode Démo / Emergency</h1>
+
+    <div id="status" class="status active">
+      Vérification en cours...
+    </div>
+
+    <div class="info">
+      <strong>⚠️ Pourquoi cette page ?</strong>
+      <p>
+        Si tu vois l'ancienne version (page d'urgence avec seulement 3 options) pendant quelques secondes
+        au login, c'est parce que le <strong>mode démo/emergency est activé</strong> dans ton navigateur.
+      </p>
+      <ul>
+        <li>Ce mode était conçu pour Bolt/WebContainer</li>
+        <li>Il ne devrait PAS être actif sur le site de production</li>
+        <li>Il utilise des données fictives au lieu des vraies données Supabase</li>
+      </ul>
+    </div>
+
+    <div class="steps">
+      <strong>🎯 Objectif</strong>
+      <ol>
+        <li><strong>Désactiver le mode démo</strong> en cliquant sur le bouton rouge ci-dessous</li>
+        <li><strong>Vider le cache du navigateur</strong> : Ctrl + Shift + R plusieurs fois</li>
+        <li><strong>Se déconnecter puis reconnecter</strong></li>
+        <li>Tu devrais maintenant voir les <strong>vraies données</strong> de ta base Supabase !</li>
+      </ol>
+    </div>
+
+    <button id="disableBtn" onclick="disableEmergencyMode()">
+      🚫 Désactiver le Mode Démo
+    </button>
+
+    <button class="secondary" onclick="checkStatus()">
+      🔄 Vérifier le Statut
+    </button>
+
+    <div id="result"></div>
+  </div>
+
+  <script>
+    function checkStatus() {
+      const emergencyMode = localStorage.getItem('emergency_mode_enabled');
+      const emergencyProfile = localStorage.getItem('emergency_profile');
+      const statusDiv = document.getElementById('status');
+
+      if (emergencyMode === 'true') {
+        statusDiv.className = 'status active';
+        statusDiv.innerHTML = `
+          <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+          <strong>Mode Démo ACTIF</strong><br>
+          <small style="margin-top: 10px; display: block;">
+            Le mode démo est activé. Clique sur "Désactiver le Mode Démo" ci-dessous.
+          </small>
+        `;
+      } else {
+        statusDiv.className = 'status inactive';
+        statusDiv.innerHTML = `
+          <div style="font-size: 24px; margin-bottom: 10px;">✅</div>
+          <strong>Mode Démo DÉSACTIVÉ</strong><br>
+          <small style="margin-top: 10px; display: block;">
+            Le mode démo est désactivé. Tu utilises les vraies données Supabase !
+          </small>
+        `;
+      }
+
+      console.log('Emergency Mode Status:', {
+        enabled: emergencyMode === 'true',
+        profile: emergencyProfile ? JSON.parse(emergencyProfile) : null
+      });
+    }
+
+    function disableEmergencyMode() {
+      localStorage.removeItem('emergency_mode_enabled');
+      localStorage.removeItem('emergency_profile');
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = '<div class="success">✅ Mode démo désactivé avec succès !</div>';
+
+      checkStatus();
+
+      setTimeout(() => {
+        if (confirm('Mode démo désactivé ! Veux-tu recharger la page maintenant ?')) {
+          window.location.href = '/';
+        }
+      }, 1000);
+    }
+
+    // Check status on page load
+    checkStatus();
+  </script>
+</body>
+</html>
