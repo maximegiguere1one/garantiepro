@@ -57,6 +57,15 @@ export default defineConfig({
             if (id.includes('zod') || id.includes('signature_pad') || id.includes('qrcode')) {
               return 'vendor-utils';
             }
+            if (id.includes('xlsx') || id.includes('shepherd')) {
+              return 'vendor-excel-tour';
+            }
+            if (id.includes('pdf-lib')) {
+              return 'vendor-pdf-lib';
+            }
+            if (id.includes('@tanstack')) {
+              return 'vendor-query';
+            }
             return 'vendor-other';
           }
 
@@ -81,7 +90,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 1000,
     sourcemap: false,
     minify: 'terser',
     terserOptions: {
