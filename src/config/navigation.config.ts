@@ -114,17 +114,9 @@ export const standardNavigation: NavigationSection[] = [
     roles: ['admin', 'master', 'f_and_i', 'operations', 'client'],
     items: [
       {
-        id: 'optimized-warranty',
-        label: 'Nouvelle vente ⚡',
-        description: 'Formulaire optimisé - 60% plus rapide',
-        icon: FileText,
-        roles: ['admin', 'master', 'f_and_i'],
-        isNew: true,
-      },
-      {
         id: 'new-warranty',
-        label: 'Vente (classique)',
-        description: 'Formulaire standard',
+        label: 'Nouvelle vente',
+        description: 'Créer une nouvelle garantie',
         icon: FileText,
         roles: ['admin', 'master', 'f_and_i'],
       },

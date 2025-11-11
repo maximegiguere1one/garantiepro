@@ -23,8 +23,6 @@ import { TourInitializer } from './components/TourInitializer';
 import { BoltModeWarning } from './components/BoltModeWarning';
 
 const NewWarranty = lazy(() => import('./components/NewWarranty').then(m => ({ default: m.NewWarranty })));
-const SmartNewWarranty = lazy(() => import('./components/SmartNewWarranty').then(m => ({ default: m.SmartNewWarranty })));
-const OptimizedWarrantyPage = lazy(() => import('./components/OptimizedWarrantyPage').then(m => ({ default: m.OptimizedWarrantyPage })));
 const WarrantiesList = lazy(() => import('./components/WarrantiesList').then(m => ({ default: m.WarrantiesList })));
 const ClaimsCenter = lazy(() => import('./components/ClaimsCenter').then(m => ({ default: m.ClaimsCenter })));
 const CustomersPage = lazy(() => import('./components/CustomersPage').then(m => ({ default: m.CustomersPage })));
@@ -164,10 +162,6 @@ function AppContent() {
         return <BillingDashboard />;
       case 'new-warranty':
         return <NewWarranty />;
-      case 'smart-warranty':
-        return <SmartNewWarranty />;
-      case 'optimized-warranty':
-        return <OptimizedWarrantyPage onNavigate={setCurrentPage} onBack={() => setCurrentPage('dashboard')} />;
       case 'warranties':
         return <WarrantiesList />;
       case 'my-products':
