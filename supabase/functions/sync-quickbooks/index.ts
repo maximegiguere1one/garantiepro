@@ -7,7 +7,7 @@ const QUICKBOOKS_SANDBOX_URL = "https://sandbox-quickbooks.api.intuit.com/v3";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Client-Info, Apikey, x-environment",
 };
 
 interface QuickBooksConfig {
