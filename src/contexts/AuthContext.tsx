@@ -155,9 +155,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Current session:', session ? 'EXISTS' : 'NULL');
         console.log('[AuthContext] Session user:', session?.user?.id);
 
-        // Use RPC function instead of direct query to avoid RLS timeout
-        // RPC returns SETOF, so we need to get first row with .limit(1).single()
-        const result = await supabase
+        // Try RPC function first (preferred method)
+        let result = await supabase
           .rpc('get_my_profile')
           .limit(1)
           .maybeSingle();
@@ -168,6 +167,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           status: result.status,
           statusText: result.statusText
         });
+
+        // Fallback: If RPC fails (function doesn't exist), try direct query
+        if (result.error && result.error.message?.includes('function') && result.error.message?.includes('does not exist')) {
+          console.warn('[AuthContext] RPC function not found, falling back to direct query');
+          result = await supabase
+            .from('profiles')
+            .select('id, email, full_name, role, organization_id, phone, is_master_account, last_sign_in_at, created_at, updated_at')
+            .eq('id', userId)
+            .maybeSingle();
+
+          console.log('[AuthContext] Direct query result:', {
+            data: result.data ? 'EXISTS' : 'NULL',
+            error: result.error
+          });
+        }
 
         profileData = result.data;
         profileError = result.error;
@@ -426,13 +440,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     emergencyTimeoutRef.current = setTimeout(() => {
       if (mounted && loading) {
-        logger.error('EMERGENCY TIMEOUT - Force stopping loading');
+        console.error('[AuthContext] EMERGENCY TIMEOUT triggered after', timeouts.emergencyTimeout * 2, 'ms');
+        logger.error('EMERGENCY TIMEOUT - Force stopping loading after ' + (timeouts.emergencyTimeout * 2) + 'ms');
+
         setLoading(false);
         setLoadingTimedOut(true);
+
         if (envType === 'bolt' || envType === 'webcontainer') {
           setProfileError('Environnement Bolt détecté. Connexion Supabase limitée. Cliquez sur "Ignorer et continuer" pour utiliser l\'application.');
         } else {
-          setProfileError('La connexion a pris trop de temps. Cliquez sur "Ignorer et continuer".');
+          // In production, this might indicate missing RPC function or RLS issue
+          console.error('[AuthContext] Production timeout - Check if get_my_profile() RPC exists and RLS policies are correct');
+          setProfileError('Erreur de chargement du profil. Vérifiez votre connexion et réessayez. Si le problème persiste, contactez le support.');
         }
       }
     }, timeouts.emergencyTimeout * 2);
