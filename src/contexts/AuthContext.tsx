@@ -156,8 +156,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('[AuthContext] Session user:', session?.user?.id);
 
         // Use RPC function instead of direct query to avoid RLS timeout
+        // RPC returns SETOF, so we need to get first row with .limit(1).single()
         const result = await supabase
           .rpc('get_my_profile')
+          .limit(1)
           .maybeSingle();
 
         console.log('[AuthContext] Profile RPC result:', {
