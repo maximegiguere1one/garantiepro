@@ -34,6 +34,8 @@ export function DashboardLayoutV2({
 }: DashboardLayoutV2Props) {
   const {
     profile,
+    profileLoaded,
+    loading,
     signOut,
     isOwner,
     organization: currentOrganization,
@@ -44,9 +46,24 @@ export function DashboardLayoutV2({
     () => localStorage.getItem('devMode') === 'true'
   );
 
-  // If no profile but we have a user, show layout with fallback data
-  if (!profile && user) {
-    console.log('[DashboardLayoutV2] No profile yet, using fallback layout with navigation');
+  // Show loading state while profile is being loaded
+  // CRITICAL FIX: Only show fallback if profile loading has completed but still no profile
+  if (user && !profileLoaded && loading) {
+    console.log('[DashboardLayoutV2] Profile loading in progress, showing spinner');
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+          <p className="text-slate-600 font-medium">Chargement de votre profil...</p>
+          <p className="text-slate-500 text-sm mt-2">Veuillez patienter</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If no profile but we have a user AND loading is complete, show minimal fallback
+  if (!profile && user && profileLoaded) {
+    console.log('[DashboardLayoutV2] Profile failed to load, using fallback layout with navigation');
 
     // Minimal fallback navigation
     const fallbackNavigation = [
@@ -116,8 +133,8 @@ export function DashboardLayoutV2({
                 <LogOut className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-2 text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
-              Chargement du profil...
+            <div className="mt-2 text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+              Erreur: Profil non chargé
             </div>
           </div>
         </div>

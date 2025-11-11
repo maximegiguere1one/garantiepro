@@ -22,6 +22,7 @@ interface AuthContextType {
   activeOrganization: Organization | null;
   session: Session | null;
   loading: boolean;
+  profileLoaded: boolean;
   isOwner: boolean;
   profileError: string | null;
   loadingTimedOut: boolean;
@@ -45,6 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isOwner, setIsOwner] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [canSwitchOrganization, setCanSwitchOrganization] = useState(false);
   const [loadingTimedOut, setLoadingTimedOut] = useState(false);
@@ -118,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setProfile(parsed.profile);
               setOrganization(parsed.organization);
               setIsOwner(parsed.isOwner);
+              setProfileLoaded(true);
 
               // Set activeOrganization and canSwitchOrganization from cache
               const canSwitch = parsed.profile.role === 'master' || parsed.profile.role === 'admin';
@@ -285,6 +288,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setOrganization(orgData);
       setIsOwner(ownerStatus);
       setProfileError(null);
+      setProfileLoaded(true);
 
       // Check if user can switch organizations (master or admin only)
       const canSwitch = profileData.role === 'master' || profileData.role === 'admin';
@@ -580,6 +584,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setOrganization(null);
         setActiveOrganization(null);
+        setProfileLoaded(false);
       }
     });
 
@@ -595,6 +600,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logger.info('Force skipping loading state');
     setLoading(false);
     setLoadingTimedOut(false);
+    setProfileLoaded(true);
 
     // Clear all loading flags and timeouts
     loadingRef.current = false;
@@ -752,6 +758,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setActiveOrganization(mockOrganization);
       setIsOwner(true);
       setLoading(false);
+      setProfileLoaded(true);
 
       logger.info('Demo mode sign in successful');
       loadingRef.current = false;
@@ -842,6 +849,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+
+    // Reset all state on sign out
+    setProfile(null);
+    setOrganization(null);
+    setActiveOrganization(null);
+    setProfileLoaded(false);
+    setCanSwitchOrganization(false);
   };
 
   return (
@@ -853,6 +867,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         activeOrganization,
         session,
         loading,
+        profileLoaded,
         isOwner,
         profileError,
         loadingTimedOut,

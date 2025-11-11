@@ -71,14 +71,16 @@ function LoginRoute() {
 }
 
 function AppContent() {
-  const { user, loading, profileError, loadingTimedOut, forceSkipLoading, retryLoadProfile, signOut } = useAuth();
+  const { user, loading, profileLoaded, profile, profileError, loadingTimedOut, forceSkipLoading, retryLoadProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState('dashboard');
 
   // Debug logs
   console.log('[AppContent] State:', {
     user: user ? 'present' : 'null',
+    profile: profile ? 'present' : 'null',
     loading,
+    profileLoaded,
     profileError,
     loadingTimedOut
   });
@@ -103,8 +105,9 @@ function AppContent() {
     );
   }
 
-  if (loading) {
-    console.log('[AppContent] Showing loading screen');
+  // Show loading screen while authenticating OR while profile is loading
+  if (loading || (user && !profileLoaded && !profileError)) {
+    console.log('[AppContent] Showing loading screen - loading:', loading, 'profileLoaded:', profileLoaded);
     return (
       <LoadingWithTimeout
         message="Chargement de votre profil"
