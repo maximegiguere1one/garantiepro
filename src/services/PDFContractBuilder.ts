@@ -16,7 +16,6 @@ import type { Database } from '../lib/database.types';
 import {
   safeToFixed,
   safeNumber,
-  safeAdd,
   normalizeWarrantyNumbers,
   safeLocaleString,
 } from '../lib/numeric-utils';
@@ -364,7 +363,7 @@ export class PDFContractBuilder {
 
     this.doc.setFontSize(this.config.fontSize.body);
     this.doc.setFont(this.config.fontFamily, 'normal');
-    this.doc.text(`Type: ${data.trailer.type || 'N/A'}`, 20, this.yPos);
+    this.doc.text(`Type: ${(data.trailer as any).type || 'N/A'}`, 20, this.yPos);
 
     this.addSpace(5);
 
@@ -373,7 +372,7 @@ export class PDFContractBuilder {
     this.addSpace(5);
 
     this.doc.text(
-      `Prix d'achat: ${safeLocaleString(normalizedWarranty.purchase_price, 'fr-CA')} $`,
+      `Prix d'achat: ${safeLocaleString((data.trailer as any).purchase_price || 0, 'fr-CA')} $`,
       20,
       this.yPos
     );
@@ -442,7 +441,7 @@ export class PDFContractBuilder {
     this.addSpace(10);
 
     // Exclusions Section
-    if (data.plan.exclusions) {
+    if ((data.plan as any).exclusions) {
       this.checkPageBreak(30);
 
       this.doc.setFillColor(220, 38, 38);
@@ -458,7 +457,7 @@ export class PDFContractBuilder {
 
       this.addSpace(10);
 
-      const exclusionLines = this.doc.splitTextToSize(data.plan.exclusions, maxWidth);
+      const exclusionLines = this.doc.splitTextToSize((data.plan as any).exclusions, maxWidth);
       this.doc.setFontSize(this.config.fontSize.body);
       this.doc.setFont(this.config.fontFamily, 'normal');
 
@@ -472,7 +471,7 @@ export class PDFContractBuilder {
     }
 
     // Customer Obligations Section
-    if (data.plan.customer_obligations) {
+    if ((data.plan as any).customer_obligations) {
       this.checkPageBreak(30);
 
       this.doc.setFillColor(220, 38, 38);
@@ -488,7 +487,7 @@ export class PDFContractBuilder {
 
       this.addSpace(10);
 
-      const obligationLines = this.doc.splitTextToSize(data.plan.customer_obligations, maxWidth);
+      const obligationLines = this.doc.splitTextToSize((data.plan as any).customer_obligations, maxWidth);
       this.doc.setFontSize(this.config.fontSize.body);
       this.doc.setFont(this.config.fontFamily, 'normal');
 
@@ -502,7 +501,7 @@ export class PDFContractBuilder {
     }
 
     // Claim Process Section
-    if (data.plan.claim_process) {
+    if ((data.plan as any).claim_process) {
       this.checkPageBreak(30);
 
       this.doc.setFillColor(220, 38, 38);
@@ -518,7 +517,7 @@ export class PDFContractBuilder {
 
       this.addSpace(10);
 
-      const claimProcessLines = this.doc.splitTextToSize(data.plan.claim_process, maxWidth);
+      const claimProcessLines = this.doc.splitTextToSize((data.plan as any).claim_process, maxWidth);
       this.doc.setFontSize(this.config.fontSize.body);
       this.doc.setFont(this.config.fontFamily, 'normal');
 

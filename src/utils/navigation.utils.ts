@@ -1,4 +1,14 @@
-import { NavigationSection } from '../types/navigation';
+// Navigation utility types
+interface NavigationItem {
+  id: string;
+  label: string;
+  icon?: any;
+}
+
+interface NavigationSection {
+  title: string;
+  items: NavigationItem[];
+}
 
 export function generateBreadcrumbs(
   currentPage: string,
@@ -9,7 +19,7 @@ export function generateBreadcrumbs(
   ];
 
   for (const section of navigation) {
-    const item = section.items.find(i => i.id === currentPage);
+    const item = section.items.find((i: NavigationItem) => i.id === currentPage);
     if (item) {
       if (currentPage !== 'dashboard') {
         breadcrumbs.push({ label: item.label, id: item.id });
