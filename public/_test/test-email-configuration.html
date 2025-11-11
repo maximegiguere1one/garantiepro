@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Configuration Email - Pro Remorque</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .section {
+      margin-bottom: 25px;
+      padding: 20px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #667eea;
+    }
+    .section h2 {
+      color: #333;
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+    .status {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 13px;
+      margin-right: 10px;
+    }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .status.warning { background: #fff3cd; color: #856404; }
+    .status.pending { background: #d1ecf1; color: #0c5460; }
+    .info-box {
+      background: #e7f3ff;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .info-box strong {
+      color: #1976d2;
+      display: block;
+      margin-bottom: 8px;
+    }
+    .info-box code {
+      background: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+    }
+    button {
+      background: #667eea;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover { background: #5568d3; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+    button:disabled { background: #ccc; cursor: not-allowed; transform: none; }
+    input[type="email"] {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 15px;
+      margin-bottom: 15px;
+      transition: border-color 0.3s;
+    }
+    input[type="email"]:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    .result {
+      margin-top: 15px;
+      padding: 15px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .result.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .result.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    .step-list {
+      list-style: none;
+      counter-reset: step-counter;
+    }
+    .step-list li {
+      counter-increment: step-counter;
+      margin-bottom: 15px;
+      padding-left: 35px;
+      position: relative;
+    }
+    .step-list li:before {
+      content: counter(step-counter);
+      position: absolute;
+      left: 0;
+      top: 0;
+      background: #667eea;
+      color: white;
+      width: 25px;
+      height: 25px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 12px;
+    }
+    .warning-box {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
+      padding: 15px;
+      margin: 15px 0;
+      border-radius: 4px;
+    }
+    .warning-box strong {
+      color: #856404;
+      display: block;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🔧 Test Configuration Email</h1>
+    <p class="subtitle">Outil de diagnostic complet pour vérifier la configuration de Resend</p>
+
+    <!-- Section 1: État de la connexion -->
+    <div class="section">
+      <h2>1️⃣ État de la connexion Supabase</h2>
+      <div id="connectionStatus">
+        <span class="status pending">En attente...</span>
+      </div>
+    </div>
+
+    <!-- Section 2: Vérification de la configuration -->
+    <div class="section">
+      <h2>2️⃣ Vérification de la configuration Resend</h2>
+      <button onclick="checkEmailConfig()" id="checkConfigBtn">Vérifier la configuration</button>
+      <div id="configResult"></div>
+    </div>
+
+    <!-- Section 3: Test d'envoi d'email -->
+    <div class="section">
+      <h2>3️⃣ Test d'envoi d'email</h2>
+      <input type="email" id="testEmail" placeholder="Entrez votre adresse email" value="">
+      <button onclick="sendTestEmail()" id="sendEmailBtn">Envoyer un email de test</button>
+      <div id="emailResult"></div>
+    </div>
+
+    <!-- Section 4: Guide de configuration -->
+    <div class="section">
+      <h2>📚 Guide de configuration Resend</h2>
+      <div class="info-box">
+        <strong>Si la configuration n'est pas complète, suivez ces étapes :</strong>
+        <ol class="step-list">
+          <li>
+            <strong>Créer un compte Resend</strong><br>
+            Allez sur <a href="https://resend.com" target="_blank">resend.com</a> et créez un compte gratuit
+          </li>
+          <li>
+            <strong>Ajouter et vérifier votre domaine</strong><br>
+            Dans Resend Dashboard → Domains → Add Domain<br>
+            Domaine : <code>locationproremorque.ca</code><br>
+            Ajoutez les enregistrements DNS requis (SPF, DKIM, DMARC)
+          </li>
+          <li>
+            <strong>Générer une clé API</strong><br>
+            Dans Resend Dashboard → API Keys → Create API Key<br>
+            Permissions : <code>Full Access</code> ou <code>Sending Access</code>
+          </li>
+          <li>
+            <strong>Ajouter la clé API dans Supabase</strong><br>
+            Supabase Dashboard → Project Settings → Edge Functions → Secrets<br>
+            Nom : <code>RESEND_API_KEY</code><br>
+            Valeur : Votre clé API Resend (commence par <code>re_</code>)
+          </li>
+          <li>
+            <strong>Redéployer les Edge Functions (si nécessaire)</strong><br>
+            Les secrets sont automatiquement disponibles après ajout
+          </li>
+        </ol>
+      </div>
+
+      <div class="warning-box">
+        <strong>⚠️ Important</strong>
+        Le domaine <code>locationproremorque.ca</code> doit être vérifié dans Resend avant de pouvoir envoyer des emails.
+        Le statut doit être "Verified" (pas "Pending" ou "Failed").
+      </div>
+    </div>
+
+    <!-- Section 5: Informations techniques -->
+    <div class="section">
+      <h2>🔍 Informations techniques</h2>
+      <div class="info-box">
+        <strong>Configuration actuelle :</strong>
+        <p>
+          Edge Function : <code>send-email</code> (ACTIVE)<br>
+          From Email : <code>noreply@locationproremorque.ca</code><br>
+          From Name : <code>Location Pro-Remorque</code><br>
+          Service : <code>Resend API</code><br>
+          Endpoint : <code>https://api.resend.com/emails</code>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://fkxldrkkqvputdgfpayi.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZreGxkcmtrcXZwdXRkZ2ZwYXlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzE4NDUsImV4cCI6MjA3NTEwNzg0NX0.cfWvm-NeUcVONV1VWd6U65lwg-2JdEBMWhSFWUJZdxg';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Check connection on load
+    window.onload = async () => {
+      const statusDiv = document.getElementById('connectionStatus');
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          statusDiv.innerHTML = '<span class="status success">✅ Connecté</span> ' +
+            '<span style="color: #666;">Utilisateur: ' + session.user.email + '</span>';
+        } else {
+          statusDiv.innerHTML = '<span class="status warning">⚠️ Non connecté</span> ' +
+            '<span style="color: #666;">Veuillez vous connecter à l\'application pour tester l\'envoi d\'emails</span>';
+        }
+      } catch (error) {
+        statusDiv.innerHTML = '<span class="status error">❌ Erreur de connexion</span> ' +
+          '<div class="result error" style="margin-top: 10px;">' + error.message + '</div>';
+      }
+    };
+
+    async function checkEmailConfig() {
+      const btn = document.getElementById('checkConfigBtn');
+      const resultDiv = document.getElementById('configResult');
+
+      btn.disabled = true;
+      btn.textContent = 'Vérification en cours...';
+      resultDiv.innerHTML = '<span class="status pending">Vérification...</span>';
+
+      try {
+        const { data, error } = await supabaseClient.functions.invoke('send-email', {
+          body: {
+            to: 'test@example.com',
+            subject: 'Test',
+            body: 'Test',
+            checkConfigOnly: true
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.success && data.configured) {
+          resultDiv.innerHTML = `
+            <span class="status success">✅ Configuration valide</span>
+            <div class="result success">
+✅ RESEND_API_KEY est configuré
+✅ Edge Function send-email est accessible
+✅ From Email: ${data.fromEmail}
+✅ From Name: ${data.fromName}
+
+Le système est prêt à envoyer des emails !
+            </div>
+          `;
+        } else {
+          throw new Error('Configuration invalide');
+        }
+      } catch (error) {
+        console.error('Error checking config:', error);
+        let errorMessage = error.message || 'Erreur inconnue';
+        let errorDetails = '';
+
+        if (error.context?.body) {
+          try {
+            const errorBody = JSON.parse(error.context.body);
+            errorMessage = errorBody.userMessage || errorMessage;
+            errorDetails = `
+Code d'erreur: ${errorBody.errorCode || 'UNKNOWN'}
+${errorBody.suggestedAction ? '\n🔧 Action suggérée:\n' + errorBody.suggestedAction : ''}
+${errorBody.helpUrl ? '\n📖 Documentation:\n' + errorBody.helpUrl : ''}
+            `;
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+
+        resultDiv.innerHTML = `
+          <span class="status error">❌ Configuration incomplète</span>
+          <div class="result error">
+❌ ${errorMessage}
+${errorDetails}
+
+⚠️ Veuillez configurer RESEND_API_KEY dans Supabase Dashboard:
+   Project Settings → Edge Functions → Secrets
+
+📝 Suivez le guide de configuration ci-dessous pour résoudre ce problème.
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Vérifier la configuration';
+      }
+    }
+
+    async function sendTestEmail() {
+      const email = document.getElementById('testEmail').value;
+      const btn = document.getElementById('sendEmailBtn');
+      const resultDiv = document.getElementById('emailResult');
+
+      if (!email) {
+        resultDiv.innerHTML = '<div class="result error">⚠️ Veuillez entrer une adresse email</div>';
+        return;
+      }
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        resultDiv.innerHTML = '<div class="result error">⚠️ Adresse email invalide</div>';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Envoi en cours...';
+      resultDiv.innerHTML = '<span class="status pending">Envoi...</span>';
+
+      try {
+        const { data, error } = await supabaseClient.functions.invoke('send-email', {
+          body: {
+            to: email,
+            subject: '✅ Test Email - Pro Remorque',
+            body: `Bonjour,
+
+Ceci est un email de test envoyé depuis le système de gestion de garanties Pro-Remorque.
+
+✅ Si vous recevez cet email, la configuration est correcte !
+
+🔧 Détails techniques:
+- Edge Function: send-email
+- Service: Resend API
+- From: noreply@locationproremorque.ca
+- Date: ${new Date().toLocaleString('fr-CA')}
+
+Cordialement,
+L'équipe Pro-Remorque`,
+          }
+        });
+
+        if (error) {
+          throw error;
+        }
+
+        if (data.success) {
+          resultDiv.innerHTML = `
+            <span class="status success">✅ Email envoyé avec succès !</span>
+            <div class="result success">
+✅ Email envoyé à: ${email}
+✅ Email ID: ${data.id}
+
+Vérifiez votre boîte de réception (et le dossier spam).
+Si vous ne recevez pas l'email dans les 2 minutes, vérifiez:
+  1. Que le domaine est bien vérifié dans Resend
+  2. Que l'adresse email est valide
+  3. Les logs dans Resend Dashboard
+            </div>
+          `;
+        } else {
+          throw new Error(data.error || 'Échec de l\'envoi');
+        }
+      } catch (error) {
+        console.error('Error sending test email:', error);
+        let errorMessage = error.message || 'Erreur inconnue';
+        let errorDetails = '';
+        let suggestedFix = '';
+
+        if (error.context?.body) {
+          try {
+            const errorBody = JSON.parse(error.context.body);
+            errorMessage = errorBody.userMessage || errorMessage;
+            errorDetails = `
+Code: ${errorBody.errorCode || 'UNKNOWN'}
+Erreur: ${errorBody.error || 'N/A'}
+            `;
+            if (errorBody.suggestedAction) {
+              suggestedFix = `\n🔧 Solution:\n${errorBody.suggestedAction}`;
+            }
+            if (errorBody.helpUrl) {
+              suggestedFix += `\n\n📖 Documentation:\n${errorBody.helpUrl}`;
+            }
+          } catch (e) {
+            // Ignore parse error
+          }
+        }
+
+        resultDiv.innerHTML = `
+          <span class="status error">❌ Échec de l'envoi</span>
+          <div class="result error">
+❌ ${errorMessage}
+${errorDetails}
+${suggestedFix}
+
+💡 Vérifications à effectuer:
+  1. Le domaine locationproremorque.ca est-il vérifié dans Resend ?
+  2. La clé RESEND_API_KEY est-elle valide ?
+  3. Y a-t-il des limites de taux dépassées ?
+  4. Les enregistrements DNS sont-ils correctement configurés ?
+          </div>
+        `;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Envoyer un email de test';
+      }
+    }
+  </script>
+</body>
+</html>
