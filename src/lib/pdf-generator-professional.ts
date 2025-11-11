@@ -215,7 +215,7 @@ export function generateProfessionalInvoicePDF(data: InvoiceData): any {
   yPos = addSection(doc, 'BIEN ASSURE', yPos);
   const trailerLines = [
     `${trailer.year} ${trailer.make} ${trailer.model}`,
-    `Type: ${trailer.trailer_type}`,
+    `Catégorie: ${trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}`,
     `NIV: ${trailer.vin}`,
     `Prix d'achat: ${trailer.purchase_price.toLocaleString('fr-CA')} $`,
   ];
@@ -534,7 +534,7 @@ export function generateProfessionalContractPDF(
     `Année: ${trailer.year}`,
     `Marque: ${trailer.make}`,
     `Modèle: ${trailer.model}`,
-    `Type: ${trailer.trailer_type}`,
+    `Catégorie: ${trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}`,
     `Numéro d'identification du véhicule (NIV): ${trailer.vin}`,
     `Prix d'achat: ${trailer.purchase_price.toLocaleString('fr-CA')} $ CAD`,
   ];
@@ -1282,7 +1282,7 @@ export function generateProfessionalContractPDF(
   yPos = addSection(doc, 'BIEN ASSURÉ', yPos);
   const invoiceTrailerLines = [
     `${trailer.year} ${trailer.make} ${trailer.model}`,
-    `Type: ${trailer.trailer_type}`,
+    `Catégorie: ${trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}`,
     `NIV: ${trailer.vin}`,
     `Prix d'achat: ${trailer.purchase_price.toLocaleString('fr-CA')} $`,
   ];
@@ -1500,7 +1500,7 @@ export function generateProfessionalMerchantInvoicePDF(data: InvoiceData): any {
 
   const vehicleLines = [
     `${trailer.year} ${trailer.make} ${trailer.model}`,
-    `Type: ${trailer.trailer_type}`,
+    `Catégorie: ${trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}`,
     `NIV: ${trailer.vin}`,
     `Prix d'achat: ${safeLocaleString(trailer.purchase_price, 'fr-CA')} $ CAD`,
     trailer.license_plate ? `Plaque: ${trailer.license_plate}` : '',

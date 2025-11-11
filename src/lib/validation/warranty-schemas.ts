@@ -61,10 +61,6 @@ export const trailerSchema = z.object({
     .min(1990, 'L\'année doit être >= 1990')
     .max(new Date().getFullYear() + 1, 'L\'année ne peut être dans le futur'),
 
-  trailerType: z.string()
-    .min(1, 'Le type de remorque est requis')
-    .max(50, 'Le type ne peut dépasser 50 caractères'),
-
   category: z.enum(['fermee', 'ouverte', 'utilitaire'], {
     errorMap: () => ({ message: 'Catégorie invalide' })
   }),

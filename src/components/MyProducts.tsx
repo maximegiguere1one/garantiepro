@@ -10,7 +10,6 @@ interface CustomerProduct {
   make: string;
   model: string;
   year: number;
-  trailer_type: string;
   category: 'fermee' | 'ouverte' | 'utilitaire';
   purchase_date: string;
   purchase_price: number;
@@ -25,7 +24,6 @@ interface ProductForm {
   make: string;
   model: string;
   year: number;
-  trailer_type: string;
   category: 'fermee' | 'ouverte' | 'utilitaire';
   purchase_date: string;
   purchase_price: number;
@@ -38,7 +36,6 @@ const EMPTY_FORM: ProductForm = {
   make: '',
   model: '',
   year: new Date().getFullYear(),
-  trailer_type: '',
   category: 'fermee',
   purchase_date: new Date().toISOString().split('T')[0],
   purchase_price: 0,
@@ -105,7 +102,6 @@ export function MyProducts() {
       make: product.make,
       model: product.model,
       year: product.year,
-      trailer_type: product.trailer_type,
       category: product.category,
       purchase_date: product.purchase_date,
       purchase_price: product.purchase_price,
@@ -233,7 +229,9 @@ export function MyProducts() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
                     <div>
                       <p className="text-xs text-slate-500">Type</p>
-                      <p className="text-sm font-medium text-slate-900">{product.trailer_type}</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        {product.category === 'fermee' ? 'Remorque Fermée' : product.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Catégorie</p>
@@ -340,17 +338,6 @@ export function MyProducts() {
                     value={form.year}
                     onChange={(e) => setForm({ ...form, year: parseInt(e.target.value) })}
                     className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Type</label>
-                  <input
-                    type="text"
-                    value={form.trailer_type}
-                    onChange={(e) => setForm({ ...form, trailer_type: e.target.value })}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                    placeholder="ex: Utilitaire, Fermée, Ouverte"
                     required
                   />
                 </div>

@@ -117,7 +117,6 @@ export function useWarrantyCreation(options: UseWarrantyCreationOptions = {}) {
               make: trailer.make,
               model: trailer.model,
               year: trailer.year,
-              trailer_type: trailer.trailerType,
               category: trailer.category,
               purchase_date: trailer.purchaseDate,
               purchase_price: trailer.purchasePrice,

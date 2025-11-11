@@ -292,7 +292,8 @@ export function generateOptimizedContractPDF(
   yPos += 5;
   doc.text(`Modèle: ${trailer.model || 'N/A'}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
+  const categoryLabel = trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire';
+  doc.text(`Catégorie: ${categoryLabel || 'N/A'}`, 25, yPos);
   yPos += 5;
   doc.text(`Numéro d'identification du véhicule (NIV): ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;
@@ -753,7 +754,8 @@ export function generateOptimizedContractPDF(
 
   doc.text(`${trailer.year || ''} ${trailer.make || ''} ${trailer.model || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
+  const categoryLabel2 = trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire';
+  doc.text(`Catégorie: ${categoryLabel2 || 'N/A'}`, 25, yPos);
   yPos += 5;
   doc.text(`NIV: ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;
@@ -1008,7 +1010,8 @@ export function generateOptimizedMerchantInvoicePDF(data: InvoiceData): any {
 
   doc.text(`${trailer.year || ''} ${trailer.make || ''} ${trailer.model || ''}`, 25, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type || 'N/A'}`, 25, yPos);
+  const categoryLabel2 = trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire';
+  doc.text(`Catégorie: ${categoryLabel2 || 'N/A'}`, 25, yPos);
   yPos += 5;
   doc.text(`NIV: ${trailer.vin || 'N/A'}`, 25, yPos);
   yPos += 5;

@@ -460,11 +460,7 @@ export function DealerInventory() {
                       </div>
                       <p className="text-sm text-slate-600 mb-3">NIV: {item.vin}</p>
 
-                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div>
-                          <p className="text-xs text-slate-500">Type</p>
-                          <p className="text-sm font-medium text-slate-900">{item.trailer_type}</p>
-                        </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
                           <p className="text-xs text-slate-500">Catégorie</p>
                           <p className="text-sm font-medium text-slate-900 capitalize">{item.category}</p>

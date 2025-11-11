@@ -9,7 +9,7 @@ interface WarrantyDetails {
   trailerMake: string;
   trailerModel: string;
   trailerYear: string;
-  trailerType: string;
+  trailerCategory: 'fermee' | 'ouverte' | 'utilitaire';
   trailerPurchasePrice: string;
   planName: string;
   duration: string;
@@ -180,7 +180,8 @@ export async function generateInPersonSignatureDocument(data: InPersonDocumentDa
     doc.setFont('helvetica', 'bold');
     doc.text('Type:', 20, yPos);
     doc.setFont('helvetica', 'normal');
-    doc.text(details.trailerType, 55, yPos);
+    const categoryLabel = details.trailerCategory === 'fermee' ? 'Remorque Fermée' : details.trailerCategory === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire';
+    doc.text(categoryLabel, 55, yPos);
 
     yPos += 5;
     doc.setFont('helvetica', 'bold');

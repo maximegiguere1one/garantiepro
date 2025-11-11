@@ -124,7 +124,8 @@ export function generateInvoicePDF(data: InvoiceData): any {
   yPos += 5;
   doc.text(`NIV: ${trailer.vin}`, 20, yPos);
   yPos += 5;
-  doc.text(`Type: ${trailer.trailer_type}`, 20, yPos);
+  const categoryLabel = trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire';
+  doc.text(`Catégorie: ${categoryLabel}`, 20, yPos);
 
   yPos += 15;
 

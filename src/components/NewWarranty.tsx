@@ -57,7 +57,6 @@ interface TrailerForm {
   make: string;
   model: string;
   year: number;
-  trailerType: string;
   category: 'fermee' | 'ouverte' | 'utilitaire';
   purchaseDate: string;
   purchasePrice: number;
@@ -126,7 +125,6 @@ export function NewWarranty() {
     make: '',
     model: '',
     year: new Date().getFullYear(),
-    trailerType: '',
     category: 'fermee',
     purchaseDate: new Date().toISOString().split('T')[0],
     purchasePrice: 1000, // Valeur par défaut valide (contrainte: doit être > 0)
@@ -279,7 +277,6 @@ export function NewWarranty() {
       make: product.make,
       model: product.model,
       year: product.year,
-      trailerType: product.trailer_type,
       category: product.category,
       purchaseDate: product.purchase_date,
       purchasePrice: product.purchase_price,
@@ -299,8 +296,7 @@ export function NewWarranty() {
       make: item.make,
       model: item.model,
       year: item.year,
-      trailerType: item.type || '',
-      category: 'fermee',
+      category: item.category || 'fermee',
       purchaseDate: item.purchase_date || today,
       purchasePrice: item.asking_price || item.purchase_price || 0,
       manufacturerWarrantyEndDate: oneYearFromNow.toISOString().split('T')[0],
@@ -376,7 +372,7 @@ VIN: ${trailer.vin}
 Marque: ${trailer.make}
 Modèle: ${trailer.model}
 Année: ${trailer.year}
-Type: ${trailer.trailerType}
+Catégorie: ${trailer.category === 'fermee' ? 'Remorque Fermée' : trailer.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}
 Prix d'achat: ${trailer.purchasePrice.toFixed(2)} $
 
 Détails de la Garantie:
@@ -798,7 +794,6 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
             make: trailer.make,
             model: trailer.model,
             year: trailer.year,
-            trailer_type: trailer.trailerType,
             category: trailer.category,
             purchase_date: trailer.purchaseDate,
             purchase_price: trailer.purchasePrice,
@@ -1332,7 +1327,6 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
         make: '',
         model: '',
         year: new Date().getFullYear(),
-        trailerType: '',
         category: 'fermee',
         purchaseDate: new Date().toISOString().split('T')[0],
         purchasePrice: 1000,
@@ -1607,17 +1601,6 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
                 value={trailer.year}
                 onChange={(e) => setTrailer({ ...trailer, year: parseInt(e.target.value) })}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Type</label>
-              <input
-                type="text"
-                value={trailer.trailerType}
-                onChange={(e) => setTrailer({ ...trailer, trailerType: e.target.value })}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg"
-                placeholder="e.g., Utility, Enclosed, Flatbed"
                 required
               />
             </div>
@@ -2140,8 +2123,10 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
                   <p className="text-sm text-slate-600 mt-1">NIV: {product.vin}</p>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3">
                     <div>
-                      <p className="text-xs text-slate-500">Type</p>
-                      <p className="text-sm font-medium text-slate-900">{product.trailer_type}</p>
+                      <p className="text-xs text-slate-500">Catégorie</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        {product.category === 'fermee' ? 'Remorque Fermée' : product.category === 'ouverte' ? 'Remorque Ouverte' : 'Remorque Utilitaire'}
+                      </p>
                     </div>
                     <div>
                       <p className="text-xs text-slate-500">Prix d'achat</p>
@@ -2289,8 +2274,10 @@ Fin: ${(() => { const end = new Date(trailer.manufacturerWarrantyEndDate); end.s
 
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                          <p className="text-xs text-slate-500">Type</p>
-                          <p className="text-sm font-medium text-slate-900">{item.type || 'N/A'}</p>
+                          <p className="text-xs text-slate-500">Catégorie</p>
+                          <p className="text-sm font-medium text-slate-900">
+                            {item.category ? (item.category === 'fermee' ? 'Fermée' : item.category === 'ouverte' ? 'Ouverte' : 'Utilitaire') : 'N/A'}
+                          </p>
                         </div>
                         <div>
                           <p className="text-xs text-slate-500">Couleur</p>

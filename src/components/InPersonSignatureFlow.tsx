@@ -465,7 +465,8 @@ export function InPersonSignatureFlow({
       const trailerMake = extract(/Marque:\s*([^\n]+)/);
       const trailerModel = extract(/Modèle:\s*([^\n]+)/);
       const trailerYear = extract(/Année:\s*([^\n]+)/);
-      const trailerType = extract(/Type:\s*([^\n]+)/);
+      const trailerCategoryText = extract(/Catégorie:\s*([^\n]+)/);
+      const trailerCategory = trailerCategoryText.includes('Fermée') ? 'fermee' : trailerCategoryText.includes('Ouverte') ? 'ouverte' : 'utilitaire' as 'fermee' | 'ouverte' | 'utilitaire';
       const trailerPurchasePrice = extract(/Prix d'achat:\s*([^\n]+)/);
 
       const planName = extract(/Plan:\s*([^\n]+)/);
@@ -501,7 +502,7 @@ export function InPersonSignatureFlow({
         trailerMake,
         trailerModel,
         trailerYear,
-        trailerType,
+        trailerCategory,
         trailerPurchasePrice,
         planName,
         duration,

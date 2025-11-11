@@ -800,7 +800,7 @@ export interface Database {
           make: string
           model: string
           year: number
-          trailer_type: string
+          category: 'fermee' | 'ouverte' | 'utilitaire'
           purchase_date: string
           purchase_price: number
           created_at: string
@@ -812,7 +812,7 @@ export interface Database {
           make: string
           model: string
           year: number
-          trailer_type: string
+          category: 'fermee' | 'ouverte' | 'utilitaire'
           purchase_date: string
           purchase_price: number
           created_at?: string
@@ -824,7 +824,7 @@ export interface Database {
           make?: string
           model?: string
           year?: number
-          trailer_type?: string
+          category?: 'fermee' | 'ouverte' | 'utilitaire'
           purchase_date?: string
           purchase_price?: number
           created_at?: string
