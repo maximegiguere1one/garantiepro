@@ -130,24 +130,36 @@ npm run preview
 ├── src/
 │   ├── components/        # Composants React
 │   │   ├── common/        # Composants réutilisables
-│   │   └── organizations/ # Gestion organisations
+│   │   ├── organizations/ # Gestion organisations
+│   │   ├── settings/      # Paramètres et configuration
+│   │   ├── navigation/    # Navigation et menus
+│   │   └── _deprecated/   # Composants obsolètes (archivés)
 │   ├── contexts/          # React Contexts (Auth, Toast, etc.)
 │   ├── hooks/             # Hooks personnalisés
-│   └── lib/               # Utilitaires et services
-│       ├── supabase.ts    # Client Supabase
-│       ├── pdf-wrapper.ts # PDF lazy-loading
-│       └── performance-tracker.ts # Monitoring
+│   ├── lib/               # Utilitaires et services
+│   │   ├── supabase.ts    # Client Supabase
+│   │   ├── pdf-wrapper.ts # PDF lazy-loading
+│   │   ├── performance-tracker.ts # Monitoring
+│   │   └── _deprecated/   # Utilitaires de développement
+│   └── __tests__/         # Tests unitaires
 ├── supabase/
-│   ├── functions/         # Edge Functions (10+)
-│   └── migrations/        # 75 migrations DB
-└── public/
-    ├── service-worker.js  # Cache intelligent PWA
-    └── _headers           # Configuration HTTP cache
+│   ├── functions/         # Edge Functions (28)
+│   └── migrations/        # Migrations DB (283)
+├── public/
+│   ├── service-worker.js  # Cache intelligent PWA
+│   ├── _headers           # Configuration HTTP cache
+│   └── _test/             # Fichiers HTML de test
+├── docs/
+│   ├── archive/           # Documentation historique (414 fichiers)
+│   ├── scripts/           # Scripts de déploiement
+│   └── guides/            # Guides utilisateur (à venir)
+├── scripts/               # Scripts utilitaires
+└── tests/                 # Tests end-to-end
 ```
 
 ### Base de Données
 
-- **75 migrations** appliquées et testées
+- **283 migrations** appliquées et testées
 - **Row Level Security (RLS)** sur 100% des tables
 - **Isolation multi-tenant** stricte
 - **Indexes optimisés** pour performance
@@ -217,28 +229,26 @@ npm run preview
 
 ## 📚 Documentation
 
-### Guides Complets Disponibles
+### Guides Essentiels
 
-1. **[GUIDE_UTILISATION_COMPLETE.md](./GUIDE_UTILISATION_COMPLETE.md)**
-   Guide utilisateur complet avec toutes les fonctionnalités
+1. **[README.md](./README.md)** - Ce guide (démarrage rapide et vue d'ensemble)
+2. **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Architecture technique détaillée
+3. **[FEATURES.md](./FEATURES.md)** - Liste complète des fonctionnalités
 
-2. **[APPLICATION_100_FONCTIONNELLE.md](./APPLICATION_100_FONCTIONNELLE.md)**
-   Rapport de statut technique détaillé
+### Documentation Archivée
 
-3. **[PERFORMANCE_OPTIMIZATION_SUMMARY.md](./PERFORMANCE_OPTIMIZATION_SUMMARY.md)**
-   Détails techniques des optimisations
+Plus de 400 documents historiques (correctifs, guides, analyses) sont disponibles dans le dossier `docs/archive/` pour référence. Cela inclut:
+- Guides d'implémentation détaillés
+- Historique des correctifs (Oct-Nov 2025)
+- Rapports d'analyse et de performance
+- Documentation de développement
 
-4. **[PERFORMANCE_QUICK_REFERENCE.md](./PERFORMANCE_QUICK_REFERENCE.md)**
-   Référence rapide pour la performance
+### Scripts de Déploiement
 
-5. **[IMPLEMENTATION_COMPLETE_FINAL.md](./IMPLEMENTATION_COMPLETE_FINAL.md)**
-   Rapport final d'implémentation
-
-6. **[ERROR_HANDLING_GUIDE.md](./ERROR_HANDLING_GUIDE.md)**
-   Guide de gestion des erreurs
-
-7. **[TROUBLESHOOTING_GARANTIES.md](./TROUBLESHOOTING_GARANTIES.md)**
-   Résolution de problèmes
+Les scripts de déploiement sont disponibles dans `docs/scripts/`:
+- `deploy-production.sh` - Déploiement en production
+- `deploy-cloudflare.sh` - Déploiement sur Cloudflare
+- `verify-production.sh` - Vérification post-déploiement
 
 ---
 
@@ -419,9 +429,9 @@ npm run dev
 
 ### Database
 - **Tables**: 40+
-- **Migrations**: 75
+- **Migrations**: 283
 - **RLS Policies**: 150+
-- **Edge Functions**: 10+
+- **Edge Functions**: 28
 
 ---
 

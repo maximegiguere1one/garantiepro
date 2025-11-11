@@ -9,7 +9,6 @@ import { PersonalizationProvider } from './contexts/PersonalizationContext';
 import { EnhancedToastProvider } from './components/ui/EnhancedToast';
 import { LoadingWithTimeout } from './components/common/LoadingWithTimeout';
 import { EmergencyAccessPage } from './components/EmergencyAccessPage';
-import { BoltAutoDemo } from './components/BoltAutoDemo';
 import { queryClient } from './lib/query-client';
 import 'shepherd.js/dist/css/shepherd.css';
 import './styles/shepherd-custom.css';
@@ -45,18 +44,14 @@ const SignatureAuditDashboard = lazy(() => import('./components/SignatureAuditDa
 const PublicSignatureVerification = lazy(() => import('./components/PublicSignatureVerification').then(m => ({ default: m.PublicSignatureVerification })));
 const AdminPasswordReset = lazy(() => import('./components/AdminPasswordReset').then(m => ({ default: m.AdminPasswordReset })));
 const ResetPassword = lazy(() => import('./components/ResetPassword').then(m => ({ default: m.ResetPassword })));
-const WarrantyFormTester = lazy(() => import('./components/WarrantyFormTester').then(m => ({ default: m.WarrantyFormTester })));
 const ProfileRecovery = lazy(() => import('./components/ProfileRecovery').then(m => ({ default: m.ProfileRecovery })));
 const EmailQueueManager = lazy(() => import('./components/EmailQueueManager').then(m => ({ default: m.EmailQueueManager })));
 const ResponseTemplatesManager = lazy(() => import('./components/ResponseTemplatesManager').then(m => ({ default: m.ResponseTemplatesManager })));
-const SystemDiagnostics = lazy(() => import('./components/SystemDiagnostics').then(m => ({ default: m.SystemDiagnostics })));
-const WarrantyDiagnosticsPanel = lazy(() => import('./components/WarrantyDiagnosticsPanel').then(m => ({ default: m.WarrantyDiagnosticsPanel })));
 const SupabaseHealthCheck = lazy(() => import('./components/SupabaseHealthCheck').then(m => ({ default: m.SupabaseHealthCheck })));
 const DemoNewFeatures = lazy(() => import('./components/DemoNewFeatures').then(m => ({ default: m.DemoNewFeatures })));
 const WarrantyDownloadPage = lazy(() => import('./components/WarrantyDownloadPage').then(m => ({ default: m.WarrantyDownloadPage })));
 const HelpCenter = lazy(() => import('./components/HelpCenter').then(m => ({ default: m.default })));
 const HelpCenterPage = lazy(() => import('./components/HelpCenterPage').then(m => ({ default: m.HelpCenterPage })));
-const UIV2Demo = lazy(() => import('./components/UIV2Demo').then(m => ({ default: m.UIV2Demo })));
 const PromoteMasterPage = lazy(() => import('./components/PromoteMasterPage'));
 const AutomationDashboard = lazy(() => import('./components/AutomationDashboard').then(m => ({ default: m.AutomationDashboard })));
 const NotificationPreferences = lazy(() => import('./components/NotificationPreferences').then(m => ({ default: m.NotificationPreferences })));
@@ -188,16 +183,10 @@ function AppContent() {
         return <AnalyticsPage />;
       case 'signature-audit':
         return <SignatureAuditDashboard />;
-      case 'warranty-form-test':
-        return <WarrantyFormTester />;
       case 'email-queue':
         return <EmailQueueManager />;
       case 'response-templates':
         return <ResponseTemplatesManager />;
-      case 'system-diagnostics':
-        return <SystemDiagnostics />;
-      case 'warranty-diagnostics':
-        return <WarrantyDiagnosticsPanel />;
       case 'supabase-health':
         return <SupabaseHealthCheck />;
       case 'demo-features':
@@ -206,8 +195,6 @@ function AppContent() {
         return <HelpCenterPage />;
       case 'settings':
         return <SettingsPage />;
-      case 'ui-v2-demo':
-        return <UIV2Demo />;
       case 'automation':
         return <AutomationDashboard />;
       case 'notification-preferences':
@@ -250,7 +237,6 @@ function App() {
                 <AuthProvider>
                   <PersonalizationProvider>
                     <OrganizationProvider>
-                      <BoltAutoDemo />
                       <BoltModeWarning />
                       <NetworkStatusIndicator />
                       <Suspense fallback={
