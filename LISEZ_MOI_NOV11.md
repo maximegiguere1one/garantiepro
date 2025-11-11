@@ -216,5 +216,29 @@ LIMIT 5;
 
 ---
 
-**Dernière mise à jour:** 2025-11-11 07:50 UTC
+**Dernière mise à jour:** 2025-11-11 08:00 UTC
 **Status:** ✅ PRÊT - Migration Supabase requise après déploiement
+
+---
+
+# 🔧 CORRECTIF: Export AdminPasswordReset
+
+## 🚨 Erreur Production Détectée
+
+```
+Uncaught SyntaxError: Export 'AdminPasswordReset$1' is not defined in module
+```
+
+### Cause
+Vite's code splitting créait un conflit de noms avec le lazy loading pattern `.then(m => ({ default: m.AdminPasswordReset }))` sur une named export.
+
+### Solution Appliquée
+- ✅ Changé `export function AdminPasswordReset()` → `export default AdminPasswordReset`
+- ✅ Changé import dans App.tsx: `lazy(() => import('./components/AdminPasswordReset'))`
+- ✅ Build validé: 96 secondes, aucune erreur
+
+### Fichiers Modifiés
+- `src/components/AdminPasswordReset.tsx` - Default export
+- `src/App.tsx` - Simplified lazy import
+
+**Status:** ✅ CORRIGÉ - Déploiement sécurisé

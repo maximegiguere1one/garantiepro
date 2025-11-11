@@ -42,7 +42,7 @@ const OrganizationsManagement = lazy(() => import('./components/OrganizationsMan
 const BillingDashboard = lazy(() => import('./components/BillingDashboard').then(m => ({ default: m.BillingDashboard })));
 const SignatureAuditDashboard = lazy(() => import('./components/SignatureAuditDashboard').then(m => ({ default: m.SignatureAuditDashboard })));
 const PublicSignatureVerification = lazy(() => import('./components/PublicSignatureVerification').then(m => ({ default: m.PublicSignatureVerification })));
-const AdminPasswordReset = lazy(() => import('./components/AdminPasswordReset').then(m => ({ default: m.AdminPasswordReset })));
+const AdminPasswordReset = lazy(() => import('./components/AdminPasswordReset'));
 const ResetPassword = lazy(() => import('./components/ResetPassword').then(m => ({ default: m.ResetPassword })));
 const ProfileRecovery = lazy(() => import('./components/ProfileRecovery').then(m => ({ default: m.ProfileRecovery })));
 const EmailQueueManager = lazy(() => import('./components/EmailQueueManager').then(m => ({ default: m.EmailQueueManager })));

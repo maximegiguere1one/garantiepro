@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { Shield, Key, Mail, CheckCircle, AlertCircle } from 'lucide-react';
 
-export function AdminPasswordReset() {
+function AdminPasswordReset() {
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -268,3 +268,5 @@ export function AdminPasswordReset() {
     </div>
   );
 }
+
+export default AdminPasswordReset;
