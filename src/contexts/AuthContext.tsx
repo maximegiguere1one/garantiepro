@@ -178,9 +178,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           statusText: result.statusText
         });
 
-        // Fallback: If RPC fails (function doesn't exist), try direct query
-        if (result.error && result.error.message?.includes('function') && result.error.message?.includes('does not exist')) {
-          console.warn('[AuthContext] RPC function not found, falling back to direct query');
+        // Fallback: If RPC fails OR returns null, try direct query
+        if ((result.error && result.error.message?.includes('function') && result.error.message?.includes('does not exist')) || !result.data) {
+          if (result.error) {
+            console.warn('[AuthContext] RPC function not found, falling back to direct query');
+          } else {
+            console.warn('[AuthContext] RPC returned null, falling back to direct query');
+          }
           result = await supabase
             .from('profiles')
             .select('id, email, full_name, role, organization_id, phone, is_master_account, last_sign_in_at, created_at, updated_at')
