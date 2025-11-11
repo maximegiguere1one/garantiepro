@@ -63,32 +63,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const envType = getEnvironmentType();
     const useAggressiveCache = shouldUseAggressiveCaching();
 
-    // ENHANCED GUARD 1: Check if already loading for this specific user
-    if (loadingRef.current && activeUserIdRef.current === userId) {
-      console.log('[AuthContext] Profile load already in progress for this user, skipping silently');
-      return;
-    }
-
-    // ENHANCED GUARD 2: More aggressive debouncing with separate check
-    const debounceTime = envType === 'bolt' ? 2000 : 5000;
-    const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
-
-    if (timeSinceLastLoad < debounceTime && retryCount === 0 && activeUserIdRef.current === userId) {
-      console.log('[AuthContext] Debouncing - too soon since last load, skipping silently');
-      return;
-    }
-
-    // ENHANCED GUARD 3: Set loading state IMMEDIATELY before any async work
+    // GUARD: Set loading state IMMEDIATELY and check if already loading
     if (loadingRef.current) {
-      console.log('[AuthContext] Another profile load in progress, skipping');
+      console.log('[AuthContext] Another profile load in progress (loadingRef=true), skipping');
       return;
     }
+
+    // Set loading flag immediately to prevent concurrent loads
+    loadingRef.current = true;
+    activeUserIdRef.current = userId;
 
     console.log('[AuthContext] Starting profile load for userId:', userId, 'retryCount:', retryCount);
 
     try {
-      loadingRef.current = true;
-      activeUserIdRef.current = userId;
     lastLoadTimeRef.current = Date.now();
     setLoadingTimedOut(false);
 
@@ -414,6 +401,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return loadProfile(userId, retryCount + 1);
       }
 
+      // Final failure - mark as loaded (failed) so UI doesn't get stuck
+      console.log('[AuthContext] Final failure, setting profileLoaded=true with error');
+      setProfileLoaded(true);
+
       // Clear cache on final failure
       sessionStorage.removeItem(`user_data_${userId}`);
 
@@ -424,6 +415,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       loadingRef.current = false;
       activeUserIdRef.current = null;
+
+      // DO NOT set profileLoaded here - it should only be set when we successfully load data
+      // or explicitly when we've exhausted all retries
 
       // Clear all timeouts to prevent EMERGENCY TIMEOUT from firing
       if (loadingTimeoutRef.current) {
@@ -576,11 +570,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
 
-      // Only load profile for non-INITIAL_SESSION events
+      // Only load profile for SIGNED_IN event (not INITIAL_SESSION, not duplicate SIGNED_IN)
       // INITIAL_SESSION is already handled by the initAuth() useEffect
-      if (session?.user && _event !== 'INITIAL_SESSION') {
-        console.log('[AuthContext] User exists (non-initial), calling loadProfile for:', session.user.id);
-        await loadProfile(session.user.id);
+      if (session?.user && _event === 'SIGNED_IN') {
+        console.log('[AuthContext] SIGNED_IN event, calling loadProfile for:', session.user.id);
+
+        // Small delay to prevent race condition with guards
+        setTimeout(() => {
+          loadProfile(session.user.id).catch(err => {
+            console.error('[AuthContext] Failed to load profile from SIGNED_IN:', err);
+          });
+        }, 100);
       } else if (session?.user && _event === 'INITIAL_SESSION') {
         console.log('[AuthContext] INITIAL_SESSION - profile loading handled by initAuth, skipping');
       } else if (!session?.user) {
