@@ -94,6 +94,15 @@ self.addEventListener('fetch', (event) => {
     try {
       const url = new URL(request.url);
 
+      // CRITICAL: Block Bolt.new analytics calls that don't exist in production
+      if (url.hostname === 'bolt.new' && url.pathname.includes('/api/analytics')) {
+        console.log('[Service Worker] Blocking Bolt.new analytics:', request.url);
+        return new Response(JSON.stringify({ success: true, blocked: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
       // CRITICAL: Bypass all Supabase requests - return fetch directly without caching
       // This prevents auth/v1/token and rest/v1/* from being intercepted
       if (url.hostname.endsWith('.supabase.co') || url.href.includes('supabase.co')) {

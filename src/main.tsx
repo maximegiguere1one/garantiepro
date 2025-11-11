@@ -12,14 +12,15 @@ import { performanceMonitor } from './lib/monitoring/performance-monitor';
     location.hostname.includes('webcontainer') ||
     location.hostname.includes('staticblitz');
 
-  if (!isStackBlitz) return;
-
-  // Liste des URLs à filtrer silencieusement
+  // Liste des URLs à filtrer silencieusement (même en production pour Bolt.new)
   const shouldMute = (url: string | undefined) =>
     !!url &&
     (url.includes('stackblitz.com/api/ad_conversions') ||
      url.includes('/api/ad_conversions') ||
-     url.includes('/api/dns-records'));
+     url.includes('/api/dns-records') ||
+     url.includes('bolt.new/api/analytics')); // Block Bolt.new analytics
+
+  if (!isStackBlitz && !shouldMute(location.href)) return;
 
   // Intercepter fetch
   const origFetch = window.fetch.bind(window);
@@ -85,6 +86,25 @@ import { performanceMonitor } from './lib/monitoring/performance-monitor';
     return origWarn.apply(console, args);
   };
 })();
+
+// Global unhandled promise rejection handler
+window.addEventListener('unhandledrejection', (event) => {
+  const error = event.reason;
+  const errorMessage = error?.message || String(error);
+
+  // Silently ignore Bolt.new analytics and StackBlitz noise
+  if (
+    errorMessage.includes('bolt.new/api/analytics') ||
+    errorMessage.includes('ad_conversions') ||
+    errorMessage.includes('Failed to fetch') && errorMessage.includes('bolt.new')
+  ) {
+    event.preventDefault(); // Prevent console error
+    return;
+  }
+
+  // Log other unhandled rejections
+  logger.error('Unhandled promise rejection:', error);
+});
 
 errorMonitor.initialize();
 performanceMonitor.initialize();
