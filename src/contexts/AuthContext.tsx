@@ -54,32 +54,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const emergencyTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
+  const activeUserIdRef = useRef<string | null>(null);
 
   const loadProfile = useCallback(async (userId: string, retryCount = 0) => {
-    console.log('[AuthContext] loadProfile called for userId:', userId, 'retryCount:', retryCount);
-
     const timeouts = getTimeouts();
     const envType = getEnvironmentType();
     const useAggressiveCache = shouldUseAggressiveCaching();
 
-    if (loadingRef.current) {
-      console.warn('[AuthContext] ⚠️ Profile load already in progress, skipping!');
-      logger.debug('Profile load already in progress, skipping');
+    // ENHANCED GUARD 1: Check if already loading for this specific user
+    if (loadingRef.current && activeUserIdRef.current === userId) {
+      console.log('[AuthContext] Profile load already in progress for this user, skipping silently');
       return;
     }
-    console.log('[AuthContext] ✓ No concurrent load, proceeding...');
+
+    // ENHANCED GUARD 2: More aggressive debouncing with separate check
+    const debounceTime = envType === 'bolt' ? 2000 : 5000;
+    const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
+
+    if (timeSinceLastLoad < debounceTime && retryCount === 0 && activeUserIdRef.current === userId) {
+      console.log('[AuthContext] Debouncing - too soon since last load, skipping silently');
+      return;
+    }
+
+    // ENHANCED GUARD 3: Set loading state IMMEDIATELY before any async work
+    if (loadingRef.current) {
+      console.log('[AuthContext] Another profile load in progress, skipping');
+      return;
+    }
+
+    console.log('[AuthContext] Starting profile load for userId:', userId, 'retryCount:', retryCount);
 
     try {
-      const debounceTime = envType === 'bolt' ? 2000 : 5000;
-      const timeSinceLastLoad = Date.now() - lastLoadTimeRef.current;
-      console.log('[AuthContext] Debounce check:', timeSinceLastLoad, 'ms since last load, threshold:', debounceTime);
-      if (timeSinceLastLoad < debounceTime && retryCount === 0) {
-        console.warn('[AuthContext] ⚠️ Debouncing - too soon since last load!');
-        logger.debug(`Debouncing profile load (${debounceTime}ms), too soon since last load`);
-        return;
-      }
-
       loadingRef.current = true;
+      activeUserIdRef.current = userId;
     lastLoadTimeRef.current = Date.now();
     setLoadingTimedOut(false);
 
@@ -209,7 +216,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const delay = Math.min(exponentialDelay + jitter, 5000);
 
           logger.debug(`Profile not created yet. Retrying in ${Math.round(delay)}ms...`);
+
+          // Reset loading state before retry to allow the next attempt
           loadingRef.current = false;
+          activeUserIdRef.current = null;
+
           await new Promise(resolve => setTimeout(resolve, delay));
           return loadProfile(userId, retryCount + 1);
         } else {
@@ -386,7 +397,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (shouldRetry && !abortControllerRef.current?.signal.aborted) {
         const delay = baseDelay * Math.pow(2, retryCount);
         logger.debug(`Retrying after error in ${delay}ms...`);
+
+        // Reset loading state before retry to allow the next attempt
         loadingRef.current = false;
+        activeUserIdRef.current = null;
+
         await new Promise(resolve => setTimeout(resolve, delay));
         return loadProfile(userId, retryCount + 1);
       }
@@ -396,8 +411,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     } finally {
       console.log('[AuthContext] FINALLY block - resetting loading states');
+
+      // CRITICAL: Reset loading flags in proper order
       setLoading(false);
       loadingRef.current = false;
+      activeUserIdRef.current = null;
 
       // Clear all timeouts to prevent EMERGENCY TIMEOUT from firing
       if (loadingTimeoutRef.current) {
@@ -413,7 +431,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   } catch (outerError) {
     console.error('[AuthContext] ❌ OUTER CATCH - Unexpected error in loadProfile:', outerError);
+
+    // Ensure cleanup happens even in outer catch
     loadingRef.current = false;
+    activeUserIdRef.current = null;
     setLoading(false);
   }
   }, []);
@@ -574,19 +595,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logger.info('Force skipping loading state');
     setLoading(false);
     setLoadingTimedOut(false);
+
+    // Clear all loading flags and timeouts
+    loadingRef.current = false;
+    activeUserIdRef.current = null;
+
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    if (emergencyTimeoutRef.current) {
+      clearTimeout(emergencyTimeoutRef.current);
+      emergencyTimeoutRef.current = null;
     }
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
+      abortControllerRef.current = null;
     }
-    loadingRef.current = false;
   }, []);
 
   const retryLoadProfile = async () => {
     if (!user?.id) return;
 
+    // Prevent retry if already loading
+    if (loadingRef.current) {
+      console.log('[AuthContext] Retry skipped - already loading');
+      return;
+    }
+
     const timeouts = getTimeouts();
+
+    // Clear all previous state before retry
+    loadingRef.current = false;
+    activeUserIdRef.current = null;
 
     setLoading(true);
     setProfileError(null);
@@ -595,6 +636,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (loadingTimeoutRef.current) {
       clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
     }
 
     loadingTimeoutRef.current = setTimeout(() => {
