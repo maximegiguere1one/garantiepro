@@ -52,7 +52,7 @@ Email délivré au destinataire
 Avant de commencer, assurez-vous d'avoir :
 
 - ✅ Un compte Supabase avec le projet Pro-Remorque actif
-- ✅ Accès au DNS du domaine `locationproremorque.ca`
+- ✅ Accès au DNS du domaine `garantieproremorque.com`
 - ✅ Droits d'administration sur le projet Supabase
 - ⏱️ 15-30 minutes pour compléter la configuration
 
@@ -85,7 +85,7 @@ Le plan gratuit de Resend inclut :
 
 1. Dans le dashboard Resend, allez dans **Domains** (menu de gauche)
 2. Cliquez sur **"Add Domain"**
-3. Entrez : `locationproremorque.ca`
+3. Entrez : `garantieproremorque.com`
 4. Cliquez sur **"Add"**
 
 ### 2.2 Configuration DNS
@@ -126,7 +126,7 @@ TTL: 3600
 ```
 Type: TXT
 Nom: _dmarc
-Valeur: v=DMARC1; p=none; rua=mailto:dmarc@locationproremorque.ca
+Valeur: v=DMARC1; p=none; rua=mailto:dmarc@garantieproremorque.com
 TTL: 3600
 ```
 
@@ -444,7 +444,7 @@ Le système intègre un rate limiter :
 Utilisez cette checklist pour vérifier que tout est en place :
 
 - [ ] Compte Resend créé et vérifié
-- [ ] Domaine `locationproremorque.ca` ajouté dans Resend
+- [ ] Domaine `garantieproremorque.com` ajouté dans Resend
 - [ ] Enregistrement SPF ajouté dans DNS
 - [ ] Enregistrements DKIM ajoutés dans DNS
 - [ ] Enregistrement DMARC ajouté dans DNS

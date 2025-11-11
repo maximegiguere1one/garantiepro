@@ -66,7 +66,7 @@ export async function checkEmailConfiguration(): Promise<EmailConfigStatus> {
         );
       }
 
-      if (data.fromEmail && !data.fromEmail.includes('locationproremorque.ca')) {
+      if (data.fromEmail && !data.fromEmail.includes('garantieproremorque.com')) {
         status.warnings.push(
           'Le domaine email ne correspond pas à votre domaine principal. Assurez-vous qu\'il est vérifié dans Resend.'
         );

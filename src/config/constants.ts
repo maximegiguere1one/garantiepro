@@ -9,7 +9,7 @@ export const APP_CONFIG = {
   ENVIRONMENT: envType,
   PRODUCTION_URL: 'https://www.garantieproremorque.com',
   APP_NAME: 'Garantie Prolongée | Pro Remorque',
-  SUPPORT_EMAIL: 'support@locationproremorque.ca',
+  SUPPORT_EMAIL: 'support@garantieproremorque.com',
 } as const;
 
 export const ROUTES = {

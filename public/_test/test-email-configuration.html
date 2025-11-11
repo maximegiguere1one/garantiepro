@@ -195,7 +195,7 @@
           <li>
             <strong>Ajouter et vérifier votre domaine</strong><br>
             Dans Resend Dashboard → Domains → Add Domain<br>
-            Domaine : <code>locationproremorque.ca</code><br>
+            Domaine : <code>garantieproremorque.com</code><br>
             Ajoutez les enregistrements DNS requis (SPF, DKIM, DMARC)
           </li>
           <li>
@@ -218,7 +218,7 @@
 
       <div class="warning-box">
         <strong>⚠️ Important</strong>
-        Le domaine <code>locationproremorque.ca</code> doit être vérifié dans Resend avant de pouvoir envoyer des emails.
+        Le domaine <code>garantieproremorque.com</code> doit être vérifié dans Resend avant de pouvoir envoyer des emails.
         Le statut doit être "Verified" (pas "Pending" ou "Failed").
       </div>
     </div>
@@ -230,7 +230,7 @@
         <strong>Configuration actuelle :</strong>
         <p>
           Edge Function : <code>send-email</code> (ACTIVE)<br>
-          From Email : <code>noreply@locationproremorque.ca</code><br>
+          From Email : <code>noreply@garantieproremorque.com</code><br>
           From Name : <code>Location Pro-Remorque</code><br>
           Service : <code>Resend API</code><br>
           Endpoint : <code>https://api.resend.com/emails</code>
@@ -371,7 +371,7 @@ Ceci est un email de test envoyé depuis le système de gestion de garanties Pro
 🔧 Détails techniques:
 - Edge Function: send-email
 - Service: Resend API
-- From: noreply@locationproremorque.ca
+- From: noreply@garantieproremorque.com
 - Date: ${new Date().toLocaleString('fr-CA')}
 
 Cordialement,
@@ -433,7 +433,7 @@ ${errorDetails}
 ${suggestedFix}
 
 💡 Vérifications à effectuer:
-  1. Le domaine locationproremorque.ca est-il vérifié dans Resend ?
+  1. Le domaine garantieproremorque.com est-il vérifié dans Resend ?
   2. La clé RESEND_API_KEY est-elle valide ?
   3. Y a-t-il des limites de taux dépassées ?
   4. Les enregistrements DNS sont-ils correctement configurés ?

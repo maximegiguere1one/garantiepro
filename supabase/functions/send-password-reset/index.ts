@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-const FROM_EMAIL = 'noreply@locationproremorque.ca';
-const FROM_NAME = 'Location Pro-Remorque';
+const FROM_EMAIL = 'noreply@garantieproremorque.com';
+const FROM_NAME = 'Garantie Pro-Remorque';
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://www.garantieproremorque.com';
 
 interface PasswordResetRequest {
@@ -30,7 +30,7 @@ function generatePasswordResetEmailHTML(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Réinitialisation de mot de passe - Location Pro-Remorque</title>
+  <title>Réinitialisation de mot de passe - Garantie Pro-Remorque</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
@@ -67,7 +67,7 @@ function generatePasswordResetEmailHTML(params: {
                     <p style="color: #1e293b; font-size: 17px; line-height: 1.6; margin: 0 0 24px;">Bonjour <strong style="color: #dc2626;">${params.userName}</strong>,</p>
 
                     <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 32px;">
-                      Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte <strong>${params.organizationName}</strong> sur la plateforme <strong>Location Pro-Remorque</strong>.
+                      Nous avons reçu une demande de réinitialisation de votre mot de passe pour votre compte <strong>${params.organizationName}</strong> sur la plateforme <strong>Garantie Pro-Remorque</strong>.
                     </p>
 
                     <!-- Alerte de sécurité -->
@@ -121,7 +121,7 @@ function generatePasswordResetEmailHTML(params: {
                 <tr>
                   <td>
                     <p style="margin: 0 0 16px;">
-                      <strong style="color: #1e40af; font-size: 18px; font-weight: 800;">Location Pro-Remorque</strong>
+                      <strong style="color: #1e40af; font-size: 18px; font-weight: 800;">Garantie Pro-Remorque</strong>
                     </p>
                     <p style="color: #64748b; font-size: 14px; margin: 0 0 8px; font-weight: 500;">
                       Plateforme professionnelle de gestion de garanties
@@ -354,7 +354,7 @@ Deno.serve(async (req: Request) => {
     const emailData = {
       from: `${FROM_NAME} <${FROM_EMAIL}>`,
       to: [email],
-      subject: 'Réinitialisation de votre mot de passe - Location Pro-Remorque',
+      subject: 'Réinitialisation de votre mot de passe - Garantie Pro-Remorque',
       html: emailHTML,
     };
 

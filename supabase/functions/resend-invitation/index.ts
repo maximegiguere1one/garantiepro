@@ -7,8 +7,8 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-const FROM_EMAIL = 'noreply@locationproremorque.ca';
-const FROM_NAME = 'Location Pro-Remorque';
+const FROM_EMAIL = 'noreply@garantieproremorque.com';
+const FROM_NAME = 'Garantie Pro-Remorque';
 const SITE_URL = Deno.env.get('SITE_URL') || 'https://www.garantieproremorque.com';
 
 interface ResendInvitationRequest {
@@ -41,7 +41,7 @@ function generateInvitationEmailHTML(params: {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Invitation - Location Pro-Remorque</title>
+  <title>Invitation - Garantie Pro-Remorque</title>
 </head>
 <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
@@ -60,7 +60,7 @@ function generateInvitationEmailHTML(params: {
                       </svg>
                     </div>
                     <h1 style="color: #ffffff; margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">Rappel d'invitation</h1>
-                    <p style="color: #dbeafe; margin: 12px 0 0; font-size: 17px; font-weight: 500;">Rejoignez Location Pro-Remorque</p>
+                    <p style="color: #dbeafe; margin: 12px 0 0; font-size: 17px; font-weight: 500;">Rejoignez Garantie Pro-Remorque</p>
                   </td>
                 </tr>
               </table>
@@ -73,7 +73,7 @@ function generateInvitationEmailHTML(params: {
                   <td>
                     <p style="color: #1e293b; font-size: 17px; line-height: 1.6; margin: 0 0 24px;">Bonjour <strong style="color: #1e40af;">${params.invitedUserName}</strong>,</p>
                     <p style="color: #475569; font-size: 16px; line-height: 1.6; margin: 0 0 32px;">
-                      <strong style="color: #1e293b;">${params.invitedByName}</strong> vous a invité à rejoindre <strong style="color: #1e40af;">${params.organizationName}</strong> sur la plateforme professionnelle de gestion de garanties Location Pro-Remorque.
+                      <strong style="color: #1e293b;">${params.invitedByName}</strong> vous a invité à rejoindre <strong style="color: #1e40af;">${params.organizationName}</strong> sur la plateforme professionnelle de gestion de garanties Garantie Pro-Remorque.
                     </p>
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 32px 0;">
                       <tr>
@@ -106,7 +106,7 @@ function generateInvitationEmailHTML(params: {
                 <tr>
                   <td>
                     <p style="margin: 0 0 16px;">
-                      <strong style="color: #1e40af; font-size: 18px; font-weight: 800;">Location Pro-Remorque</strong>
+                      <strong style="color: #1e40af; font-size: 18px; font-weight: 800;">Garantie Pro-Remorque</strong>
                     </p>
                     <p style="color: #64748b; font-size: 14px; margin: 0 0 8px; font-weight: 500;">
                       Plateforme professionnelle de gestion de garanties
@@ -255,7 +255,7 @@ Deno.serve(async (req: Request) => {
         const emailData = {
           from: `${FROM_NAME} <${FROM_EMAIL}>`,
           to: [invitation.email],
-          subject: `Rappel - Votre invitation chez Location Pro-Remorque`,
+          subject: `Rappel - Votre invitation chez Garantie Pro-Remorque`,
           html: emailHTML,
         };
 

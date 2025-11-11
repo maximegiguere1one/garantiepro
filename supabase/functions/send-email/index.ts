@@ -2,8 +2,8 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM_EMAIL = "noreply@locationproremorque.ca";
-const FROM_NAME = "Location Pro-Remorque";
+const FROM_EMAIL = "noreply@garantieproremorque.com";
+const FROM_NAME = "Garantie Pro-Remorque";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

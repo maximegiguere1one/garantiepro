@@ -39,7 +39,7 @@ J'ai effectué une vérification complète du système d'envoi d'emails de votre
 
 ### 4. Configuration Resend
 - **Service**: Resend (https://resend.com)
-- **From Email**: `noreply@locationproremorque.ca`
+- **From Email**: `noreply@garantieproremorque.com`
 - **From Name**: `Location Pro-Remorque`
 - **API Endpoint**: `https://api.resend.com/emails`
 
@@ -66,11 +66,11 @@ Le secret `RESEND_API_KEY` n'est PAS présent dans le fichier `.env` local (c'es
 ### Étape 2: Configurer le domaine
 
 1. Dans Resend Dashboard → Domains → Add Domain
-2. Ajoutez: `locationproremorque.ca`
+2. Ajoutez: `garantieproremorque.com`
 3. Configurez les enregistrements DNS:
    - **SPF**: `v=spf1 include:_spf.resend.com ~all`
    - **DKIM**: 2 enregistrements CNAME fournis par Resend
-   - **DMARC**: `v=DMARC1; p=none; rua=mailto:dmarc@locationproremorque.ca`
+   - **DMARC**: `v=DMARC1; p=none; rua=mailto:dmarc@garantieproremorque.com`
 4. Attendez la vérification (15-30 minutes généralement)
 5. Vérifiez que le statut est "Verified" ✅
 
@@ -208,7 +208,7 @@ console.log(result);
                       ▼
 ┌─────────────────────────────────────────────────────────┐
 │                 Boîte email du client                   │
-│  noreply@locationproremorque.ca                        │
+│  noreply@garantieproremorque.com                        │
 │  Location Pro-Remorque                                  │
 └─────────────────────────────────────────────────────────┘
 ```
@@ -283,7 +283,7 @@ Utilisez cette checklist pour vérifier que tout est en place :
 
 ### Configuration Resend
 - [ ] Compte Resend créé
-- [ ] Domaine `locationproremorque.ca` ajouté
+- [ ] Domaine `garantieproremorque.com` ajouté
 - [ ] Enregistrement SPF configuré dans DNS
 - [ ] Enregistrements DKIM configurés dans DNS
 - [ ] Enregistrement DMARC configuré dans DNS

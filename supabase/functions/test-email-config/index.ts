@@ -19,7 +19,7 @@ Deno.serve(async (req: Request) => {
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
     const FROM_EMAIL = Deno.env.get("FROM_EMAIL") || "info@locationproremorque.ca";
-    const FROM_NAME = Deno.env.get("FROM_NAME") || "Location Pro-Remorque";
+    const FROM_NAME = Deno.env.get("FROM_NAME") || "Garantie Pro-Remorque";
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
 
     const checks = {

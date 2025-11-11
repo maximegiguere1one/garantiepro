@@ -15,7 +15,7 @@ export const APP_CONFIG = {
   // Company Information
   company: {
     name: import.meta.env.VITE_COMPANY_NAME || 'Pro Remorque',
-    supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || 'support@locationproremorque.ca',
+    supportEmail: import.meta.env.VITE_SUPPORT_EMAIL || 'support@garantieproremorque.com',
     defaultLanguage: 'fr' as const,
   },
 

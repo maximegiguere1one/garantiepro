@@ -34,7 +34,7 @@ export async function queueEmail(options: EmailOptions, maxRetries: number = MAX
     await supabase.from('email_queue').insert({
       id: queueId,
       to_email: options.to,
-      from_email: 'info@locationproremorque.ca', // Default, can be overridden
+      from_email: 'info@garantieproremorque.com', // Default, can be overridden
       subject: options.subject,
       html_body: options.body,
       metadata: {
