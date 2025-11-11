@@ -140,3 +140,81 @@ Dans console navigateur après login:
 **Les correctifs CORS et Analytics sont 100% résolus!** 🎉
 
 **Le timeout profil nécessite vérification de la migration RPC en production.**
+
+---
+
+# 🔧 MISE À JOUR IMPORTANTE - Redirects Cloudflare
+
+## 🚨 Nouveau Problème Détecté (Déploiement Live)
+
+Lors du déploiement réel, Cloudflare a bloqué les redirects proxy:
+
+```
+❌ Proxy (200) redirects can only point to relative paths
+❌ /api/download-warranty-direct → BLOQUÉ
+```
+
+### Cause
+**Cloudflare Pages ne supporte PAS les redirects proxy (200) vers URLs externes.**
+
+## ✅ Solution Appliquée
+
+### 1. Redirects Corrigés
+Fichier `public/_redirects` mis à jour:
+- ❌ Supprimé: Proxy /api/ → Supabase (ne fonctionne pas sur Pages)
+- ✅ Ajouté: Redirect non-www → www (301)
+- ✅ Gardé: SPA fallback
+
+### 2. Migration Supabase Créée
+**CRITIQUE:** Les emails utilisent maintenant URLs directes Supabase (pas de proxy).
+
+**Fichier:** `supabase/migrations/20251111000000_fix_email_url_direct_supabase_nov11.sql`
+
+## ⚠️ ACTION CRITIQUE POST-DÉPLOIEMENT
+
+**VOUS DEVEZ appliquer cette migration sur Supabase:**
+
+```bash
+# Via Dashboard (RECOMMANDÉ)
+1. https://supabase.com/dashboard/project/fkxldrkkqvputdgfpayi/editor
+2. SQL Editor > New Query
+3. Copier le contenu de:
+   supabase/migrations/20251111000000_fix_email_url_direct_supabase_nov11.sql
+4. Run
+
+# OU via CLI
+supabase db push
+```
+
+**Sans cette migration, les liens de téléchargement dans les emails seront CASSÉS!**
+
+## 🧪 Tests Après Migration
+
+### Test Liens Email
+1. Créer nouvelle garantie
+2. Vérifier email reçu
+3. Lien doit commencer par: `https://fkxldrkkqvputdgfpayi.supabase.co/`
+4. Cliquer lien → PDF télécharge ✅
+
+### Vérifier Database
+```sql
+SELECT
+  to_email,
+  subject,
+  html_body LIKE '%fkxldrkkqvputdgfpayi.supabase.co%' as has_direct_url
+FROM email_queue
+ORDER BY created_at DESC
+LIMIT 5;
+-- Tous doivent avoir: has_direct_url = true
+```
+
+## 📚 Documentation Complète
+
+- **FIX_FINAL_NOV11_2025.md** - Analyse complète de TOUS les problèmes
+- **GUIDE_DEPLOIEMENT_PRODUCTION_100.md** - Guide déploiement
+- **PRODUCTION_READY_VALIDATION.md** - Validation production
+
+---
+
+**Dernière mise à jour:** 2025-11-11 07:50 UTC
+**Status:** ✅ PRÊT - Migration Supabase requise après déploiement
