@@ -246,7 +246,7 @@ export async function sendWarrantyCreatedEmail(
       const variables = {
         customer_name: customerName,
         contract_number: contractNumber,
-        company_name: 'Location Pro-Remorque',
+        company_name: 'Garantie Pro-Remorque',
         ...additionalData,
       };
 

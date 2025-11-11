@@ -57,7 +57,7 @@ export function generateWarrantyConfirmationEmailHTML(params: {
                 </svg>
               </div>
               <h1 style="margin: 0 0 4px; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.3px;">Garantie confirmée</h1>
-              <p style="margin: 0; color: #FEE2E2; font-size: 14px; font-weight: 600;">Location Pro-Remorque</p>
+              <p style="margin: 0; color: #FEE2E2; font-size: 14px; font-weight: 600;">Garantie Pro-Remorque</p>
             </td>
           </tr>
 
@@ -141,7 +141,7 @@ export function generateWarrantyConfirmationEmailHTML(params: {
           <!-- Footer noir du logo -->
           <tr>
             <td style="background-color: #1F2937; padding: 16px; text-align: center;">
-              <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 700;">Location Pro-Remorque</p>
+              <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 700;">Garantie Pro-Remorque</p>
               <p style="margin: 4px 0 0; color: #D1D5DB; font-size: 11px;">Garanties prolongées professionnelles</p>
             </td>
           </tr>
@@ -177,7 +177,7 @@ export function generateWarrantyConfirmationEmailHTML(params: {
                 </svg>
               </div>
               <h1 style="margin: 0 0 4px; color: #ffffff; font-size: 24px; font-weight: 700; letter-spacing: -0.3px;">Warranty confirmed</h1>
-              <p style="margin: 0; color: #FEE2E2; font-size: 14px; font-weight: 600;">Location Pro-Remorque</p>
+              <p style="margin: 0; color: #FEE2E2; font-size: 14px; font-weight: 600;">Garantie Pro-Remorque</p>
             </td>
           </tr>
 
@@ -253,7 +253,7 @@ export function generateWarrantyConfirmationEmailHTML(params: {
 
           <tr>
             <td style="background-color: #1F2937; padding: 16px; text-align: center;">
-              <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 700;">Location Pro-Remorque</p>
+              <p style="margin: 0; color: #ffffff; font-size: 13px; font-weight: 700;">Garantie Pro-Remorque</p>
               <p style="margin: 4px 0 0; color: #D1D5DB; font-size: 11px;">Professional Extended Warranties</p>
             </td>
           </tr>
