@@ -251,7 +251,8 @@ export async function processQueuedEmailsInBackground(): Promise<void> {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${supabase.supabaseKey}`,
-            'Content-Type': 'application/json',
+            'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             to: email.to_email,

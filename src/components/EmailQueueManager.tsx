@@ -100,6 +100,7 @@ export function EmailQueueManager() {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

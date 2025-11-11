@@ -69,7 +69,8 @@ export function BulkEmailModal({ selectedOrganizations, onClose, onSuccess }: Bu
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${session?.access_token}`,
-                'Content-Type': 'application/json',
+                'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
+          'Content-Type': 'application/json',
               },
               body: JSON.stringify({
                 to: org.billing_email,
