@@ -381,19 +381,11 @@ export const DealerDashboardComplete = memo(({ onNavigate }: DealerDashboardComp
 
   const quickActions = [
     {
-      id: 'optimized-warranty',
-      icon: Shield,
-      label: 'Nouvelle garantie ⚡',
-      description: '60% plus rapide',
-      color: 'bg-gradient-to-r from-primary-600 to-primary-600',
-      action: () => onNavigate?.('optimized-warranty'),
-    },
-    {
       id: 'new-warranty',
       icon: Shield,
-      label: 'Formulaire classique',
-      description: 'Version standard',
-      color: 'bg-slate-500',
+      label: 'Nouvelle garantie',
+      description: 'Créer une nouvelle garantie',
+      color: 'bg-gradient-to-r from-primary-600 to-primary-600',
       action: () => onNavigate?.('new-warranty'),
     },
     {
