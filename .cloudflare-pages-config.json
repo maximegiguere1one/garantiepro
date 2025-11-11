@@ -1,0 +1,10 @@
+{
+  "build": {
+    "command": "npm run build",
+    "output": "dist"
+  },
+  "deployment": {
+    "compatibility_date": "2024-10-26",
+    "compatibility_flags": []
+  }
+}

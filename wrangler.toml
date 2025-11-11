@@ -5,6 +5,11 @@ name = "garantieproremorque"
 compatibility_date = "2024-10-26"
 
 # Pages configuration
+pages_build_output_dir = "dist"
+
+[build]
+command = "npm run build"
+
 [site]
 bucket = "./dist"
 
