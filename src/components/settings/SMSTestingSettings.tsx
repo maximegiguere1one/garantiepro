@@ -55,40 +55,86 @@ export function SMSTestingSettings() {
     }
 
     setIsSending(true);
+    let smsQueueId: string | null = null;
+
     try {
-      // Add to SMS queue
+      // Add to SMS queue first
       const { data: smsData, error: smsError } = await supabase
         .from('sms_queue')
         .insert({
           organization_id: currentOrganization?.id,
           to_phone: phoneNumber,
           body: message,
-          status: 'pending',
+          status: 'sending',
           priority: 'high'
         })
         .select()
         .single();
 
       if (smsError) throw smsError;
+      smsQueueId = smsData.id;
 
-      showToast('SMS ajouté à la file d\'attente', 'success');
+      console.log('SMS added to queue:', smsData);
 
-      // Process the queue
-      const { error: processError } = await supabase.rpc('process_sms_queue');
+      // Call Edge Function directly to send SMS
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-      if (processError) {
-        console.error('Error processing queue:', processError);
-        showToast('SMS en file d\'attente, sera envoyé sous peu', 'info');
-      } else {
-        showToast('SMS envoyé avec succès!', 'success');
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${supabaseKey}`,
+        },
+        body: JSON.stringify({
+          to: phoneNumber,
+          body: message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du SMS');
       }
+
+      // Update SMS status to sent
+      await supabase
+        .from('sms_queue')
+        .update({
+          status: 'sent',
+          sent_at: new Date().toISOString(),
+          attempts: 1,
+        })
+        .eq('id', smsQueueId);
+
+      showToast('SMS envoyé avec succès!', 'success');
+      console.log('SMS sent successfully:', result);
 
       // Clear message and reload history
       setMessage('');
       await loadHistory();
     } catch (error: any) {
       console.error('Error sending SMS:', error);
+
+      // Update SMS status to failed if we have the ID
+      if (smsQueueId) {
+        try {
+          await supabase
+            .from('sms_queue')
+            .update({
+              status: 'failed',
+              error_message: error.message,
+              failed_at: new Date().toISOString(),
+            })
+            .eq('id', smsQueueId);
+        } catch (updateError) {
+          console.error('Error updating failed SMS:', updateError);
+        }
+      }
+
       showToast(error.message || 'Erreur lors de l\'envoi du SMS', 'error');
+      await loadHistory();
     } finally {
       setIsSending(false);
     }
