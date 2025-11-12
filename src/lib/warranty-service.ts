@@ -4,6 +4,8 @@ import { supabaseCache } from './supabase-cache';
 export interface WarrantyListItem {
   id: string;
   contract_number: string;
+  organization_id?: string;
+  customer_id?: string;
   status: string;
   total_price: number;
   base_price: number;
@@ -14,6 +16,8 @@ export interface WarrantyListItem {
   margin: number;
   deductible: number;
   duration_months: number;
+  province?: string;
+  sale_duration_seconds?: number;
   created_at: string;
   start_date: string;
   end_date: string;
@@ -23,8 +27,10 @@ export interface WarrantyListItem {
   signature_proof_url: string | null;
   signed_at: string | null;
   signature_ip: string | null;
+  legal_validation_passed?: boolean;
   customer_first_name: string;
   customer_last_name: string;
+  customer_name?: string;
   customer_email: string;
   customer_phone: string;
   customer_address: string;
@@ -40,8 +46,11 @@ export interface WarrantyListItem {
   trailer_color: string;
   trailer_purchase_price: number;
   plan_name: string;
+  plan_name_en?: string;
+  plan_name_fr?: string;
   plan_duration_months: number;
   plan_price: number;
+  vin?: string;
   total_count: number;
 }
 
