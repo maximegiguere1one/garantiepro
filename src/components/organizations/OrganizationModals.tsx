@@ -85,7 +85,12 @@ export function CreateOrganizationModal({ onClose, onSuccess }: CreateOrganizati
     e.preventDefault();
     setSubmitting(true);
 
+    let createdOrgId: string | null = null;
+
     try {
+      console.log('[CreateOrg] Starting organization creation...');
+      console.log('[CreateOrg] Current org:', currentOrganization?.id);
+
       const { data: newOrg, error: orgError } = await supabase
         .from('organizations')
         .insert({
@@ -103,7 +108,14 @@ export function CreateOrganizationModal({ onClose, onSuccess }: CreateOrganizati
         .select()
         .single();
 
-      if (orgError) throw orgError;
+      if (orgError) {
+        console.error('[CreateOrg] Organization creation failed:', orgError);
+        throw new Error(`Impossible de créer l'organisation: ${orgError.message} (Code: ${orgError.code})`);
+      }
+
+      createdOrgId = newOrg.id;
+      console.log('[CreateOrg] ✅ Organization created:', createdOrgId);
+      console.log('[CreateOrg] Creating billing configuration...');
 
       const { error: billingError } = await supabase
         .from('organization_billing_config')
@@ -114,7 +126,23 @@ export function CreateOrganizationModal({ onClose, onSuccess }: CreateOrganizati
           is_active: true,
         });
 
-      if (billingError) throw billingError;
+      if (billingError) {
+        console.error('[CreateOrg] Billing config creation failed:', billingError);
+        console.error('[CreateOrg] Error code:', billingError.code);
+        console.error('[CreateOrg] Error details:', billingError.details);
+        console.error('[CreateOrg] Error message:', billingError.message);
+
+        // Rollback: Delete the organization we just created
+        console.log('[CreateOrg] Rolling back organization creation...');
+        await supabase
+          .from('organizations')
+          .delete()
+          .eq('id', newOrg.id);
+
+        throw new Error(`Impossible de créer la configuration de facturation: ${billingError.message} (Code: ${billingError.code})`);
+      }
+
+      console.log('[CreateOrg] ✅ Billing config created successfully');
 
       const { data: { session } } = await supabase.auth.getSession();
       const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/onboard-franchisee`;
@@ -157,8 +185,21 @@ export function CreateOrganizationModal({ onClose, onSuccess }: CreateOrganizati
         onSuccess();
       }
     } catch (error: any) {
-      console.error('Error creating organization:', error);
-      showToast(error.message || 'Erreur lors de la création du franchisé', 'error');
+      console.error('[CreateOrg] ❌ Error creating organization:', error);
+      console.error('[CreateOrg] Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+
+      // If we created an org but failed later, note it in the error
+      let errorMessage = error.message || 'Erreur lors de la création du franchisé';
+      if (createdOrgId && error.message?.includes('facturation')) {
+        errorMessage = `Organisation créée mais erreur de configuration. L'organisation a été supprimée. Détails: ${error.message}`;
+      }
+
+      showToast(errorMessage, 'error');
     } finally {
       setSubmitting(false);
     }
