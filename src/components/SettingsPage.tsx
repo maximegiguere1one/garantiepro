@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Inbox,
   PenTool,
+  Smartphone,
 } from 'lucide-react';
 
 const CompanySettings = lazy(() => import('./settings/CompanySettings').then(m => ({ default: m.CompanySettings })));
@@ -33,6 +34,7 @@ const EmailQueueManager = lazy(() => import('./EmailQueueManager').then(m => ({ 
 const SignatureGenerator = lazy(() => import('./settings/SignatureGenerator').then(m => ({ default: m.SignatureGenerator })));
 const UsersManagement = lazy(() => import('./settings/UsersAndInvitationsManagement').then(m => ({ default: m.UsersAndInvitationsManagement })));
 const MyProfile = lazy(() => import('./settings/MyProfile').then(m => ({ default: m.MyProfile })));
+const SMSTestingSettings = lazy(() => import('./settings/SMSTestingSettings').then(m => ({ default: m.SMSTestingSettings })));
 
 type SettingsTab =
   | 'profile'
@@ -49,7 +51,8 @@ type SettingsTab =
   | 'claims'
   | 'signatures'
   | 'diagnostics'
-  | 'templates';
+  | 'templates'
+  | 'sms';
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center py-12">
@@ -81,6 +84,7 @@ export function SettingsPage() {
     { id: 'users' as const, name: 'Utilisateurs', icon: Users },
     { id: 'signatures' as const, name: 'Signatures', icon: PenTool },
     { id: 'emailconfig' as const, name: 'Config Email', icon: Settings },
+    { id: 'sms' as const, name: 'Test SMS', icon: Smartphone },
     { id: 'plans' as const, name: 'Plans de Garantie', icon: Shield },
     { id: 'notifications' as const, name: 'Notifications', icon: Bell },
     { id: 'emails' as const, name: 'Templates Emails', icon: Mail },
@@ -124,6 +128,8 @@ export function SettingsPage() {
           return <EmailTemplatesSettings />;
         case 'signatures':
           return <SignatureGenerator />;
+        case 'sms':
+          return <SMSTestingSettings />;
         case 'options':
           return <AddOnOptionsSettings />;
         default:

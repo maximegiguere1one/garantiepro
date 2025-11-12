@@ -6,7 +6,7 @@
  */
 
 import { useContext } from 'react';
-import { OrganizationContext } from '@/contexts/OrganizationProvider';
+import { OrganizationContext } from '../contexts/OrganizationContext';
 
 export function useOrganization() {
   const context = useContext(OrganizationContext);
