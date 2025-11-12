@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test SMS Notification</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #DC2626;
+            margin-bottom: 10px;
+        }
+        .section {
+            margin: 25px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+        button {
+            background: #DC2626;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #B91C1C;
+        }
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            display: none;
+        }
+        .success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #10B981;
+        }
+        .error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #DC2626;
+        }
+        .info {
+            background: #DBEAFE;
+            color: #1E40AF;
+            border: 1px solid #3B82F6;
+        }
+        pre {
+            background: #1F2937;
+            color: #F3F4F6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+        }
+        .phone {
+            font-weight: bold;
+            color: #DC2626;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .status-pending { color: #F59E0B; }
+        .status-sent { color: #10B981; }
+        .status-failed { color: #DC2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test SMS Notification</h1>
+        <p>Testez le système de notifications SMS pour les garanties</p>
+
+        <div class="section">
+            <h2>📱 Numéro de Test</h2>
+            <p>SMS sera envoyé à: <span class="phone">+1 418-572-8464</span></p>
+        </div>
+
+        <div class="section">
+            <h2>Test 1: SMS Direct via Edge Function</h2>
+            <p>Envoie un SMS de test directement via la fonction Edge Twilio</p>
+            <button onclick="testDirectSMS()" id="btnDirect">Envoyer SMS de Test Direct</button>
+        </div>
+
+        <div class="section">
+            <h2>Test 2: SMS via File d'Attente</h2>
+            <p>Ajoute un SMS dans la file d'attente et le traite (simule le système complet)</p>
+            <button onclick="testQueueSMS()" id="btnQueue">Envoyer SMS via File d'Attente</button>
+        </div>
+
+        <div class="section">
+            <h2>Test 3: Créer une Garantie de Test</h2>
+            <p>Crée une vraie garantie pour tester le trigger automatique</p>
+            <button onclick="testWarrantyCreation()" id="btnWarranty">Créer Garantie de Test</button>
+        </div>
+
+        <div class="section">
+            <h2>📊 Historique des SMS</h2>
+            <button onclick="viewSMSHistory()" id="btnHistory">Voir l'Historique</button>
+            <div id="historyResult"></div>
+        </div>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        // Configuration Supabase - REMPLACER AVEC VOS VRAIES VALEURS
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        // Essayer de lire depuis les variables d'environnement
+        const supabaseUrl = SUPABASE_URL.startsWith('YOUR_') ?
+            prompt('Entrez votre SUPABASE_URL:') : SUPABASE_URL;
+        const supabaseKey = SUPABASE_ANON_KEY.startsWith('YOUR_') ?
+            prompt('Entrez votre SUPABASE_ANON_KEY:') : SUPABASE_ANON_KEY;
+
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        function showResult(message, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = message;
+            resultDiv.style.display = 'block';
+        }
+
+        function setLoading(buttonId, loading) {
+            const btn = document.getElementById(buttonId);
+            btn.disabled = loading;
+            if (loading) {
+                btn.innerHTML = btn.innerHTML.split('<span')[0] + '<span class="loading">⏳</span>';
+            } else {
+                btn.innerHTML = btn.innerHTML.split('<span')[0];
+            }
+        }
+
+        async function testDirectSMS() {
+            setLoading('btnDirect', true);
+            showResult('⏳ Envoi du SMS direct...', 'info');
+
+            try {
+                const response = await fetch(`${supabaseUrl}/functions/v1/send-sms`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseKey}`
+                    },
+                    body: JSON.stringify({
+                        to: '+14185728464',
+                        body: 'Test SMS Direct - Système de notifications SMS fonctionne! 🎉'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showResult(`
+                        <h3>✅ SMS Envoyé avec Succès!</h3>
+                        <p>Vérifiez votre téléphone <span class="phone">+1 418-572-8464</span></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'success');
+                } else {
+                    showResult(`
+                        <h3>❌ Erreur lors de l'envoi</h3>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `, 'error');
+                }
+            } catch (error) {
+                showResult(`
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                `, 'error');
+            } finally {
+                setLoading('btnDirect', false);
+            }
+        }
+
+        async function testQueueSMS() {
+            setLoading('btnQueue', true);
+            showResult('⏳ Ajout du SMS à la file d\'attente...', 'info');
+
+            try {
+                // 1. Récupérer l'organisation
+                const { data: orgs } = await supabase
+                    .from('organizations')
+                    .select('id')
+                    .limit(1)
+                    .single();
+
+                if (!orgs) {
+                    throw new Error('Aucune organisation trouvée');
+                }
+
+                // 2. Ajouter le SMS à la file
+                const { data: smsData, error: smsError } = await supabase
+                    .from('sms_queue')
+                    .insert({
+                        organization_id: orgs.id,
+                        to_phone: '+14185728464',
+                        body: 'Test SMS File d\'Attente - Système de queue fonctionne! 🎉',
+                        status: 'pending',
+                        priority: 'high'
+                    })
+                    .select()
+                    .single();
+
+                if (smsError) throw smsError;
+
+                // 3. Traiter la file
+                const { data: processData, error: processError } = await supabase
+                    .rpc('process_sms_queue');
+
+                showResult(`
+                    <h3>✅ SMS Ajouté et Traité!</h3>
+                    <p>Vérifiez votre téléphone <span class="phone">+1 418-572-8464</span></p>
+                    <h4>SMS créé:</h4>
+                    <pre>${JSON.stringify(smsData, null, 2)}</pre>
+                    <h4>Traitement de la file:</h4>
+                    <pre>${JSON.stringify(processData, null, 2)}</pre>
+                `, 'success');
+            } catch (error) {
+                showResult(`
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                `, 'error');
+            } finally {
+                setLoading('btnQueue', false);
+            }
+        }
+
+        async function testWarrantyCreation() {
+            setLoading('btnWarranty', true);
+            showResult('⏳ Création d\'une garantie de test...', 'info');
+
+            try {
+                // Récupérer les données nécessaires
+                const { data: org } = await supabase
+                    .from('organizations')
+                    .select('id')
+                    .limit(1)
+                    .single();
+
+                const { data: plan } = await supabase
+                    .from('warranty_plans')
+                    .select('id, name, base_price')
+                    .limit(1)
+                    .single();
+
+                if (!org || !plan) {
+                    throw new Error('Données manquantes (organisation ou plan)');
+                }
+
+                // Créer une garantie de test
+                const testWarranty = {
+                    organization_id: org.id,
+                    warranty_plan_id: plan.id,
+                    contract_number: `TEST-${Date.now()}`,
+                    customer_name: 'Jean Test',
+                    customer_email: 'test@example.com',
+                    customer_phone: '+15555555555',
+                    customer_address: '123 rue Test',
+                    customer_city: 'Montréal',
+                    customer_province: 'QC',
+                    customer_postal_code: 'H1H 1H1',
+                    trailer_vin: `VIN-TEST-${Date.now()}`,
+                    trailer_category: 'Fermé',
+                    trailer_year: 2024,
+                    trailer_make: 'Test',
+                    trailer_model: 'Test Model',
+                    sale_price: 15000,
+                    warranty_price: plan.base_price || 500,
+                    total_amount: 15500,
+                    start_date: new Date().toISOString().split('T')[0],
+                    end_date: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
+                    duration_months: 12,
+                    status: 'active'
+                };
+
+                const { data: warranty, error: warrantyError } = await supabase
+                    .from('warranties')
+                    .insert(testWarranty)
+                    .select()
+                    .single();
+
+                if (warrantyError) throw warrantyError;
+
+                // Attendre un peu pour que le SMS soit traité
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Vérifier si un SMS a été créé
+                const { data: sms } = await supabase
+                    .from('sms_queue')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                showResult(`
+                    <h3>✅ Garantie Créée!</h3>
+                    <p>Un SMS devrait être envoyé automatiquement à <span class="phone">+1 418-572-8464</span></p>
+                    <h4>Garantie créée:</h4>
+                    <pre>${JSON.stringify(warranty, null, 2)}</pre>
+                    <h4>SMS dans la file:</h4>
+                    <pre>${sms ? JSON.stringify(sms, null, 2) : 'Aucun SMS trouvé (vérifiez les logs)'}</pre>
+                `, 'success');
+            } catch (error) {
+                showResult(`
+                    <h3>❌ Erreur</h3>
+                    <p>${error.message}</p>
+                `, 'error');
+            } finally {
+                setLoading('btnWarranty', false);
+            }
+        }
+
+        async function viewSMSHistory() {
+            setLoading('btnHistory', true);
+            const historyDiv = document.getElementById('historyResult');
+
+            try {
+                const { data: smsHistory, error } = await supabase
+                    .from('sms_queue')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(20);
+
+                if (error) throw error;
+
+                if (!smsHistory || smsHistory.length === 0) {
+                    historyDiv.innerHTML = '<p style="margin-top: 15px;">Aucun SMS dans l\'historique</p>';
+                    return;
+                }
+
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Téléphone</th>
+                                <th>Status</th>
+                                <th>Tentatives</th>
+                                <th>Message</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                smsHistory.forEach(sms => {
+                    const date = new Date(sms.created_at).toLocaleString('fr-CA');
+                    const statusClass = `status-${sms.status}`;
+                    const message = sms.body.substring(0, 50) + (sms.body.length > 50 ? '...' : '');
+
+                    tableHTML += `
+                        <tr>
+                            <td>${date}</td>
+                            <td>${sms.to_phone}</td>
+                            <td class="${statusClass}">${sms.status}</td>
+                            <td>${sms.attempts}</td>
+                            <td>${message}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += '</tbody></table>';
+                historyDiv.innerHTML = tableHTML;
+
+            } catch (error) {
+                historyDiv.innerHTML = `<p style="color: #DC2626; margin-top: 15px;">Erreur: ${error.message}</p>`;
+            } finally {
+                setLoading('btnHistory', false);
+            }
+        }
+
+        // Afficher un message au chargement
+        window.addEventListener('load', () => {
+            showResult(`
+                <h3>ℹ️ Instructions</h3>
+                <p>Choisissez un test ci-dessus pour vérifier le système SMS:</p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>Test 1</strong>: Test le plus simple - envoie direct via Twilio</li>
+                    <li><strong>Test 2</strong>: Test complet - utilise la file d'attente</li>
+                    <li><strong>Test 3</strong>: Test du trigger - crée une vraie garantie</li>
+                </ul>
+                <p>Après chaque test, vous devriez recevoir un SMS sur <span class="phone">+1 418-572-8464</span></p>
+            `, 'info');
+        });
+    </script>
+</body>
+</html>
