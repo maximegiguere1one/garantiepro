@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../lib/supabase';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
-import { Building2, Plus, Users, DollarSign, AlertCircle, CheckCircle, CreditCard as Edit, Ban, PlayCircle, Mail, Key, MoreVertical, RefreshCw, Link as LinkIcon, TestTube, Clock, CheckCircle2, XCircle, Download, Eye, Zap } from 'lucide-react';
+import { Building2, Plus, Users, DollarSign, AlertCircle, CheckCircle, CreditCard as Edit, Ban, PlayCircle, Mail, Key, MoreVertical, RefreshCw, Link as LinkIcon, TestTube, Clock, CheckCircle2, XCircle, Download, Eye, Zap, Trash2 } from 'lucide-react';
 import type { Database } from '../lib/database.types';
 import {
   OrganizationFilters,
@@ -14,6 +14,7 @@ import {
   CreateOrganizationModal,
   EditOrganizationModal,
   InvitationLinkModal,
+  DeleteFranchiseModal,
   type ViewMode
 } from './organizations';
 import { exportToCSV, exportToJSON, generateSummaryReport } from '../lib/organization-export';
@@ -52,6 +53,7 @@ export function OrganizationsManagementV2() {
   const [showActionsMenu, setShowActionsMenu] = useState<string | null>(null);
   const [showInvitationLink, setShowInvitationLink] = useState<string | null>(null);
   const [sendingInvitation, setSendingInvitation] = useState<string | null>(null);
+  const [franchiseToDelete, setFranchiseToDelete] = useState<OrganizationWithStats | null>(null);
 
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -112,6 +114,7 @@ export function OrganizationsManagementV2() {
         setShowBulkEmailModal(false);
         setShowBulkTagModal(false);
         setDetailOrg(null);
+        setFranchiseToDelete(null);
       }
     };
 
@@ -716,6 +719,7 @@ export function OrganizationsManagementV2() {
                 onResendInvitation={handleResendInvitation}
                 onCopyLink={handleCopyInvitationLink}
                 onResetPassword={handleResetPassword}
+                onDelete={setFranchiseToDelete}
                 showActionsMenu={showActionsMenu}
                 setShowActionsMenu={setShowActionsMenu}
                 sendingInvitation={sendingInvitation}
@@ -736,6 +740,7 @@ export function OrganizationsManagementV2() {
                 onResendInvitation={handleResendInvitation}
                 onCopyLink={handleCopyInvitationLink}
                 onResetPassword={handleResetPassword}
+                onDelete={setFranchiseToDelete}
                 showActionsMenu={showActionsMenu}
                 setShowActionsMenu={setShowActionsMenu}
                 sendingInvitation={sendingInvitation}
@@ -828,12 +833,23 @@ export function OrganizationsManagementV2() {
           }}
         />
       )}
+
+      {franchiseToDelete && (
+        <DeleteFranchiseModal
+          franchise={franchiseToDelete}
+          onClose={() => setFranchiseToDelete(null)}
+          onSuccess={() => {
+            setFranchiseToDelete(null);
+            loadOrganizations();
+          }}
+        />
+      )}
     </div>
   );
 }
 
 // Organization Card Component
-function OrganizationCard({ organization, isSelected, onToggleSelect, onViewDetails, onEdit, onToggleStatus, onResendInvitation, onCopyLink, onResetPassword, showActionsMenu, setShowActionsMenu, sendingInvitation }: any) {
+function OrganizationCard({ organization, isSelected, onToggleSelect, onViewDetails, onEdit, onToggleStatus, onResendInvitation, onCopyLink, onResetPassword, onDelete, showActionsMenu, setShowActionsMenu, sendingInvitation }: any) {
   return (
     <div className={`bg-slate-50 rounded-xl p-5 border-2 transition-all hover:shadow-md ${
       isSelected ? 'border-slate-900 bg-slate-100' : 'border-slate-200'
@@ -881,6 +897,7 @@ function OrganizationCard({ organization, isSelected, onToggleSelect, onViewDeta
                   onCopyLink={onCopyLink}
                   onResetPassword={onResetPassword}
                   onEdit={onEdit}
+                  onDelete={onDelete}
                   sendingInvitation={sendingInvitation}
                 />
               )}
@@ -959,7 +976,7 @@ function OrganizationCard({ organization, isSelected, onToggleSelect, onViewDeta
 }
 
 // Organization List Item
-function OrganizationListItem({ organization, isSelected, onToggleSelect, onViewDetails, onEdit, onToggleStatus, onResendInvitation, onCopyLink, onResetPassword, showActionsMenu, setShowActionsMenu, sendingInvitation }: any) {
+function OrganizationListItem({ organization, isSelected, onToggleSelect, onViewDetails, onEdit, onToggleStatus, onResendInvitation, onCopyLink, onResetPassword, onDelete, showActionsMenu, setShowActionsMenu, sendingInvitation }: any) {
   return (
     <div className={`px-6 py-4 hover:bg-slate-50 transition-colors ${isSelected ? 'bg-slate-100' : ''}`}>
       <div className="flex items-center gap-4">
@@ -1009,6 +1026,7 @@ function OrganizationListItem({ organization, isSelected, onToggleSelect, onView
                   onCopyLink={onCopyLink}
                   onResetPassword={onResetPassword}
                   onEdit={onEdit}
+                  onDelete={onDelete}
                   sendingInvitation={sendingInvitation}
                 />
               )}
@@ -1063,7 +1081,7 @@ function KanbanView({ organizations, onViewDetails, onToggleStatus }: any) {
 }
 
 // Actions Menu Component
-function ActionsMenu({ org, onResendInvitation, onCopyLink, onResetPassword, onEdit, sendingInvitation }: any) {
+function ActionsMenu({ org, onResendInvitation, onCopyLink, onResetPassword, onEdit, onDelete, sendingInvitation }: any) {
   return (
     <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-lg shadow-xl border border-slate-200 py-2 z-50">
       <button
@@ -1094,6 +1112,14 @@ function ActionsMenu({ org, onResendInvitation, onCopyLink, onResetPassword, onE
       >
         <Edit className="w-4 h-4" />
         Modifier les détails
+      </button>
+      <div className="border-t border-slate-200 my-2"></div>
+      <button
+        onClick={() => onDelete(org)}
+        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+      >
+        <Trash2 className="w-4 h-4" />
+        Supprimer la franchise
       </button>
     </div>
   );

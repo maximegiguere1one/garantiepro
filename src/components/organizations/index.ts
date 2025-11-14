@@ -5,3 +5,4 @@ export { BulkTagModal } from './BulkTagModal';
 export { OrganizationDetailModal } from './OrganizationDetailModal';
 export { ViewToggle, type ViewMode } from './ViewToggle';
 export { InvitationLinkModal, CreateOrganizationModal, EditOrganizationModal } from './OrganizationModals';
+export { DeleteFranchiseModal } from './DeleteFranchiseModal';
