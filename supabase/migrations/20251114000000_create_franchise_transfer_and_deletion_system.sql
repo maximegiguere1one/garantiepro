@@ -132,8 +132,8 @@ BEGIN
       JOIN warranties w2 ON w2.id = wdt.warranty_id
       WHERE w2.organization_id = p_franchise_id
     ),
-    'unpaid_invoices', COUNT(DISTINCT fi.id) FILTER (WHERE fi.status = 'unpaid'),
-    'total_unpaid_amount', COALESCE(SUM(fi.amount) FILTER (WHERE fi.status = 'unpaid'), 0),
+    'unpaid_invoices', COUNT(DISTINCT fi.id) FILTER (WHERE fi.status IN ('overdue', 'sent', 'draft')),
+    'total_unpaid_amount', COALESCE(SUM(fi.total_amount) FILTER (WHERE fi.status IN ('overdue', 'sent', 'draft')), 0),
     'billing_config', (
       SELECT jsonb_build_object(
         'billing_type', billing_type,
@@ -498,6 +498,9 @@ COMMENT ON FUNCTION transfer_and_delete_franchise IS 'Transfère toutes les donn
 -- =====================================================
 -- FONCTION: LISTER LES FRANCHISES DISPONIBLES POUR TRANSFERT
 -- =====================================================
+
+-- Drop existing function to allow signature change
+DROP FUNCTION IF EXISTS get_available_destination_franchises(uuid);
 
 CREATE OR REPLACE FUNCTION get_available_destination_franchises(p_exclude_franchise_id uuid)
 RETURNS TABLE (
